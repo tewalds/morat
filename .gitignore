@@ -1,0 +1,32 @@
+# dependencies
+.Makefile
+
+# object files
+*.o
+
+# executables
+castro
+castro-*
+moy
+moy-*
+pentagod
+pentagod-*
+
+# valgrind output
+callgrind.out.*
+
+# pdf generation
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.properties.xml
+*.make
+*.d
+*.fls
+
