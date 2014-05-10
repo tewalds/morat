@@ -3,7 +3,7 @@
 
 using namespace std;
 
-GTPResponse GTPCommon::gtp_echo(vecstr args){
+GTPResponse GTPCommon::gtp_echo(vecstr args) const {
 	return GTPResponse(true, implode(args, " "));
 }
 
@@ -56,4 +56,17 @@ GTPResponse GTPCommon::gtp_time(vecstr args){
 	}
 
 	return GTPResponse(true);
+}
+
+string GTPCommon::won_str(int outcome) const {
+	switch(outcome){
+		case -3: return "none";
+		case -2: return "black_or_draw";
+		case -1: return "white_or_draw";
+		case 0:
+		case 3:  return "draw";
+		case 1:  return "white";
+		case 2:  return "black";
+		default: return "unknown";
+	}
 }
