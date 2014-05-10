@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../lib/gtpbase.h"
+#include "../lib/gtpcommon.h"
 #include "../lib/string.h"
 
 #include "board.h"
@@ -14,44 +14,14 @@
 #include "solverpns2.h"
 #include "solverpns_tt.h"
 
-struct TimeControl {
-	enum Method { PERCENT, EVEN, STATS };
-	Method method; //method to use to distribute the remaining time
-	double param;  //param for the method, such as the percentage used or multiple of even
-	double game;
-	double move;
-	bool   flexible; //whether time_per_move can be saved for future moves
-	int    max_sims;
 
-	TimeControl(){
-		method   = STATS;
-		param    = 2;
-		game     = 0;
-		move     = 5;
-		flexible = true;
-		max_sims = 0;
-	}
-
-	string method_name(){
-		switch(method){
-			case PERCENT: return "percent";
-			case EVEN:    return "even";
-			case STATS:   return "stats";
-			default:      return "WTF? unknown time control method";
-		}
-	}
-};
-
-class GTP : public GTPBase {
+class GTP : public GTPCommon {
 	Game game;
 
 public:
 	int verbose;
 	bool genmoveextended;
 	bool colorboard;
-
-	TimeControl time;
-	double      time_remain; //time remaining for this game
 
 	int mem_allowed;
 	bool allow_swap;
@@ -63,12 +33,10 @@ public:
 	SolverPNS2  solverpns2;
 	SolverPNSTT solverpnstt;
 
-	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o), game(10) {
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o), game(10) {
 		verbose = 1;
 		genmoveextended = false;
 		colorboard = true;
-
-		time_remain = time.game;
 
 		mem_allowed = 1000;
 		allow_swap = false;
@@ -80,7 +48,6 @@ public:
 		newcallback("verbose",         bind(&GTP::gtp_verbose,       this, _1), "Set verbosity, 0 for quiet, 1 for normal, 2+ for more output");
 		newcallback("extended",        bind(&GTP::gtp_extended,      this, _1), "Output extra stats from genmove in the response");
 		newcallback("debug",           bind(&GTP::gtp_debug,         this, _1), "Enable debug mode");
-		newcallback("echo",            bind(&GTP::gtp_echo,          this, _1), "Return the arguments as the response");
 		newcallback("colorboard",      bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
 		newcallback("showboard",       bind(&GTP::gtp_print,         this, _1), "Show the board");
 		newcallback("print",           bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
@@ -149,7 +116,6 @@ public:
 		solverpnstt.move(m);
 	}
 
-	GTPResponse gtp_echo(vecstr args);
 	GTPResponse gtp_print(vecstr args);
 	GTPResponse gtp_zobrist(vecstr args);
 	string won_str(int outcome) const;
@@ -174,8 +140,6 @@ public:
 	GTPResponse gtp_debug(vecstr args);
 	GTPResponse gtp_dists(vecstr args);
 
-	GTPResponse gtp_time(vecstr args);
-	double get_time();
 	GTPResponse gtp_move_stats(vecstr args);
 	GTPResponse gtp_player_solve(vecstr args);
 	GTPResponse gtp_player_solved(vecstr args);

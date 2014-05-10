@@ -2,9 +2,6 @@
 #include "gtp.h"
 #include "lbdist.h"
 
-GTPResponse GTP::gtp_echo(vecstr args){
-	return GTPResponse(true, implode(args, " "));
-}
 
 GTPResponse GTP::gtp_print(vecstr args){
 	Board board = game.getboard();
@@ -50,7 +47,7 @@ GTPResponse GTP::gtp_boardsize(vecstr args){
 	game = Game(size);
 	set_board();
 
-	time_remain = time.game;
+	time_control.new_game();
 
 	return GTPResponse(true);
 }
@@ -59,7 +56,7 @@ GTPResponse GTP::gtp_clearboard(vecstr args){
 	game.clear();
 	set_board();
 
-	time_remain = time.game;
+	time_control.new_game();
 
 	return GTPResponse(true);
 }

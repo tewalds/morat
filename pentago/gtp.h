@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../lib/gtpbase.h"
+#include "../lib/gtpcommon.h"
 #include "../lib/string.h"
 
 #include "agent.h"
@@ -12,52 +12,21 @@
 #include "game.h"
 #include "move.h"
 
-struct TimeControl {
-	enum Method { PERCENT, EVEN, STATS };
-	Method method; //method to use to distribute the remaining time
-	double param;  //param for the method, such as the percentage used or multiple of even
-	double game;
-	double move;
-	bool   flexible; //whether time_per_move can be saved for future moves
-	int    max_sims;
-
-	TimeControl(){
-		method   = STATS;
-		param    = 2;
-		game     = 0;
-		move     = 5;
-		flexible = true;
-		max_sims = 0;
-	}
-
-	string method_name(){
-		switch(method){
-			case PERCENT: return "percent";
-			case EVEN:    return "even";
-			case STATS:   return "stats";
-			default:      return "WTF? unknown time control method";
-		}
-	}
-};
-
-class GTP : public GTPBase {
+class GTP : public GTPCommon {
 	Game game;
 
 public:
 	int verbose;
 	bool colorboard;
 
-	TimeControl time;
-	double      time_remain; //time remaining for this game
 	int mem_allowed;
 
 	Agent * agent;
 
-	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o) {
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o) {
 		verbose = 1;
 		colorboard = true;
 
-		time_remain = time.game;
 		mem_allowed = 1000;
 
 		agent = new AgentMCTS();
@@ -67,7 +36,6 @@ public:
 		newcallback("name",            bind(&GTP::gtp_name,          this, _1), "Name of the program");
 		newcallback("version",         bind(&GTP::gtp_version,       this, _1), "Version of the program");
 		newcallback("verbose",         bind(&GTP::gtp_verbose,       this, _1), "Set verbosity, 0 for quiet, 1 for normal, 2+ for more output");
-		newcallback("echo",            bind(&GTP::gtp_echo,          this, _1), "Return the arguments as the response");
 		newcallback("colorboard",      bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
 		newcallback("showboard",       bind(&GTP::gtp_print,         this, _1), "Show the board");
 		newcallback("print",           bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
@@ -109,7 +77,6 @@ public:
 		agent->move(m);
 	}
 
-	GTPResponse gtp_echo(vecstr args);
 	GTPResponse gtp_state(vecstr args);
 	GTPResponse gtp_print(vecstr args);
 	GTPResponse gtp_hash(vecstr args);
@@ -134,9 +101,6 @@ public:
 	GTPResponse gtp_pns(vecstr args);
 	GTPResponse gtp_ab(vecstr args);
 
-	GTPResponse gtp_time(vecstr args);
-	double get_time();
-	void time_used(double used);
 	GTPResponse gtp_move_stats(vecstr args);
 	GTPResponse gtp_pv(vecstr args);
 	GTPResponse gtp_genmove(vecstr args);

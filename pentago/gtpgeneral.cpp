@@ -22,10 +22,6 @@ GTPResponse GTP::gtp_ab(vecstr args){
 	return GTPResponse(true);
 }
 
-GTPResponse GTP::gtp_echo(vecstr args){
-	return GTPResponse(true, implode(args, " "));
-}
-
 GTPResponse GTP::gtp_state(vecstr args){
 	return GTPResponse(true, game.getboard().state());
 }
@@ -55,7 +51,7 @@ GTPResponse GTP::gtp_clearboard(vecstr args){
 	game.clear();
 	set_board();
 
-	time_remain = time.game;
+	time_control.new_game();
 
 	return GTPResponse(true);
 }

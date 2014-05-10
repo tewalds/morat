@@ -7,90 +7,6 @@
 
 using namespace std;
 
-GTPResponse GTP::gtp_time(vecstr args){
-	if(args.size() == 0)
-		return GTPResponse(true, string("\n") +
-			"Update the time settings, eg: time -s 2.5 -m 10 -g 600 -f 1\n" +
-			"Method for distributing remaining time, current: " + time.method_name() + " " + to_str(time.param) + "\n" +
-			"  -p --percent  Percentage of the remaining time every move            [10.0]\n" +
-			"  -e --even     Multiple of even split of the maximum  remaining moves [2.0]\n" +
-			"  -s --stats    Multiple of even split of the expected remaining moves [2.0]\n" +
-			"Time allocation\n" +
-			"  -m --move     Time per move                                          [" + to_str(time.move) + "]\n" +
-			"  -g --game     Time per game                                          [" + to_str(time.game) + "]\n" +
-			"  -f --flexible Add remaining time per move to remaining time          [" + to_str(time.flexible) + "]\n" +
-			"  -i --maxsims  Maximum number of simulations per move                 [" + to_str(time.max_sims) + "]\n" +
-			"Current game\n" +
-			"  -r --remain   Remaining time for this game                           [" + to_str(time_remain) + "]\n");
-
-	for(unsigned int i = 0; i < args.size(); i++) {
-		string arg = args[i];
-
-		if(arg == "-p" || arg == "--percent"){
-			time.method = TimeControl::PERCENT;
-			time.param = 10;
-			if(i+1 < args.size() && from_str<double>(args[i+1]) > 0) time.param = from_str<double>(args[++i]);
-		}else if(arg == "-e" || arg == "--even"){
-			time.method = TimeControl::EVEN;
-			time.param = 2;
-			if(i+1 < args.size() && from_str<double>(args[i+1]) > 0) time.param = from_str<double>(args[++i]);
-		}else if(arg == "-s" || arg == "--stats"){
-			time.method = TimeControl::STATS;
-			time.param = 2;
-			if(i+1 < args.size() && from_str<double>(args[i+1]) > 0) time.param = from_str<double>(args[++i]);
-		}else if((arg == "-m" || arg == "--move") && i+1 < args.size()){
-			time.move = from_str<double>(args[++i]);
-		}else if((arg == "-g" || arg == "--game") && i+1 < args.size()){
-			time.game = from_str<float>(args[++i]);
-		}else if((arg == "-f" || arg == "--flexible") && i+1 < args.size()){
-			time.flexible = from_str<bool>(args[++i]);
-		}else if((arg == "-i" || arg == "--maxsims") && i+1 < args.size()){
-			time.max_sims = from_str<int>(args[++i]);
-		}else if((arg == "-r" || arg == "--remain") && i+1 < args.size()){
-			time_remain = from_str<double>(args[++i]);
-		}else{
-			return GTPResponse(false, "Missing or unknown parameter");
-		}
-	}
-
-	return GTPResponse(true);
-}
-
-double GTP::get_time(){
-	double ret = 0;
-
-	switch(time.method){
-		case TimeControl::PERCENT:
-			ret += time.param*time_remain/100;
-			break;
-		case TimeControl::STATS:{
-			double gamelen = agent->gamelen();
-			if(gamelen > 0){
-				ret += 2.0*time.param*time_remain / gamelen;
-				break;
-			}
-		}//fall back to even
-		case TimeControl::EVEN:
-			ret += 2.0*time.param*time_remain / game.moves_remain();
-			break;
-	}
-
-	if(ret > time_remain)
-		ret = time_remain;
-
-	ret += time.move;
-
-	return ret;
-}
-
-void GTP::time_used(double used){
-	if(time.flexible)
-		time_remain += time.move - used;
-	else
-		time_remain += min(0.0, time.move - used);
-	if(time_remain < 0)
-			time_remain = 0;
-}
 
 GTPResponse GTP::gtp_move_stats(vecstr args){
 	return GTPResponse(true, agent->move_stats());
@@ -100,14 +16,16 @@ GTPResponse GTP::gtp_solve(vecstr args){
 	if(game.getboard().won() >= 0)
 		return GTPResponse(true, "resign");
 
-	double use_time = (args.size() >= 2 ? from_str<double>(args[1]) : get_time());
+	double use_time = (args.size() >= 1 ?
+			from_str<double>(args[0]) :
+			time_control.get_time(game.len(), game.moves_remain(), agent->gamelen()));
 
 	if(verbose)
-		logerr("time remain: " + to_str(time_remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time.max_sims) + "\n");
+		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
 
 	Time start;
-	agent->search(use_time, time.max_sims, verbose);
-	time_used(Time() - start);
+	agent->search(use_time, time_control.max_sims, verbose);
+	time_control.use(Time() - start);
 
 
 	//TODO: find the outcome, not the best move...
@@ -125,14 +43,17 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 	if(game.getboard().won() >= 0)
 		return GTPResponse(true, "resign");
 
-	double use_time = (args.size() >= 2 ? from_str<double>(args[1]) : get_time());
+	double use_time = (args.size() >= 2 ?
+			from_str<double>(args[1]) :
+			time_control.get_time(game.len(), game.moves_remain(), agent->gamelen()));
+
 
 	if(verbose)
-		logerr("time:        remain: " + to_str(time_remain, 1) + ", use: " + to_str(use_time, 3) + ", sims: " + to_str(time.max_sims) + "\n");
+		logerr("time:        remain: " + to_str(time_control.remain, 1) + ", use: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
 
 	Time start;
-	agent->search(use_time, time.max_sims, verbose);
-	time_used(Time() - start);
+	agent->search(use_time, time_control.max_sims, verbose);
+	time_control.use(Time() - start);
 
 
 	Move best = agent->return_move(verbose);

@@ -39,6 +39,7 @@ castro: \
 		havannah/player.o \
 		havannah/playeruct.o \
 		lib/fileio.o \
+		lib/gtpcommon.o \
 		lib/string.o \
 		lib/zobrist.o \
 		$(ALARM)
@@ -56,6 +57,7 @@ pentagod: \
 		pentago/move.o \
 		pentago/moveiterator.o \
 		lib/fileio.o \
+		lib/gtpcommon.o \
 		lib/string.o \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
@@ -72,6 +74,7 @@ moy: \
 		y/player.o \
 		y/playeruct.o \
 		lib/fileio.o \
+		lib/gtpcommon.o \
 		lib/string.o \
 		lib/zobrist.o \
 		$(ALARM)
