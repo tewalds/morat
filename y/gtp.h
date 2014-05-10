@@ -157,9 +157,6 @@ public:
 	GTPResponse gtp_boardsize(vecstr args);
 	GTPResponse gtp_clearboard(vecstr args);
 	GTPResponse gtp_undo(vecstr args);
-	Move parse_move(const string & str);
-	string move_str(int x, int y);
-	string move_str(Move m);
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
 	GTPResponse gtp_patterns(vecstr args);

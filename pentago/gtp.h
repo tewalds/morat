@@ -9,8 +9,8 @@
 #include "agentmcts.h"
 #include "agentpns.h"
 #include "board.h"
-#include "move.h"
 #include "game.h"
+#include "move.h"
 
 struct TimeControl {
 	enum Method { PERCENT, EVEN, STATS };
@@ -53,9 +53,7 @@ public:
 
 	Agent * agent;
 
-	GTP(FILE * i = stdin, FILE * o = stdout){
-		GTPBase(i, o);
-
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o) {
 		verbose = 1;
 		colorboard = true;
 
@@ -78,6 +76,7 @@ public:
 		newcallback("clear_board",     bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
 		newcallback("clear",           bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
 		newcallback("boardsize",       bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board, board is fixed size");
+		newcallback("size",            bind(&GTP::gtp_clearboard,    this, _1), "Alias for board_size");
 		newcallback("play",            bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
 		newcallback("white",           bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
 		newcallback("black",           bind(&GTP::gtp_playblack,     this, _1), "Place a black stone: black <location>");

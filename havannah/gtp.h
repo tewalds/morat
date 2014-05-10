@@ -91,6 +91,7 @@ public:
 		newcallback("clear_board",     bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
 		newcallback("clear",           bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
 		newcallback("boardsize",       bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");
+		newcallback("size",            bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
 		newcallback("swap",            bind(&GTP::gtp_swap,          this, _1), "Enable/disable swap: swap <0|1>");
 		newcallback("play",            bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
 		newcallback("white",           bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
@@ -112,7 +113,6 @@ public:
 		newcallback("history",         bind(&GTP::gtp_history,       this, _1), "List of played moves");
 		newcallback("playgame",        bind(&GTP::gtp_playgame,      this, _1), "Play a list of moves");
 		newcallback("winner",          bind(&GTP::gtp_winner,        this, _1), "Check the winner of the game");
-		newcallback("havannah_winner", bind(&GTP::gtp_winner,        this, _1), "Alias for winner");
 
 		newcallback("ab_solve",        bind(&GTP::gtp_solve_ab,        this, _1),  "Solve with alpha-beta");
 		newcallback("ab_params",       bind(&GTP::gtp_solve_ab_params, this, _1),  "Set Parameters for alpha-beta");

@@ -107,7 +107,7 @@ GTPResponse GTP::gtp_move_stats(vecstr args){
 		if(child->move == M_NONE)
 			continue;
 
-		s += move_str(child->move);
+		s += child->move.to_s();
 		s += "," + to_str((child->exp.num()  ? child->exp.avg() : 0.0), 4) + "," + to_str(child->exp.num());
 		s += "," + to_str((child->rave.num() ? child->rave.avg() : 0.0), 4) + "," + to_str(child->rave.num());
 		s += "," + to_str(child->know);
@@ -229,7 +229,7 @@ GTPResponse GTP::gtp_pv(vecstr args){
 	string pvstr = "";
 	vector<Move> pv = player.get_pv();
 	for(unsigned int i = 0; i < pv.size(); i++)
-		pvstr += move_str(pv[i]) + " ";
+		pvstr += pv[i].to_s() + " ";
 	return GTPResponse(true, pvstr);
 }
 
@@ -466,7 +466,7 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 		stats += "history: ";
 		vector<Move> hist = game.get_hist();
 		for(unsigned int i = 0; i < hist.size(); i++)
-			stats += move_str(hist[i]) + " ";
+			stats += hist[i].to_s() + " ";
 		stats += "\n";
 		stats += game.getboard().to_s(colorboard) + "\n";
 	}
@@ -474,7 +474,7 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 	if(verbose)
 		logerr(stats);
 
-	return GTPResponse(true, move_str(best) + extended);
+	return GTPResponse(true, best.to_s() + extended);
 }
 
 GTPResponse GTP::gtp_player_params(vecstr args){

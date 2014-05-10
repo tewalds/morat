@@ -78,18 +78,6 @@ GTPResponse GTP::gtp_undo(vecstr args){
 	return GTPResponse(true);
 }
 
-Move GTP::parse_move(const string & str){
-	return Move(str);
-}
-
-string GTP::move_str(int x, int y){
-	return move_str(Move(x, y));
-}
-
-string GTP::move_str(Move m){
-	return m.to_s();
-}
-
 GTPResponse GTP::gtp_patterns(vecstr args){
 	bool symmetric = true;
 	bool invert = true;
@@ -112,7 +100,7 @@ GTPResponse GTP::gtp_all_legal(vecstr args){
 	string ret;
 	Board board = game.getboard();
 	for(Board::MoveIterator move = board.moveit(); !move.done(); ++move)
-		ret += move_str(*move) + " ";
+		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
@@ -120,7 +108,7 @@ GTPResponse GTP::gtp_history(vecstr args){
 	string ret;
 	vector<Move> hist = game.get_hist();
 	for(unsigned int i = 0; i < hist.size(); i++)
-		ret += move_str(hist[i]) + " ";
+		ret += hist[i].to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
@@ -131,7 +119,7 @@ GTPResponse GTP::play(const string & pos, int toplay){
 	if(game.getboard().won() >= 0)
 		return GTPResponse(false, "The game is already over.");
 
-	Move m = parse_move(pos);
+	Move m(pos);
 
 	if(!game.valid(m))
 		return GTPResponse(false, "Invalid move");
@@ -139,7 +127,7 @@ GTPResponse GTP::play(const string & pos, int toplay){
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + move_str(m) + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
 
 	return GTPResponse(true);
 }
