@@ -5,7 +5,7 @@
 #include "../lib/string.h"
 
 #include "board.h"
-#include "game.h"
+#include "history.h"
 #include "move.h"
 #include "player.h"
 #include "solver.h"
@@ -16,7 +16,7 @@
 
 
 class GTP : public GTPCommon {
-	Game game;
+	History hist;
 
 public:
 	int verbose;
@@ -33,7 +33,7 @@ public:
 	SolverPNS2  solverpns2;
 	SolverPNSTT solverpnstt;
 
-	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o), game(8) {
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o), hist(Board(Board::default_size)) {
 		verbose = 1;
 		genmoveextended = false;
 		colorboard = true;
@@ -101,15 +101,15 @@ public:
 	}
 
 	void set_board(bool clear = true){
-		player.set_board(game.getboard());
-		solverab.set_board(game.getboard());
-		solverpns.set_board(game.getboard());
-		solverpns2.set_board(game.getboard());
-		solverpnstt.set_board(game.getboard(), clear);
+		player.set_board(*hist);
+		solverab.set_board(*hist);
+		solverpns.set_board(*hist);
+		solverpns2.set_board(*hist);
+		solverpnstt.set_board(*hist, clear);
 	}
 
 	void move(const Move & m){
-		game.move(m);
+		hist.move(m);
 		player.move(m);
 		solverab.move(m);
 		solverpns.move(m);

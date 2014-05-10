@@ -23,8 +23,6 @@ string GTP::solve_str(const Solver & solve){
 }
 
 
-
-
 GTPResponse GTP::gtp_solve_ab(vecstr args){
 	double time = 60;
 
@@ -68,9 +66,9 @@ GTPResponse GTP::gtp_solve_ab_params(vecstr args){
 GTPResponse GTP::gtp_solve_ab_stats(vecstr args){
 	string s = "";
 
-	Board board = game.getboard();
-	for(unsigned int i = 0; i < args.size(); i++)
-		board.move(Move(args[i]));
+	Board board = *hist;
+	for(auto arg : args)
+		board.move(Move(arg));
 
 	int value;
 	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
@@ -326,9 +324,9 @@ GTPResponse GTP::gtp_solve_pnstt_params(vecstr args){
 GTPResponse GTP::gtp_solve_pnstt_stats(vecstr args){
 	string s = "";
 
-	Board board = game.getboard();
-	for(unsigned int i = 0; i < args.size(); i++)
-		board.move(Move(args[i]));
+	Board board = *hist;
+	for(auto arg : args)
+		board.move(Move(arg));
 
 	SolverPNSTT::PNSNode * child = NULL;
 	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){

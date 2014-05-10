@@ -4,9 +4,10 @@
 
 
 GTPResponse GTP::gtp_print(vecstr args){
-	Board board = game.getboard();
-	for(unsigned int i = 0; i < args.size() && board.move(args[i]); i++)
-		;
+	Board board = *hist;
+	for(auto arg : args)
+		if (!board.move(arg))
+			break;
 	return GTPResponse(true, "\n" + board.to_s(colorboard));
 }
 
@@ -26,40 +27,36 @@ GTPResponse GTP::gtp_swap(vecstr args){
 
 GTPResponse GTP::gtp_boardsize(vecstr args){
 	if(args.size() != 1)
-		return GTPResponse(false, "Current board size: " + to_str(game.getsize()));
+		return GTPResponse(false, "Current board size: " + to_str(hist->get_size()));
 
 	int size = from_str<int>(args[0]);
-	if(size < 3 || size > 10)
+	if(size < Board::min_size || size > Board::max_size)
 		return GTPResponse(false, "Size " + to_str(size) + " is out of range.");
 
-	game = Game(size);
+	hist = History(size);
 	set_board();
-
 	time_control.new_game();
 
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_clearboard(vecstr args){
-	game.clear();
+	hist.clear();
 	set_board();
-
 	time_control.new_game();
 
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_undo(vecstr args){
-	int num = 1;
-	if(args.size() >= 1)
-		num = from_str<int>(args[0]);
+	int num = (args.size() >= 1 ? from_str<int>(args[0]) : 1);
 
 	while(num--){
-		game.undo();
+		hist.undo();
 	}
 	set_board(false);
 	if(verbose >= 2)
-		logerr(game.getboard().to_s(colorboard) + "\n");
+		logerr(hist->to_s(colorboard) + "\n");
 	return GTPResponse(true);
 }
 
@@ -67,7 +64,7 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 	bool symmetric = true;
 	bool invert = true;
 	string ret;
-	Board board = game.getboard();
+	const Board & board = *hist;
 	for(Board::MoveIterator move = board.moveit(); !move.done(); ++move){
 		ret += move->to_s() + " ";
 		unsigned int p = board.pattern(*move);
@@ -83,35 +80,34 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 
 GTPResponse GTP::gtp_all_legal(vecstr args){
 	string ret;
-	for(Board::MoveIterator move = game.getboard().moveit(); !move.done(); ++move)
+	for(Board::MoveIterator move = hist->moveit(); !move.done(); ++move)
 		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::gtp_history(vecstr args){
 	string ret;
-	vector<Move> hist = game.get_hist();
-	for(unsigned int i = 0; i < hist.size(); i++)
-		ret += hist[i].to_s() + " ";
+	for(auto m : hist)
+		ret += m.to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::play(const string & pos, int toplay){
-	if(toplay != game.toplay())
+	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 
-	if(game.getboard().won() >= 0)
+	if(hist->won() >= 0)
 		return GTPResponse(false, "The game is already over.");
 
 	Move m(pos);
 
-	if(!game.valid(m))
+	if(!hist->valid_move(m))
 		return GTPResponse(false, "Invalid move");
 
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + m.to_s() + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + hist->won_str() + "\n" + hist->to_s(colorboard));
 
 	return GTPResponse(true);
 }
@@ -120,7 +116,7 @@ GTPResponse GTP::gtp_playgame(vecstr args){
 	GTPResponse ret(true);
 
 	for(unsigned int i = 0; ret.success && i < args.size(); i++)
-		ret = play(args[i], game.toplay());
+		ret = play(args[i], hist->toplay());
 
 	return ret;
 }
@@ -155,7 +151,7 @@ GTPResponse GTP::gtp_playblack(vecstr args){
 }
 
 GTPResponse GTP::gtp_winner(vecstr args){
-	return GTPResponse(true, game.getboard().won_str());
+	return GTPResponse(true, hist->won_str());
 }
 
 GTPResponse GTP::gtp_name(vecstr args){
@@ -192,16 +188,16 @@ GTPResponse GTP::gtp_extended(vecstr args){
 
 GTPResponse GTP::gtp_debug(vecstr args){
 	string str = "\n";
-	str += "Board size:  " + to_str(game.getboard().get_size()) + "\n";
-	str += "Board cells: " + to_str(game.getboard().numcells()) + "\n";
-	str += "Board vec:   " + to_str(game.getboard().vecsize()) + "\n";
-	str += "Board mem:   " + to_str(game.getboard().memsize()) + "\n";
+	str += "Board size:  " + to_str(hist->get_size()) + "\n";
+	str += "Board cells: " + to_str(hist->numcells()) + "\n";
+	str += "Board vec:   " + to_str(hist->vecsize()) + "\n";
+	str += "Board mem:   " + to_str(hist->memsize()) + "\n";
 
 	return GTPResponse(true, str);
 }
 
 GTPResponse GTP::gtp_dists(vecstr args){
-	Board board = game.getboard();
+	Board board = *hist;
 	LBDists dists(&board);
 
 	int side = 0;
@@ -256,5 +252,5 @@ GTPResponse GTP::gtp_dists(vecstr args){
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
-	return GTPResponse(true, game.getboard().hashstr());
+	return GTPResponse(true, hist->hashstr());
 }

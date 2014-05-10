@@ -5,88 +5,85 @@
 GTPResponse GTP::gtp_mcts(vecstr args){
 	delete agent;
 	agent = new AgentMCTS();
-	agent->set_board(game.getboard());
+	agent->set_board(*hist);
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_pns(vecstr args){
 	delete agent;
 	agent = new AgentPNS();
-	agent->set_board(game.getboard());
+	agent->set_board(*hist);
 	return GTPResponse(true);
 }
 GTPResponse GTP::gtp_ab(vecstr args){
 	delete agent;
 	agent = new AgentAB();
-	agent->set_board(game.getboard());
+	agent->set_board(*hist);
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_state(vecstr args){
-	return GTPResponse(true, game.getboard().state());
+	return GTPResponse(true, hist->state());
 }
 
 GTPResponse GTP::gtp_print(vecstr args){
-	Board board = game.getboard();
-	for(unsigned int i = 0; i < args.size() && board.move(args[i]); i++)
-		;
+	Board board = *hist;
+	for(auto arg : args)
+		if (!board.move(arg))
+			break;
 	return GTPResponse(true, "\n" + board.to_s(colorboard));
 }
 
 GTPResponse GTP::gtp_clearboard(vecstr args){
-	game.clear();
+	hist.clear();
 	set_board();
-
 	time_control.new_game();
 
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_undo(vecstr args){
-	int num = 1;
-	if(args.size() >= 1)
-		num = from_str<int>(args[0]);
+	int num = (args.size() >= 1 ? from_str<int>(args[0]) : 1);
 
 	while(num--){
-		game.undo();
+		hist.undo();
 	}
 	set_board(false);
 	if(verbose >= 2)
-		logerr(game.getboard().to_s(colorboard) + "\n");
+		logerr(hist->to_s(colorboard) + "\n");
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_all_legal(vecstr args){
 	string ret;
-	for(MoveIterator move(game.getboard()); !move.done(); ++move)
+	for(MoveIterator move(*hist); !move.done(); ++move)
 		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::gtp_history(vecstr args){
 	string ret;
-	vector<Move> hist = game.get_hist();
-	for(unsigned int i = 0; i < hist.size(); i++)
-		ret += hist[i].to_s() + " ";
+	for(auto m : hist)
+		ret += m.to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::play(const string & pos, int toplay){
-	if(toplay != game.toplay())
+	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 
-	if(game.getboard().won() >= 0)
+	if(hist->won() >= 0)
 		return GTPResponse(false, "The game is already over.");
 
 	Move m(pos);
 
-	if(!game.valid(m))
+	if(!hist->valid_move(m))
 		return GTPResponse(false, "Invalid move");
 
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + m.to_s() + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + hist->won_str() + "\n" + hist->to_s(colorboard));
 
 	return GTPResponse(true);
 }
@@ -95,7 +92,7 @@ GTPResponse GTP::gtp_playgame(vecstr args){
 	GTPResponse ret(true);
 
 	for(unsigned int i = 0; ret.success && i < args.size(); i++)
-		ret = play(args[i], game.toplay());
+		ret = play(args[i], hist->toplay());
 
 	return ret;
 }
@@ -130,7 +127,7 @@ GTPResponse GTP::gtp_playblack(vecstr args){
 }
 
 GTPResponse GTP::gtp_winner(vecstr args){
-	return GTPResponse(true, game.getboard().won_str());
+	return GTPResponse(true, hist->won_str());
 }
 
 GTPResponse GTP::gtp_name(vecstr args){
@@ -158,5 +155,5 @@ GTPResponse GTP::gtp_colorboard(vecstr args){
 }
 
 GTPResponse GTP::gtp_hash(vecstr args){
-	return GTPResponse(true, to_str(game.getboard().hash()));
+	return GTPResponse(true, to_str(hist->hash()));
 }

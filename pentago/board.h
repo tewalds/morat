@@ -47,10 +47,15 @@ class Board{
 	mutable uint64_t cached_hash;
 	static const int16_t default_score = 0xDEAD;
 public:
+
+	static const int default_size = 6;
+	static const int min_size = 6;
+	static const int max_size = 6;
+
 	static const short unique_depth = 10;  //look for redundant moves up to this depth
 	static const short fullhash_depth = 7; //also consider rotations/mirrors of the board
 
-	Board(){
+	Board(int size = 6){
 		sides[0] = 0;
 		sides[1] = 0;
 		sides[2] = 0;
@@ -71,6 +76,9 @@ public:
 	int moves_remain() const { return (won() >= 0 ? 0 : 36 - nummoves); }
 	int moves_avail() const { return moves_remain()*8; } //upper bound
 
+	int get_size() const {
+		return 6;
+	}
 
 	bool valid_move_fast(const Move & m) const { return !(sides[0] & xybits[m.l]); }
 	bool valid_move(const Move & m) const { return valid_move_fast(m) && m.r >= 0 && m.r < 8; }

@@ -46,7 +46,7 @@ GTPResponse GTP::gtp_move_stats(vecstr args){
 GTPResponse GTP::gtp_player_solve(vecstr args){
 	double use_time = (args.size() >= 1 ?
 			from_str<double>(args[0]) :
-			time_control.get_time(game.len(), game.movesremain(), player.gamelen()));
+			time_control.get_time(hist.len(), hist->movesremain(), player.gamelen()));
 
 	if(verbose)
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
@@ -171,13 +171,15 @@ GTPResponse GTP::gtp_player_hgf(vecstr args){
 	if(args.size() > 1)
 		limit = from_str<unsigned int>(args[1]);
 
-	Board board = game.getboard();
+	Board board = *hist;
 
-	vector<Move> hist = game.get_hist();
 
 	fprintf(fd, "(;FF[4]SZ[%i]\n", board.get_size());
-	for(unsigned int i = 0; i < hist.size(); i++)
-		fprintf(fd, ";%c[%s]", (i % 2 ? 'B' : 'W'), hist[i].to_s().c_str());
+	int p = 1;
+	for(auto m : hist){
+		fprintf(fd, ";%c[%s]", (p == 1 ? 'W' : 'B'), m.to_s().c_str());
+		p = 3-p;
+	}
 
 
 	Player::Node * child = player.root.children.begin(),
@@ -207,13 +209,11 @@ GTPResponse GTP::gtp_player_load_hgf(vecstr args){
 	if(!fd)
 		return GTPResponse(false, "Opening file " + args[0] + " for reading failed");
 
-	vector<Move> hist = game.get_hist();
-
 	int size;
 	assert(fscanf(fd, "(;FF[4]SZ[%i]", & size) > 0);
-	if(size != game.getsize()){
-		if(hist.size() == 0){
-			game = Game(size);
+	if(size != hist->get_size()){
+		if(hist.len() == 0){
+			hist = History(Board(size));
 			set_board();
 		}else{
 			fclose(fd);
@@ -231,7 +231,7 @@ GTPResponse GTP::gtp_player_load_hgf(vecstr args){
 	while(fscanf(fd, ";%c[%5[^]]]", &side, movestr) > 0){
 		Move move(movestr);
 
-		if(board.num_moves() >= (int)hist.size()){
+		if(board.num_moves() >= (int)hist.len()){
 			if(node->children.empty())
 				player.create_children_simple(board, node);
 
@@ -277,7 +277,7 @@ GTPResponse GTP::gtp_player_load_hgf(vecstr args){
 		Player::Node * child = node->children.begin(),
 			         * end = node->children.end();
 
-		int toplay = game.getboard().toplay();
+		int toplay = hist->toplay();
 		if(prefix.size() % 2 == 1)
 			toplay = 3 - toplay;
 
@@ -302,7 +302,7 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 
 	double use_time = (args.size() >= 2 ?
 			from_str<double>(args[1]) :
-			time_control.get_time(game.len(), game.movesremain(), player.gamelen()));
+			time_control.get_time(hist.len(), hist->movesremain(), player.gamelen()));
 
 	if(args.size() >= 2)
 		use_time = from_str<double>(args[1]);
@@ -378,11 +378,10 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 
 	if(verbose >= 2){
 		stats += "history: ";
-		vector<Move> hist = game.get_hist();
-		for(unsigned int i = 0; i < hist.size(); i++)
-			stats += hist[i].to_s() + " ";
+		for(auto m : hist)
+			stats += m.to_s() + " ";
 		stats += "\n";
-		stats += game.getboard().to_s(colorboard) + "\n";
+		stats += hist->to_s(colorboard) + "\n";
 	}
 
 	if(verbose)
@@ -528,7 +527,7 @@ GTPResponse GTP::gtp_player_gammas(vecstr args){
 	if(!ifs.good())
 		return GTPResponse(false, "Failed to open file for reading");
 
-	Board board = game.getboard();
+	Board board = *hist;
 
 	for(int i = 0; i < 4096; i++){
 		int a;

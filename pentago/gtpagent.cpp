@@ -13,12 +13,12 @@ GTPResponse GTP::gtp_move_stats(vecstr args){
 }
 
 GTPResponse GTP::gtp_solve(vecstr args){
-	if(game.getboard().won() >= 0)
+	if(hist->won() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 1 ?
 			from_str<double>(args[0]) :
-			time_control.get_time(game.len(), game.moves_remain(), agent->gamelen()));
+			time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen()));
 
 	if(verbose)
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
@@ -33,19 +33,19 @@ GTPResponse GTP::gtp_solve(vecstr args){
 	Move best = agent->return_move(verbose);
 
 	if(verbose >= 2)
-		logerr(game.getboard().to_s(colorboard) + "\n");
+		logerr(hist->to_s(colorboard) + "\n");
 
 	return GTPResponse(true, best.to_s());
 }
 
 
 GTPResponse GTP::gtp_genmove(vecstr args){
-	if(game.getboard().won() >= 0)
+	if(hist->won() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 2 ?
 			from_str<double>(args[1]) :
-			time_control.get_time(game.len(), game.moves_remain(), agent->gamelen()));
+			time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen()));
 
 
 	if(verbose)
@@ -61,7 +61,7 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 	move(best);
 
 	if(verbose >= 2)
-		logerr(game.getboard().to_s(colorboard) + "\n");
+		logerr(hist->to_s(colorboard) + "\n");
 
 	return GTPResponse(true, best.to_s());
 }

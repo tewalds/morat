@@ -49,6 +49,11 @@ static MoveValid * staticneighbourlist[11] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL
 
 class Board{
 public:
+
+	static const int default_size = 8;
+	static const int min_size = 3;
+	static const int max_size = 10;
+
 	struct Cell {
 /*
 		unsigned piece  : 2; //who controls this cell, 0 for none, 1,2 for players

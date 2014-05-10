@@ -9,11 +9,11 @@
 #include "agentmcts.h"
 #include "agentpns.h"
 #include "board.h"
-#include "game.h"
+#include "history.h"
 #include "move.h"
 
 class GTP : public GTPCommon {
-	Game game;
+	History hist;
 
 public:
 	int verbose;
@@ -23,7 +23,7 @@ public:
 
 	Agent * agent;
 
-	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o) {
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPCommon(i, o), hist(Board(Board::default_size)) {
 		verbose = 1;
 		colorboard = true;
 
@@ -69,11 +69,11 @@ public:
 	}
 
 	void set_board(bool clear = true){
-		agent->set_board(game.getboard());
+		agent->set_board(*hist);
 	}
 
 	void move(const Move & m){
-		game.move(m);
+		hist.move(m);
 		agent->move(m);
 	}
 

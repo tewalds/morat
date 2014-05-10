@@ -54,6 +54,11 @@ static MoveValid * staticneighbourlist[17] = {
 
 class Board{
 public:
+
+	static const int default_size = 10;
+	static const int min_size = 5;
+	static const int max_size = 16;
+
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
 
