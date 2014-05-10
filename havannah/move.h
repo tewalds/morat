@@ -19,7 +19,7 @@ struct Move {
 	Move(MoveSpecial a = M_UNKNOWN) : y(a), x(120) { } //big x so it will always wrap to y=0 with swap
 	Move(int X, int Y) : y(Y), x(X) { }
 
-	Move(const std::string & str, int size = 0){
+	Move(const std::string & str){
 		if(     str == "swap"   ){ y = M_SWAP;    x = 120; }
 		else if(str == "resign" ){ y = M_RESIGN;  x = 120; }
 		else if(str == "none"   ){ y = M_NONE;    x = 120; }
@@ -27,22 +27,15 @@ struct Move {
 		else{
 			y = tolower(str[0]) - 'a';
 			x = atoi(str.c_str() + 1) - 1;
-
-			if(size && y >= size)
-				x += y + 1 - size;
 		}
 	}
 
-	std::string to_s(int size = 0) const {
+	std::string to_s() const {
 		if(y == M_UNKNOWN) return "unknown";
 		if(y == M_NONE)    return "none";
 		if(y == M_SWAP)    return "swap";
 		if(y == M_RESIGN)  return "resign";
-
-		if(size && y >= size)
-			return std::string() + char(y + 'a') + to_str(x - y + size);
-		else
-			return std::string() + char(y + 'a') + to_str(x + 1);
+		return std::string() + char(y + 'a') + to_str(x + 1);
 	}
 
 	bool operator< (const Move & b) const { return (y == b.y ? x <  b.x : y <  b.y); }

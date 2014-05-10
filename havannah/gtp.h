@@ -48,7 +48,6 @@ class GTP : public GTPBase {
 public:
 	int verbose;
 	bool genmoveextended;
-	bool hguicoords;
 	bool colorboard;
 
 	TimeControl time;
@@ -69,7 +68,6 @@ public:
 
 		verbose = 1;
 		genmoveextended = false;
-		hguicoords = true;
 		colorboard = true;
 
 		time_remain = time.game;
@@ -85,8 +83,6 @@ public:
 		newcallback("extended",        bind(&GTP::gtp_extended,      this, _1), "Output extra stats from genmove in the response");
 		newcallback("debug",           bind(&GTP::gtp_debug,         this, _1), "Enable debug mode");
 		newcallback("echo",            bind(&GTP::gtp_echo,          this, _1), "Return the arguments as the response");
-		newcallback("hguicoords",      bind(&GTP::gtp_hguicoords,    this, _1), "Switch coordinate systems to match HavannahGui");
-		newcallback("gridcoords",      bind(&GTP::gtp_gridcoords,    this, _1), "Switch coordinate systems to match Little Golem");
 		newcallback("colorboard",      bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
 		newcallback("showboard",       bind(&GTP::gtp_print,         this, _1), "Show the board");
 		newcallback("print",           bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
@@ -164,9 +160,6 @@ public:
 	GTPResponse gtp_boardsize(vecstr args);
 	GTPResponse gtp_clearboard(vecstr args);
 	GTPResponse gtp_undo(vecstr args);
-	Move parse_move(const string & str);
-	string move_str(int x, int y, int hguic = -1);
-	string move_str(Move m, int hguic = -1);
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
 	GTPResponse gtp_patterns(vecstr args);
@@ -181,8 +174,6 @@ public:
 	GTPResponse gtp_verbose(vecstr args);
 	GTPResponse gtp_extended(vecstr args);
 	GTPResponse gtp_colorboard(vecstr args);
-	GTPResponse gtp_hguicoords(vecstr args);
-	GTPResponse gtp_gridcoords(vecstr args);
 	GTPResponse gtp_debug(vecstr args);
 	GTPResponse gtp_dists(vecstr args);
 

@@ -16,7 +16,7 @@ string GTP::solve_str(int outcome) const {
 string GTP::solve_str(const Solver & solve){
 	string ret = "";
 	ret += solve_str(solve.outcome) + " ";
-	ret += move_str(solve.bestmove) + " ";
+	ret += solve.bestmove.to_s() + " ";
 	ret += to_str(solve.maxdepth) + " ";
 	ret += to_str(solve.nodes_seen);
 	return ret;

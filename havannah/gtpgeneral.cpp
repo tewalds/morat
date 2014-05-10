@@ -10,7 +10,7 @@ GTPResponse GTP::gtp_print(vecstr args){
 	Board board = game.getboard();
 	for(unsigned int i = 0; i < args.size() && board.move(args[i]); i++)
 		;
-	return GTPResponse(true, "\n" + board.to_s(colorboard, hguicoords));
+	return GTPResponse(true, "\n" + board.to_s(colorboard));
 }
 
 string GTP::won_str(int outcome) const {
@@ -78,21 +78,6 @@ GTPResponse GTP::gtp_undo(vecstr args){
 	return GTPResponse(true);
 }
 
-Move GTP::parse_move(const string & str){
-	return Move(str, !hguicoords * game.getsize());
-}
-
-string GTP::move_str(int x, int y, int hguic){
-	return move_str(Move(x, y), hguic);
-}
-
-string GTP::move_str(Move m, int hguic){
-	if(hguic == -1)
-		hguic = hguicoords;
-
-	return m.to_s(!hguic * game.getsize());
-}
-
 GTPResponse GTP::gtp_patterns(vecstr args){
 	bool symmetric = true;
 	bool invert = true;
@@ -114,7 +99,7 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 GTPResponse GTP::gtp_all_legal(vecstr args){
 	string ret;
 	for(Board::MoveIterator move = game.getboard().moveit(); !move.done(); ++move)
-		ret += move_str(*move) + " ";
+		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
@@ -122,7 +107,7 @@ GTPResponse GTP::gtp_history(vecstr args){
 	string ret;
 	vector<Move> hist = game.get_hist();
 	for(unsigned int i = 0; i < hist.size(); i++)
-		ret += move_str(hist[i]) + " ";
+		ret += hist[i].to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
@@ -133,7 +118,7 @@ GTPResponse GTP::play(const string & pos, int toplay){
 	if(game.getboard().won() >= 0)
 		return GTPResponse(false, "The game is already over.");
 
-	Move m = parse_move(pos);
+	Move m(pos);
 
 	if(!game.valid(m))
 		return GTPResponse(false, "Invalid move");
@@ -141,7 +126,7 @@ GTPResponse GTP::play(const string & pos, int toplay){
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + move_str(m) + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + game.getboard().won_str() + "\n" + game.getboard().to_s(colorboard));
 
 	return GTPResponse(true);
 }
@@ -218,15 +203,6 @@ GTPResponse GTP::gtp_extended(vecstr args){
 	else
 		genmoveextended = !genmoveextended;
 	return GTPResponse(true, "extended " + to_str(genmoveextended));
-}
-
-GTPResponse GTP::gtp_hguicoords(vecstr args){
-	hguicoords = true;
-	return GTPResponse(true);
-}
-GTPResponse GTP::gtp_gridcoords(vecstr args){
-	hguicoords = false;
-	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_debug(vecstr args){

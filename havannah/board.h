@@ -311,7 +311,7 @@ public:
 	int lineend(int y)   const { return (y < size ? size + y : size_d); }
 	int linelen(int y)   const { return size_d - abs(sizem1 - y); }
 
-	string to_s(bool color, bool hguicoords = false) const {
+	string to_s(bool color) const {
 		string white = "O",
 		       black = "@",
 		       empty = ".",
@@ -347,23 +347,15 @@ public:
 			s += (last == Move(end-1, y) ? coord + "]" : " ");
 			if(y < sizem1)
 				s += coord + to_str(size + y + 1);
-			else if(!hguicoords && y > sizem1)
-				s += coord + to_str(3*size - y - 1);
 			s += '\n';
-		}
-		if(!hguicoords){
-			s += string(size + 3, ' ');
-			for(int i = 0; i < size; i++)
-				s += " " + coord + to_str(i+1);
-			s += "\n";
 		}
 
 		s += reset;
 		return s;
 	}
 
-	void print(bool color = true, bool hguicoords = true) const {
-		printf("%s", to_s(color, hguicoords).c_str());
+	void print(bool color = true) const {
+		printf("%s", to_s(color).c_str());
 	}
 
 	string boardstr() const {
