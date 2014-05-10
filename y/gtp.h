@@ -63,7 +63,7 @@ public:
 	SolverPNS2  solverpns2;
 	SolverPNSTT solverpnstt;
 
-	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o) {
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o), game(10) {
 		verbose = 1;
 		genmoveextended = false;
 		colorboard = true;

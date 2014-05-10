@@ -47,7 +47,7 @@ GTPResponse GTP::gtp_boardsize(vecstr args){
 	if(size < 3 || size > 10)
 		return GTPResponse(false, "Size " + to_str(size) + " is out of range.");
 
-	game = HavannahGame(size);
+	game = Game(size);
 	set_board();
 
 	time_remain = time.game;

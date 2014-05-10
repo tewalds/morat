@@ -312,7 +312,7 @@ GTPResponse GTP::gtp_player_load_hgf(vecstr args){
 	assert(fscanf(fd, "(;FF[4]SZ[%i]", & size) > 0);
 	if(size != game.getsize()){
 		if(hist.size() == 0){
-			game = HavannahGame(size);
+			game = Game(size);
 			set_board();
 		}else{
 			fclose(fd);

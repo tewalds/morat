@@ -43,7 +43,7 @@ struct TimeControl {
 };
 
 class GTP : public GTPBase {
-	HavannahGame game;
+	Game game;
 
 public:
 	int verbose;
@@ -63,9 +63,7 @@ public:
 	SolverPNS2  solverpns2;
 	SolverPNSTT solverpnstt;
 
-	GTP(FILE * i = stdin, FILE * o = stdout){
-		GTPBase(i, o);
-
+	GTP(FILE * i = stdin, FILE * o = stdout) : GTPBase(i, o), game(8) {
 		verbose = 1;
 		genmoveextended = false;
 		colorboard = true;

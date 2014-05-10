@@ -6,13 +6,13 @@
 #include "board.h"
 #include "move.h"
 
-class HavannahGame {
+class Game {
 	vector<Move> hist;
 	int size;
 
 public:
 
-	HavannahGame(int s = 8){
+	Game(int s){
 		size = s;
 	}
 
@@ -36,7 +36,7 @@ public:
 		if(offset <= 0)
 			offset += hist.size();
 		for(int i = 0; i < offset; i++)
-			board.move(hist[i], true, true);
+			board.move(hist[i]);
 		return board;
 	}
 

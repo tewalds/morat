@@ -12,7 +12,7 @@ class Game {
 
 public:
 
-	Game(int s = 10){
+	Game(int s){
 		size = s;
 	}
 
