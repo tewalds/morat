@@ -81,7 +81,6 @@ public:
 	GTPResponse gtp_print(vecstr args);
 	GTPResponse gtp_hash(vecstr args);
 	string won_str(int outcome) const;
-	GTPResponse gtp_swap(vecstr args);
 	GTPResponse gtp_boardsize(vecstr args);
 	GTPResponse gtp_clearboard(vecstr args);
 	GTPResponse gtp_undo(vecstr args);

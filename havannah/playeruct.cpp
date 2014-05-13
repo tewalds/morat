@@ -414,7 +414,7 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 		wtree[1].resize(board.vecsize());
 
 		int set = 0;
-		for(Board::MoveIterator m = board.moveit(false, false); !m.done(); ++m){
+		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m){
 			int i = board.xy(*m);
 			moves[i] = *m;
 			unsigned int p = board.pattern(i);
@@ -427,7 +427,7 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 		wtree[1].rebuild();
 	}else{
 		int i = 0;
-		for(Board::MoveIterator m = board.moveit(false, false); !m.done(); ++m)
+		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m)
 			moves[i++] = *m;
 
 		i = num;
@@ -529,7 +529,7 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 		int m = -1;
 		while(rave != raveend){
 			if(m >= 0){
-				if(rave->player == won && *rave != M_SWAP)
+				if(rave->player == won)
 					goodreply[rave->player - 1][m] = *rave;
 				else if(player->lastgoodreply == 2)
 					goodreply[rave->player - 1][m] = M_UNKNOWN;
@@ -635,7 +635,7 @@ skipinstwin3:
 	}
 
 	//reuse the last good reply
-	if(player->lastgoodreply && prev != M_SWAP){
+	if(player->lastgoodreply){
 		Move move = goodreply[board.toplay()-1][board.xy(prev)];
 		if(move != M_UNKNOWN && board.valid_move_fast(move))
 			return move;

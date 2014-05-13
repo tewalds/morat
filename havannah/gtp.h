@@ -24,7 +24,6 @@ public:
 	bool colorboard;
 
 	int mem_allowed;
-	bool allow_swap;
 
 	Player player;
 
@@ -39,7 +38,6 @@ public:
 		colorboard = true;
 
 		mem_allowed = 1000;
-		allow_swap = false;
 
 		set_board();
 
@@ -57,7 +55,6 @@ public:
 		newcallback("clear",           bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
 		newcallback("boardsize",       bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");
 		newcallback("size",            bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
-		newcallback("swap",            bind(&GTP::gtp_swap,          this, _1), "Enable/disable swap: swap <0|1>");
 		newcallback("play",            bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
 		newcallback("white",           bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
 		newcallback("black",           bind(&GTP::gtp_playblack,     this, _1), "Place a black stone: black <location>");
@@ -119,7 +116,6 @@ public:
 
 	GTPResponse gtp_print(vecstr args);
 	GTPResponse gtp_zobrist(vecstr args);
-	GTPResponse gtp_swap(vecstr args);
 	GTPResponse gtp_boardsize(vecstr args);
 	GTPResponse gtp_clearboard(vecstr args);
 	GTPResponse gtp_undo(vecstr args);

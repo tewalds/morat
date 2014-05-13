@@ -11,20 +11,6 @@ GTPResponse GTP::gtp_print(vecstr args){
 	return GTPResponse(true, "\n" + board.to_s(colorboard));
 }
 
-GTPResponse GTP::gtp_swap(vecstr args){
-	if(args.size() == 0)
-		return GTPResponse(false, "Wrong number of arguments");
-
-	if(args.size() >= 1)
-		allow_swap = from_str<bool>(args[0]);
-
-	string ret = "";
-	if(allow_swap) ret += "Swap on";
-	else           ret += "Swap off";
-
-	return GTPResponse(true, ret);
-}
-
 GTPResponse GTP::gtp_boardsize(vecstr args){
 	if(args.size() != 1)
 		return GTPResponse(false, "Current board size: " + to_str(hist->get_size()));

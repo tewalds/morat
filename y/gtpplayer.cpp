@@ -51,8 +51,6 @@ GTPResponse GTP::gtp_player_solve(vecstr args){
 	if(verbose)
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
 
-	player.rootboard.setswap(allow_swap);
-
 	Player::Node * ret = player.genmove(use_time, time_control.max_sims, time_control.flexible);
 	Move best = M_RESIGN;
 	if(ret)
@@ -311,8 +309,6 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
 
 	uword nodesbefore = player.nodes;
-
-	player.rootboard.setswap(allow_swap);
 
 	Player::Node * ret = player.genmove(use_time, time_control.max_sims, time_control.flexible);
 	Move best = player.root.bestmove;

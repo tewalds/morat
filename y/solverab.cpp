@@ -11,7 +11,6 @@ void SolverAB::solve(double time){
 		outcome = rootboard.won();
 		return;
 	}
-	rootboard.setswap(false);
 
 	if(TT == NULL && maxnodes)
 		TT = new ABTTNode[maxnodes];

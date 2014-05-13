@@ -22,7 +22,7 @@ public:
 	// only need to save the valid moves once since all the rollouts start from the same position
 	void prepare(const Board & board) {
 		num = 0;
-		for(Board::MoveIterator m = board.moveit(false, false); !m.done(); ++m)
+		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m)
 			moves[num++] = *m;
 	}
 

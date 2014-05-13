@@ -88,14 +88,12 @@ mutable uint8_t ringdepth; //when doing a ring search, what depth was this posit
 		bool unique;
 		HashSet hashes;
 	public:
-		MoveIterator(const Board & b, bool Unique, bool allowswap) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
+		MoveIterator(const Board & b, bool Unique) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
 			if(board.outcome >= 0){
-				move = MoveValid(0, board.size_d, -1); //already done
-			}else if(!allowswap || !board.valid_move(move)){ //check if swap is valid
-				if(unique){
+				move = MoveValid(0, board.get_size_d(), -1); //already done
+			} else {
+				if(unique)
 					hashes.init(board.movesremain());
-					hashes.add(board.test_hash(move, board.toplay()));
-				}
 				++(*this); //find the first valid move
 			}
 		}
@@ -125,20 +123,12 @@ mutable uint8_t ringdepth; //when doing a ring search, what depth was this posit
 
 				if(unique){
 					uint64_t h = board.test_hash(move, board.toplay());
-					if(hashes.exists(h))
+					if(!hashes.add(h))
 						continue;
-					else
-						hashes.add(board.test_hash(move, board.toplay()));
 				}
 				break;
 			}
-
 			return *this;
-		}
-		MoveIterator operator ++ (int){ //postfix form, discouraged from being used
-			MoveIterator newit(*this);
-			++(*this);
-			return newit;
 		}
 	};
 
@@ -154,7 +144,6 @@ private:
 	char toPlay;
 	char outcome; //-3 = unknown, 0 = tie, 1,2 = player win
 	char wintype; //0 no win, 1 = edge, 2 = corner, 3 = ring
-	bool allowswap;
 
 	vector<Cell> cells;
 	Zobrist<12> hash;
@@ -175,7 +164,6 @@ public:
 		toPlay = 1;
 		outcome = -3;
 		wintype = 0;
-		allowswap = false;
 		neighbourlist = get_neighbour_list();
 		num_cells = vecsize() - size*sizem1;
 
@@ -198,7 +186,7 @@ public:
 	int numcells() const { return num_cells; }
 
 	int num_moves() const { return nummoves; }
-	int movesremain() const { return (won() >= 0 ? 0 : num_cells - nummoves + canswap()); }
+	int movesremain() const { return (won() >= 0 ? 0 : num_cells - nummoves); }
 
 	int xy(int x, int y)   const { return   y*size_d +   x; }
 	int xy(const Move & m) const { return m.y*size_d + m.x; }
@@ -236,15 +224,12 @@ public:
 	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_d && m.y < size_d && onboard_fast(m) ); }
 	bool onboard(const MoveValid & m) const { return m.onboard(); }
 
-	void setswap(bool s) { allowswap = s; }
-	bool canswap() const { return (nummoves == 1 && toPlay == 2 && allowswap); }
-
-	//assumes x, y are in bounds (meaning no swap) and the game isn't already finished
+	//assumes x, y are in bounds and the game isn't already finished
 	bool valid_move_fast(int x, int y)   const { return !get(x,y); }
 	bool valid_move_fast(const Move & m) const { return !get(m); }
 	//checks array bounds too
-	bool valid_move(int x, int y)   const { return (outcome == -3 && onboard(x, y) && !get(x,y)); } //ignores swap rule!
-	bool valid_move(const Move & m) const { return (outcome == -3 && ((onboard(m) && !get(m)) || (m == M_SWAP && canswap()))); }
+	bool valid_move(int x, int y)   const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
+	bool valid_move(const Move & m) const { return (outcome == -3 && onboard(m) && !get(m)); }
 
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
@@ -403,8 +388,8 @@ public:
 		return toPlay;
 	}
 
-	MoveIterator moveit(bool unique = false, int swap = -1) const {
-		return MoveIterator(*this, (unique ? nummoves <= unique_depth : false), (swap == -1 ? allowswap : swap));
+	MoveIterator moveit(bool unique = false) const {
+		return MoveIterator(*this, (unique ? nummoves <= unique_depth : false));
 	}
 
 	void set(const Move & m, bool perm = true){
@@ -424,18 +409,6 @@ public:
 		Cell * cell = & cells[xy(m)];
 		cell->piece = 0;
 		cell->perm = 0;
-	}
-
-	void doswap(){
-		for(int y = 0; y < size_d; y++){
-			for(int x = linestart(y); x < lineend(y); x++){
-				if(get(x,y) != 0){
-					cells[xy(x,y)].piece = 2;
-					toPlay = 1;
-					return;
-				}
-			}
-		}
 	}
 
 	int find_group(const MoveValid & m) const { return find_group(m.xy); }
@@ -823,11 +796,6 @@ public:
 
 		if(!valid_move(pos))
 			return false;
-
-		if(pos == M_SWAP){
-			doswap();
-			return true;
-		}
 
 		char turn = toplay();
 		char localshift = (turn & 2); //0 for p1, 2 for p2

@@ -146,7 +146,6 @@ public:
 
 	void set_board(const Board & board, bool clear = true){
 		rootboard = board;
-		rootboard.setswap(false);
 		reset();
 		if(clear)
 			clear_mem();
