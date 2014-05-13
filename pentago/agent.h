@@ -1,7 +1,7 @@
 
 #pragma once
 
-//Interface for the various solvers
+//Interface for the various agents: players and solvers
 
 #include "../lib/types.h"
 
@@ -21,7 +21,7 @@ public:
 	virtual void clear_mem() = 0;
 
 	virtual vector<Move> get_pv() const = 0;
-	string move_stats() const { return move_stats(vector<Move>()); }
+	        string move_stats() const { return move_stats(vector<Move>()); }
 	virtual string move_stats(const vector<Move> moves) const = 0;
 	virtual double gamelen() const = 0;
 
