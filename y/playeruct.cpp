@@ -15,8 +15,6 @@ void Player::PlayerUCT::iterate(){
 	movelist.reset(&(player->rootboard));
 	player->root.exp.addvloss();
 	Board copy = player->rootboard;
-//	printf("iterate: %llu\n", player->runs);
-//	copy.print();
 	use_rave    = (unitrand() < player->userave);
 	use_explore = (unitrand() < player->useexplore);
 	walk_tree(copy, & player->root, 0);
@@ -32,9 +30,6 @@ void Player::PlayerUCT::iterate(){
 
 void Player::PlayerUCT::walk_tree(Board & board, Node * node, int depth){
 	int toplay = board.toplay();
-
-//	printf("walk_tree: %i\n", depth);
-//	board.print();
 
 	if(!node->children.empty() && node->outcome < 0){
 	//choose a child and recurse
@@ -119,10 +114,6 @@ bool sort_node_know(const Player::Node & a, const Player::Node & b){
 }
 
 bool Player::PlayerUCT::create_children(Board & board, Node * node, int toplay){
-
-//	printf("create_children:\n");
-//	board.print();
-
 	if(!node->children.lock())
 		return false;
 
@@ -404,20 +395,15 @@ bool Player::PlayerUCT::test_bridge_probe(const Board & board, const Move & move
 
 //play a random game starting from a board state, and return the results of who won
 int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
-
-//	printf("rollout: %i\n", depth);
-//	board.print();
-
 	int won;
 
 	if(player->instantwin)
-		instant_wins.rollout_start(board);
+		instant_wins.rollout_start(board, player->instantwin);
 
 	random_policy.rollout_start(board);
 
 	while((won = board.won()) < 0){
 		int turn = board.toplay();
-//		printf("turn: %i, winner: %i\n", turn, won);
 
 		move = rollout_choose_move(board, move);
 
@@ -425,10 +411,6 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 		assert2(board.move(move), "\n" + board.to_s(true) + "\n" + move.to_s());
 		depth++;
-
-//		printf("rollout random: %i\n", depth);
-//		board.print();
-
 	}
 
 	gamelen.add(depth);
@@ -443,9 +425,8 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 Move Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev){
 	//look for instant wins
-	Move move = M_UNKNOWN;
 	if(player->instantwin){
-		move = instant_wins.choose_move(board, prev);
+		Move move = instant_wins.choose_move(board, prev);
 		if(move != M_UNKNOWN)
 			return move;
 	}

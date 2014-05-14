@@ -10,8 +10,8 @@
 #include "../lib/depthstats.h"
 #include "../lib/exppair.h"
 #include "../lib/log.h"
-#include "../lib/time.h"
 #include "../lib/thread.h"
+#include "../lib/time.h"
 #include "../lib/types.h"
 #include "../lib/xorshift.h"
 
@@ -238,11 +238,10 @@ public:
 	int   bridge;     //boost replying to a probe at a bridge
 	int   dists;      //boost based on minimum number of stones needed to finish a non-ring win
 //rollout
-	int   weightedrandom; //learn weights based on patterns and outcomes to make better moves
+	int   weightedrandom; //use weighted random for move ordering based on gammas
 	bool  rolloutpattern; //play the response to a virtual connection threat in rollouts
 	int   lastgoodreply;  //use the last-good-reply rollout heuristic
-	int   instantwin;     //look for instant wins in rollouts
-	int   instwindepth;   //how deep to look for instant wins
+	int   instantwin;     //how deep to look for instant wins in rollouts
 
 	float gammas[4096]; //pattern weights for weighted random
 

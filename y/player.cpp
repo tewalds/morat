@@ -162,7 +162,6 @@ Player::Player() {
 	rolloutpattern = true;
 	lastgoodreply  = false;
 	instantwin     = 0;
-	instwindepth   = 1000;
 
 	for(int i = 0; i < 4096; i++)
 		gammas[i] = 1;

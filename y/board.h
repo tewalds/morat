@@ -256,8 +256,8 @@ public:
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
 	const MoveValid * nb_end(int i)          const { return nb_end(nb_begin(i)); }
 	const MoveValid * nb_end(const MoveValid * m) const { return m + 6; }
-	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 18; }
-	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 12; }
+	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
+	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
 	int edges(int x, int y) const {
 		return (x == 0 ? 1 : 0) | (y == 0 ? 2 : 0) | (x + y == sizem1 ? 4 : 0);
@@ -544,7 +544,7 @@ public:
 		return ((p & 0xAAAAAAAAAull) >> 1) | ((p & 0x555555555ull) << 1);
 	}
 	static Pattern pattern_rotate(Pattern p){
-		return (((p & 0x003003003ull) << 10) | ((p & 0xFFCFFCFFC) >> 2));
+		return (((p & 0x003003003ull) << 10) | ((p & 0xFFCFFCFFCull) >> 2));
 	}
 	static Pattern pattern_mirror(Pattern p){
 		// HGFEDC BA9876 543210 -> DEFGHC 6789AB 123450
@@ -595,12 +595,10 @@ public:
 
 		// join the groups for win detection
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end(i); i < e; i++){
-			if(i->onboard()){
-				if(turn == get(i->xy)){
-					join_groups(pos.xy, i->xy);
-					i++; //skip the next one. If it is the same group,
-						 //it is already connected and forms a corner, which we can ignore
-				}
+			if(i->onboard() && turn == get(i->xy)){
+				join_groups(pos.xy, i->xy);
+				i++; //skip the next one. If it is the same group,
+					 //it is already connected and forms a corner, which we can ignore
 			}
 		}
 
@@ -609,7 +607,6 @@ public:
 		if(g->numedges() == 3){
 			outcome = turn;
 		}
-
 		return true;
 	}
 
