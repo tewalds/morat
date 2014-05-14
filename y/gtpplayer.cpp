@@ -417,6 +417,7 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			"  -m --minimax     Backup the minimax proof in the UCT tree          [" + to_str(player.minimax) + "]\n" +
 			"  -x --visitexpand Number of visits before expanding a node          [" + to_str(player.visitexpand) + "]\n" +
 			"  -P --symmetry    Prune symmetric moves, good for proof, not play   [" + to_str(player.prunesymmetry) + "]\n" +
+			"     --gcsolved    Garbage collect solved nodes with fewer sims than [" + to_str(player.gcsolved) + "]\n" +
 			"Node initialization knowledge, Give a bonus:\n" +
 			"  -l --localreply  based on the distance to the previous move        [" + to_str(player.localreply) + "]\n" +
 			"  -y --locality    to stones near other stones of the same color     [" + to_str(player.locality) + "]\n" +
@@ -470,6 +471,8 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			player.minimax = from_str<int>(args[++i]);
 		}else if((arg == "-P" || arg == "--symmetry") && i+1 < args.size()){
 			player.prunesymmetry = from_str<bool>(args[++i]);
+		}else if((               arg == "--gcsolved") && i+1 < args.size()){
+			player.gcsolved = from_str<uint>(args[++i]);
 		}else if((arg == "-r" || arg == "--userave") && i+1 < args.size()){
 			player.userave = from_str<float>(args[++i]);
 		}else if((arg == "-X" || arg == "--useexplore") && i+1 < args.size()){

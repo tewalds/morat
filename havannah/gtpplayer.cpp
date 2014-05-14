@@ -456,7 +456,6 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			"  -T --detectdraw  Detect draws once no win is possible at all       [" + to_str(player.detectdraw) + "]\n" +
 			"  -x --visitexpand Number of visits before expanding a node          [" + to_str(player.visitexpand) + "]\n" +
 			"  -P --symmetry    Prune symmetric moves, good for proof, not play   [" + to_str(player.prunesymmetry) + "]\n" +
-			"  -L --logproof    Log proven nodes hashes and outcomes to this file [" + player.solved_logname + "]\n" +
 			"     --gcsolved    Garbage collect solved nodes with fewer sims than [" + to_str(player.gcsolved) + "]\n" +
 			"Node initialization knowledge, Give a bonus:\n" +
 			"  -l --localreply     based on the distance to the previous move     [" + to_str(player.localreply) + "]\n" +
@@ -518,9 +517,6 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			player.detectdraw = from_str<bool>(args[++i]);
 		}else if((arg == "-P" || arg == "--symmetry") && i+1 < args.size()){
 			player.prunesymmetry = from_str<bool>(args[++i]);
-		}else if((arg == "-L" || arg == "--logproof") && i+1 < args.size()){
-			if(player.setlogfile(args[++i]) == 0)
-				errs += "Can't set the log file\n";
 		}else if((               arg == "--gcsolved") && i+1 < args.size()){
 			player.gcsolved = from_str<uint>(args[++i]);
 		}else if((arg == "-r" || arg == "--userave") && i+1 < args.size()){
@@ -607,18 +603,4 @@ GTPResponse GTP::gtp_player_gammas(vecstr args){
 
 	ifs.close();
 	return GTPResponse(true);
-}
-
-GTPResponse GTP::gtp_confirm_proof(vecstr args){
-	Time start;
-
-	SolverAB ab(false);
-	ab.set_memlimit(0);
-
-	SolverPNS pns;
-
-	int outcome = player.confirm_proof(player.rootboard, &player.root, ab, pns);
-	Time end;
-
-	return GTPResponse(true, to_str(outcome) + " " + to_str(end - start));
 }

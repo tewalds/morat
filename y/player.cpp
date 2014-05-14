@@ -307,7 +307,6 @@ double Player::gamelen(){
 	return len.avg();
 }
 
-
 vector<Move> Player::get_pv(){
 	vector<Move> pv;
 

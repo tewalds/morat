@@ -53,7 +53,6 @@ void Player::PlayerThread::run(){
 				uint64_t nodesbefore = player->nodes;
 				Board copy = player->rootboard;
 				player->garbage_collect(copy, & player->root);
-				player->flushlog();
 				Time gctime;
 				player->ctmem.compact(1.0, 0.75);
 				Time compacttime;
@@ -124,8 +123,6 @@ Player::Player() {
 	gclimit = 5;
 	time_used = 0;
 
-	solved_logfile = NULL;
-
 	profile     = false;
 	ponder      = false;
 //#ifdef SINGLE_THREAD ... make sure only 1 thread
@@ -184,12 +181,6 @@ Player::~Player(){
 
 	numthreads = 0;
 	reset_threads(); //shut down the theads properly
-
-	if(solved_logfile){
-		logsolved(rootboard, & root);
-		fclose(solved_logfile);
-		solved_logfile = NULL;
-	}
 
 	root.dealloc(ctmem);
 	ctmem.compact();
@@ -265,7 +256,6 @@ void Player::set_ponder(bool p){
 void Player::set_board(const Board & board){
 	stop_threads();
 
-	logsolved(rootboard, & root);
 	nodes -= root.dealloc(ctmem);
 	root = Node();
 	root.exp.addwins(visitexpand+1);
@@ -293,7 +283,6 @@ void Player::move(const Move & m){
 			}
 		}
 
-		logsolved(rootboard, &root);
 		nodes -= root.dealloc(ctmem);
 		root = child;
 		root.swap_tree(child);
@@ -301,7 +290,6 @@ void Player::move(const Move & m){
 		if(nodesbefore > 0)
 			logerr("Nodes before: " + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " +  to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
 	}else{
-		logsolved(rootboard, &root);
 		nodes -= root.dealloc(ctmem);
 		root = Node();
 		root.move = m;
@@ -323,48 +311,6 @@ double Player::gamelen(){
 	for(unsigned int i = 0; i < threads.size(); i++)
 		len += threads[i]->gamelen;
 	return len.avg();
-}
-
-bool Player::setlogfile(string name){
-	if(solved_logfile)
-		fclose(solved_logfile);
-
-	solved_logfile = fopen(name.c_str(), "a");
-
-	if(solved_logfile)
-		solved_logname = name;
-	else
-		solved_logname = "";
-
-	return solved_logfile;
-}
-
-void Player::flushlog(){
-	if(solved_logfile)
-		fflush(solved_logfile);
-}
-
-//logs all solved heavy nodes until this node. It is not limited to the proof tree
-void Player::logsolved(Board board, const Node * node, bool skiproot){
-	if(solved_logfile)
-		logsolved_unsafe(board, node, skiproot); //different in that it makes a copy of the board first
-}
-//destroys the board, so use a copy!
-void Player::logsolved_unsafe(Board & board, const Node * node, bool skiproot){
-	if(!skiproot && node->outcome >= 0){
-		string s = board.hashstr() + "," + to_str(node->exp.num()) + "," + to_str(node->outcome) + "\n";
-		fprintf(solved_logfile, "%s", s.c_str());
-	}
-
-	Node * child = node->children.begin(),
-		 * end = node->children.end();
-	for( ; child != end; child++){
-		if(child->exp.num() > 1000){
-			board.set(child->move);
-			logsolved_unsafe(board, child, false);
-			board.unset(child->move);
-		}
-	}
 }
 
 vector<Move> Player::get_pv(){
@@ -417,10 +363,11 @@ Player::Node * Player::return_move(Node * node, int toplay) const {
 	if(ret){
 		node->bestmove = ret->move;
 	}else if(node->bestmove == M_UNKNOWN){
-		SolverAB solver;
-		solver.set_board(rootboard);
-		solver.solve(0.1);
-		node->bestmove = solver.bestmove;
+		// TODO: Is this needed?
+//		SolverAB solver;
+//		solver.set_board(rootboard);
+//		solver.solve(0.1);
+//		node->bestmove = solver.bestmove;
 	}
 
 	assert(node->bestmove != M_UNKNOWN);
@@ -443,11 +390,6 @@ void Player::garbage_collect(Board & board, Node * node){
 			garbage_collect(board, child);
 			board.unset(child->move);
 		}else{
-			if(solved_logfile){
-				board.set(child->move);
-				logsolved_unsafe(board, child, true); //skip the root since it'll get logged when its parent is deallocated
-				board.unset(child->move);
-			}
 			nodes -= child->dealloc(ctmem);
 		}
 	}
@@ -569,53 +511,4 @@ void Player::load_hgf(Board board, Node * node, FILE * fd){
 	eat_char(fd, ')');
 
 	return;
-}
-
-//does not handle draws...
-int Player::confirm_proof(const Board & board, Node * node, SolverAB & ab, SolverPNS & pns){
-	int toplay = board.toplay();
-
-	if(node->children.empty()){
-		Board copy = board;
-
-		if(node->outcome == toplay)
-			copy.move(node->bestmove);
-
-		double timelimit = 0.005;
-
-		ab.set_board(copy);
-		pns.set_board(copy);
-
-		while(1){
-			ab.solve(timelimit);
-
-			if(ab.outcome >= 0){
-				assert(node->outcome < 0 || ab.outcome == node->outcome);
-				return ab.outcome;
-			}
-
-			pns.solve(timelimit);
-
-			if(pns.outcome >= 0){
-				assert(node->outcome < 0 || pns.outcome == node->outcome);
-				return pns.outcome;
-			}
-
-			timelimit *= 3;
-		}
-	}
-
-	for(Node * i = node->children.begin(); i != node->children.end(); i++){
-		if(node->outcome == toplay && node->bestmove != i->move) //only look at the best move for a win
-			continue;
-
-		Board copy = board;
-		copy.move(i->move);
-		int outcome = confirm_proof(copy, i, ab, pns);
-		if(outcome != node->outcome){
-			logerr(board.to_s(true) + "\n" + i->move.to_s() + " " + to_str(toplay) + " " + to_str((int)node->outcome) + " " + to_str(outcome) + "\n");
-			assert(false);
-		}
-	}
-	return node->outcome;
 }

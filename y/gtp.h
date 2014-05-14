@@ -144,7 +144,6 @@ public:
 	GTPResponse gtp_player_gammas(vecstr args);
 	GTPResponse gtp_player_hgf(vecstr args);
 	GTPResponse gtp_player_load_hgf(vecstr args);
-	GTPResponse gtp_confirm_proof(vecstr args);
 
 	string solve_str(int outcome) const;
 	string solve_str(const Solver & solve);

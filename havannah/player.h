@@ -19,8 +19,6 @@
 #include "board.h"
 #include "lbdist.h"
 #include "move.h"
-#include "solverab.h"
-#include "solverpns.h"
 
 class Player {
 public:
@@ -340,9 +338,6 @@ public:
 
 	CompactTree<Node> ctmem;
 
-	string solved_logname;
-	FILE * solved_logfile;
-
 	enum ThreadState {
 		Thread_Cancelled,  //threads should exit
 		Thread_Wait_Start, //threads are waiting to start
@@ -376,11 +371,6 @@ public:
 
 	double gamelen();
 
-	bool setlogfile(string name);
-	void flushlog();
-	void logsolved(Board board, const Node * node, bool skiproot = false); //copies the board before passing to unsafe
-	void logsolved_unsafe(Board & board, const Node * node, bool skiproot); //modifies the board
-
 	Node * genmove(double time, int max_runs, bool flexible);
 	vector<Move> get_pv();
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
@@ -392,8 +382,6 @@ public:
 
 	void create_children_simple(const Board & board, Node * node);
 	Node * find_child(Node * node, const Move & move);
-
-	int confirm_proof(const Board & board, Node * node, SolverAB & ab, SolverPNS & pns);
 
 protected:
 	Node * return_move(Node * node, int toplay) const;
