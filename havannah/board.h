@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-using namespace std;
 
 #include "../lib/hashset.h"
 #include "../lib/string.h"
@@ -14,6 +13,8 @@ using namespace std;
 #include "../lib/zobrist.h"
 
 #include "move.h"
+
+using namespace std;
 
 static const int BitsSetTable64[] = {
 	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
@@ -55,14 +56,6 @@ public:
 	static const int max_size = 10;
 
 	struct Cell {
-/*
-		unsigned piece  : 2; //who controls this cell, 0 for none, 1,2 for players
-		mutable unsigned parent : 9; //parent for this group of cells
-		unsigned size   : 7; //size of this group of cells
-		unsigned corner : 6; //which corners are this group connected to
-		unsigned edge   : 6; //which edges are this group connected to
-		unsigned local  : 2; //0 for far, 1 for distance 2, 2 for virtual connection, 3 for neighbour
-/*/
 		uint8_t piece;  //who controls this cell, 0 for none, 1,2 for players
 		uint8_t size;   //size of this group of cells
 mutable uint16_t parent; //parent for this group of cells
@@ -71,7 +64,6 @@ mutable uint16_t parent; //parent for this group of cells
 		unsigned perm : 4;   //is this a permanent piece or a randomly placed piece?
 		unsigned local: 4;  //0 for far, 1 for distance 2, 2 for virtual connection, 3 for neighbour
 mutable uint8_t ringdepth; //when doing a ring search, what depth was this position found
-//*/
 
 		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), perm(0), local(0), ringdepth(0) { }
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, unsigned int l) :
@@ -116,7 +108,7 @@ mutable uint8_t ringdepth; //when doing a ring search, what depth was this posit
 							return *this;
 						}
 						move.x = board.linestart(move.y);
-						move.xy = board.xy(move);
+						move.xy = board.xy(move.x, move.y);
 						lineend = board.lineend(move.y);
 					}
 				}while(!board.valid_move_fast(move));
@@ -195,6 +187,8 @@ public:
 	int xyc(int x, int y)   const { return xy(  x + sizem1,   y + sizem1); }
 	int xyc(const Move & m) const { return xy(m.x + sizem1, m.y + sizem1); }
 
+	MoveValid yx(int i) const { return MoveValid(i % size, i / size, i); }
+
 	const Cell * cell(int i)          const { return & cells[i]; }
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }
@@ -203,7 +197,7 @@ public:
 
 	//assumes valid x,y
 	int get(int i)          const { return cells[i].piece; }
-	int get(int x, int y)   const { return get(xy(x,y)); }
+	int get(int x, int y)   const { return get(xy(x, y)); }
 	int get(const Move & m) const { return get(xy(m)); }
 	int get(const MoveValid & m) const { return get(m.xy); }
 
@@ -225,11 +219,13 @@ public:
 	bool onboard(const MoveValid & m) const { return m.onboard(); }
 
 	//assumes x, y are in bounds and the game isn't already finished
-	bool valid_move_fast(int x, int y)   const { return !get(x,y); }
-	bool valid_move_fast(const Move & m) const { return !get(m); }
+	bool valid_move_fast(int x, int y)        const { return !get(x,y); }
+	bool valid_move_fast(const Move & m)      const { return !get(m); }
+	bool valid_move_fast(const MoveValid & m) const { return !get(m.xy); }
 	//checks array bounds too
-	bool valid_move(int x, int y)   const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
-	bool valid_move(const Move & m) const { return (outcome == -3 && onboard(m) && !get(m)); }
+	bool valid_move(int x, int y)        const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
+	bool valid_move(const Move & m)      const { return (outcome == -3 && onboard(m) && !get(m)); }
+	bool valid_move(const MoveValid & m) const { return (outcome == -3 && m.onboard() && !get(m)); }
 
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
@@ -240,7 +236,8 @@ public:
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
 	const MoveValid * nb_end(int i)          const { return nb_end(nb_begin(i)); }
 	const MoveValid * nb_end(const MoveValid * m) const { return m + 6; }
-	const MoveValid * nb_endhood(const MoveValid * m) const { return m + 18; }
+	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
+	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
 	int iscorner(int x, int y) const {
 		if(!onboard(x,y))
@@ -333,6 +330,7 @@ public:
 				if(p == 0) s += empty;
 				if(p == 1) s += white;
 				if(p == 2) s += black;
+				if(p >= 3) s += "?";
 			}
 			s += (last == Move(end-1, y) ? coord + "]" : " ");
 			if(y < sizem1)
