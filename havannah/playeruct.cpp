@@ -86,6 +86,7 @@ void Player::PlayerUCT::walk_tree(Board & board, Node * node, int depth){
 		}
 
 		//do random game on this node
+		random_policy.prepare(board);
 		for(int i = 0; i < player->rollouts; i++){
 			Board copy = board;
 			rollout(copy, node->move, depth);
@@ -356,6 +357,7 @@ void Player::PlayerUCT::add_knowledge(Board & board, Node * node, Node * child){
 
 //test whether this move is a forced reply to the opponent probing your virtual connections
 bool Player::PlayerUCT::test_bridge_probe(const Board & board, const Move & move, const Move & test) const {
+	//TODO: switch to the same method as policy_bridge.h, maybe even share code
 	if(move.dist(test) != 1)
 		return false;
 
@@ -405,45 +407,11 @@ bool Player::PlayerUCT::test_bridge_probe(const Board & board, const Move & move
 //play a random game starting from a board state, and return the results of who won
 int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 	int won;
-	int num = board.movesremain();
 
-	bool wrand = (player->weightedrandom);
+	if(player->instantwin)
+		instant_wins.rollout_start(board, player->instantwin);
 
-	if(wrand){
-		wtree[0].resize(board.vecsize());
-		wtree[1].resize(board.vecsize());
-
-		int set = 0;
-		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m){
-			int i = board.xy(*m);
-			moves[i] = *m;
-			unsigned int p = board.pattern(i);
-			wtree[0].set_weight_fast(i, player->gammas[p]);
-			wtree[1].set_weight_fast(i, player->gammas[board.pattern_invert(p)]);
-			set++;
-		}
-
-		wtree[0].rebuild();
-		wtree[1].rebuild();
-	}else{
-		int i = 0;
-		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m)
-			moves[i++] = *m;
-
-		i = num;
-		while(i > 1){
-			int j = rand32() % i--;
-			Move tmp = moves[j];
-			moves[j] = moves[i];
-			moves[i] = tmp;
-		}
-
-//		random_shuffle(moves, moves + num);
-	}
-
-	int doinstwin = player->instwindepth;
-	if(doinstwin < 0)
-		doinstwin *= - board.get_size();
+	random_policy.rollout_start(board);
 
 	//only check rings to the specified depth
 	int  checkdepth = (int)player->checkringdepth;
@@ -453,54 +421,17 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 	board.perm_rings = player->ringperm;
 
-	Move * nextmove = moves;
-	Move forced = M_UNKNOWN;
 	while((won = board.won()) < 0){
 		int turn = board.toplay();
 
 		board.check_rings = (depth < checkdepth);
 
-		if(forced == M_UNKNOWN){
-			//do a complex choice
-			PairMove pair = rollout_choose_move(board, move, doinstwin);
-			move = pair.a;
-			forced = pair.b;
-
-			//or the simple random choice if complex found nothing
-			if(move == M_UNKNOWN){
-				do{
-					if(wrand){
-						int j = wtree[turn-1].choose();
-//						assert(j >= 0);
-						wtree[0].set_weight(j, 0);
-						wtree[1].set_weight(j, 0);
-						move = moves[j];
-					}else{
-						move = *nextmove;
-						nextmove++;
-					}
-				}while(!board.valid_move_fast(move));
-			}
-		}else{
-			move = forced;
-			forced = M_UNKNOWN;
-		}
+		move = rollout_choose_move(board, move);
 
 		movelist.addrollout(move, turn);
 
-		board.move(move, true, false);
+		assert2(board.move(move, true, false), "\n" + board.to_s(true) + "\n" + move.to_s());
 		depth++;
-
-		if(wrand){
-			//update neighbour weights
-			for(const MoveValid * i = board.nb_begin(move), *e = board.nb_end(i); i < e; i++){
-				if(i->onboard() && board.get(i->xy) == 0){
-					unsigned int p = board.pattern(i->xy);
-					wtree[0].set_weight(i->xy, player->gammas[p]);
-					wtree[1].set_weight(i->xy, player->gammas[board.pattern_invert(p)]);
-				}
-			}
-		}
 	}
 
 	gamelen.add(depth);
@@ -509,167 +440,34 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 		wintypes[won-1][(int)board.getwintype()].add(depth);
 
 	//update the last good reply table
-	if(player->lastgoodreply && won > 0){
-		MovePlayer * rave = movelist.begin(), *raveend = movelist.end();
-
-		int m = -1;
-		while(rave != raveend){
-			if(m >= 0){
-				if(rave->player == won)
-					goodreply[rave->player - 1][m] = *rave;
-				else if(player->lastgoodreply == 2)
-					goodreply[rave->player - 1][m] = M_UNKNOWN;
-			}
-			m = board.xy(*rave);
-			++rave;
-		}
-	}
+	if(player->lastgoodreply)
+		last_good_reply.rollout_end(board, movelist, won);
 
 	movelist.finishrollout(won);
 	return won;
 }
 
-PairMove Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev, int & doinstwin){
+Move Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev){
 	//look for instant wins
-	if(player->instantwin == 1 && --doinstwin >= 0){
-		for(Board::MoveIterator m = board.moveit(); !m.done(); ++m)
-			if(board.test_win(*m, board.toplay()) > 0)
-				return *m;
+	if(player->instantwin){
+		Move move = instant_wins.choose_move(board, prev);
+		if(move != M_UNKNOWN)
+			return move;
 	}
-
-	//look for instant wins and forced replies
-	if(player->instantwin == 2 && --doinstwin >= 0){
-		Move loss = M_UNKNOWN;
-		for(Board::MoveIterator m = board.moveit(); !m.done(); ++m){
-			if(board.test_win(*m, board.toplay()) > 0) //win
-				return *m;
-			if(board.test_win(*m, 3 - board.toplay()) > 0) //lose
-				loss = *m;
-		}
-		if(loss != M_UNKNOWN)
-			return loss;
-	}
-
-	if(player->instantwin >= 3 && --doinstwin >= 0){
-		Move start, cur, loss = M_UNKNOWN;
-		int turn = 3 - board.toplay();
-
-		if(player->instantwin == 4){ //must have an edge or corner connection, or it has nothing to offer a group towards a win, ignores rings
-			const Board::Cell * c = board.cell(prev);
-			if(c->numcorners() == 0 && c->numedges() == 0)
-				goto skipinstwin3;
-
-		}
-
-//		logerr(board.to_s(true));
-
-		//find the first empty cell
-		int dir = -1;
-		for(int i = 0; i <= 5; i++){
-			start = prev + neighbours[i];
-
-			if(!board.onboard(start) || board.get(start) != turn){
-				dir = (i + 5) % 6;
-				break;
-			}
-		}
-
-		if(dir == -1) //possible if it's in the middle of a ring, which is possible if rings are being ignored
-			goto skipinstwin3;
-
-		cur = start;
-
-//		logerr(prev.to_s() + ":");
-
-		//follow contour of the current group looking for wins
-		do{
-//			logerr(" " + to_str((int)cur.y) + "," + to_str((int)cur.x));
-			//check the current cell
-			if(board.onboard(cur) && board.get(cur) == 0 && board.test_win(cur, turn) > 0){
-//				logerr(" loss");
-				if(loss == M_UNKNOWN)
-					loss = cur;
-				else if(loss != cur)
-					return PairMove(loss, cur); //game over, two wins found for opponent
-			}
-
-			//advance to the next cell
-			for(int i = 5; i <= 9; i++){
-				int nd = (dir + i) % 6;
-				Move next = cur + neighbours[nd];
-
-				if(!board.onboard(next) || board.get(next) != turn){
-					cur = next;
-					dir = nd;
-					break;
-				}
-			}
-		}while(cur != start); //potentially skips part of it when the start is in a pocket, rare bug
-
-//		logerr("\n");
-
-		if(loss != M_UNKNOWN)
-			return loss;
-	}
-skipinstwin3:
 
 	//force a bridge reply
 	if(player->rolloutpattern){
-		Move move = rollout_pattern(board, prev);
+		Move move = protect_bridge.choose_move(board, prev);
 		if(move != M_UNKNOWN)
 			return move;
 	}
 
 	//reuse the last good reply
 	if(player->lastgoodreply){
-		Move move = goodreply[board.toplay()-1][board.xy(prev)];
-		if(move != M_UNKNOWN && board.valid_move_fast(move))
+		Move move = last_good_reply.choose_move(board, prev);
+		if(move != M_UNKNOWN)
 			return move;
 	}
 
-	return M_UNKNOWN;
-}
-
-//look for good forced moves. In this case I only look for keeping a virtual connection active
-//so looking from the last played position's perspective, which is a move by the opponent
-//if you see a pattern of mine, empty, mine in the circle around the last move, their move
-//would break the virtual connection, so should be played
-//a virtual connection to a wall is also important
-Move Player::PlayerUCT::rollout_pattern(const Board & board, const Move & move){
-	Move ret;
-	int state = 0;
-	int a = (++rollout_pattern_offset % 6);
-	int piece = 3 - board.get(move);
-	for(int i = 0; i < 8; i++){
-		Move cur = move + neighbours[(i+a)%6];
-
-		bool on = board.onboard(cur);
-		int v = 0;
-		if(on)
-			v = board.get(cur);
-
-	//state machine that progresses when it see the pattern, but counting borders as part of the pattern
-		if(state == 0){
-			if(!on || v == piece)
-				state = 1;
-			//else state = 0;
-		}else if(state == 1){
-			if(on){
-				if(v == 0){
-					state = 2;
-					ret = cur;
-				}else if(v != piece)
-					state = 0;
-				//else (v==piece) => state = 1;
-			}
-			//else state = 1;
-		}else{ // state == 2
-			if(!on || v == piece){
-				return ret;
-			}else{
-				state = 0;
-			}
-		}
-	}
-	return M_UNKNOWN;
+	return random_policy.choose_move(board, prev);
 }

@@ -13,13 +13,17 @@
 #include "../lib/thread.h"
 #include "../lib/time.h"
 #include "../lib/types.h"
-#include "../lib/weightedrandtree.h"
 #include "../lib/xorshift.h"
 
 #include "board.h"
 #include "lbdist.h"
 #include "move.h"
 #include "movelist.h"
+#include "policy_bridge.h"
+#include "policy_instantwin.h"
+#include "policy_lastgoodreply.h"
+#include "policy_random.h"
+
 
 class Player {
 public:
@@ -154,20 +158,20 @@ public:
 	};
 
 	class PlayerUCT : public PlayerThread {
-		Move goodreply[2][361]; //361 is big enough for size 10 (ie 19x19), but no bigger...
+		LastGoodReply last_good_reply;
+		RandomPolicy random_policy;
+		ProtectBridge protect_bridge;
+		InstantWin instant_wins;
+
 		bool use_rave;    //whether to use rave for this simulation
 		bool use_explore; //whether to use exploration for this simulation
-		int  rollout_pattern_offset; //where to start the rollout pattern
-		Move moves[361]; //moves in the rollout
-		WeightedRandTree wtree[2]; //hold the weights for weighted random values, one per player
 		LBDists dists;    //holds the distances to the various non-ring wins as a heuristic for the minimum moves needed to win
 		MoveList movelist;
 		int stage; //which of the four MCTS stages is it on
 		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
 	public:
-		PlayerUCT(Player * p) {
-			PlayerThread();
+		PlayerUCT(Player * p) : PlayerThread() {
 			player = p;
 			reset();
 			thread(bind(&PlayerUCT::run, this));
@@ -177,13 +181,8 @@ public:
 			treelen.reset();
 			gamelen.reset();
 
-			for(int p = 0; p < 2; p++)
-				for(int i = 0; i < 361; i++)
-					goodreply[p][i] = M_UNKNOWN;
-
 			use_rave = false;
 			use_explore = false;
-			rollout_pattern_offset = 0;
 
 			for(int a = 0; a < 2; a++)
 				for(int b = 0; b < 4; b++)
@@ -203,7 +202,7 @@ public:
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
 
 		int rollout(Board & board, Move move, int depth);
-		PairMove rollout_choose_move(Board & board, const Move & prev, int & doinstwin);
+		Move rollout_choose_move(Board & board, const Move & prev);
 		Move rollout_pattern(const Board & board, const Move & move);
 	};
 
@@ -247,13 +246,12 @@ public:
 	int   bridge;     //boost replying to a probe at a bridge
 	int   dists;      //boost based on minimum number of stones needed to finish a non-ring win
 //rollout
-	bool  weightedrandom; //use weighted random for move ordering based on gammas
+	int   weightedrandom; //use weighted random for move ordering based on gammas
 	float checkringdepth; //how deep to allow rings as a win condition in a rollout
 	int   ringperm;       //how many stones in a ring must be in place before the rollout begins
 	bool  rolloutpattern; //play the response to a virtual connection threat in rollouts
 	int   lastgoodreply;  //use the last-good-reply rollout heuristic
-	int   instantwin;     //look for instant wins in rollouts
-	int   instwindepth;   //how deep to look for instant wins
+	int   instantwin;     //how deep to look for instant wins in rollouts
 
 	float gammas[4096]; //pattern weights for weighted random
 

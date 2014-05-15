@@ -458,20 +458,19 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			"  -P --symmetry    Prune symmetric moves, good for proof, not play   [" + to_str(player.prunesymmetry) + "]\n" +
 			"     --gcsolved    Garbage collect solved nodes with fewer sims than [" + to_str(player.gcsolved) + "]\n" +
 			"Node initialization knowledge, Give a bonus:\n" +
-			"  -l --localreply     based on the distance to the previous move     [" + to_str(player.localreply) + "]\n" +
-			"  -y --locality       to stones near other stones of the same color  [" + to_str(player.locality) + "]\n" +
-			"  -c --connect        to stones connected to edges/corners           [" + to_str(player.connect) + "]\n" +
-			"  -S --size           based on the size of the group                 [" + to_str(player.size) + "]\n" +
-			"  -b --bridge         to maintaining a 2-bridge after the op probes  [" + to_str(player.bridge) + "]\n" +
-			"  -D --distance       to low minimum distance to win (<0 avoid VCs)  [" + to_str(player.dists) + "]\n" +
+			"  -l --localreply  based on the distance to the previous move        [" + to_str(player.localreply) + "]\n" +
+			"  -y --locality    to stones near other stones of the same color     [" + to_str(player.locality) + "]\n" +
+			"  -c --connect     to stones connected to edges/corners              [" + to_str(player.connect) + "]\n" +
+			"  -S --size        based on the size of the group                    [" + to_str(player.size) + "]\n" +
+			"  -b --bridge      to maintaining a 2-bridge after the op probes     [" + to_str(player.bridge) + "]\n" +
+			"  -D --distance    to low minimum distance to win (<0 avoid VCs)     [" + to_str(player.dists) + "]\n" +
 			"Rollout policy:\n" +
 			"  -h --weightrand  Weight the moves according to computed gammas     [" + to_str(player.weightedrandom) + "]\n" +
 			"  -R --ringdepth   Check for rings for this depth, < 0 for % moves   [" + to_str(player.checkringdepth) + "]\n" +
 			"  -G --ringperm    Num stones placed before rollout to form a ring   [" + to_str(player.ringperm) + "]\n" +
 			"  -p --pattern     Maintain the virtual connection pattern           [" + to_str(player.rolloutpattern) + "]\n" +
 			"  -g --goodreply   Reuse the last good reply (1), remove losses (2)  [" + to_str(player.lastgoodreply) + "]\n" +
-			"  -w --instantwin  Look for instant wins (1) and forced replies (2)  [" + to_str(player.instantwin) + "]\n" +
-			"  -W --instwindep  How deep to check instant wins, - multiplies size [" + to_str(player.instwindepth) + "]\n"
+			"  -w --instantwin  Look for instant wins to this depth               [" + to_str(player.instantwin) + "]\n"
 			);
 
 	string errs;
@@ -544,7 +543,7 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 		}else if((arg == "-D" || arg == "--distance") && i+1 < args.size()){
 			player.dists = from_str<int>(args[++i]);
 		}else if((arg == "-h" || arg == "--weightrand") && i+1 < args.size()){
-			player.weightedrandom = from_str<bool>(args[++i]);
+			player.weightedrandom = from_str<int>(args[++i]);
 		}else if((arg == "-R" || arg == "--ringdepth") && i+1 < args.size()){
 			player.checkringdepth = from_str<float>(args[++i]);
 		}else if((arg == "-G" || arg == "--ringperm") && i+1 < args.size()){
@@ -555,8 +554,6 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			player.lastgoodreply = from_str<int>(args[++i]);
 		}else if((arg == "-w" || arg == "--instantwin") && i+1 < args.size()){
 			player.instantwin = from_str<int>(args[++i]);
-		}else if((arg == "-W" || arg == "--instwindep") && i+1 < args.size()){
-			player.instwindepth = from_str<int>(args[++i]);
 		}else{
 			return GTPResponse(false, "Missing or unknown parameter");
 		}
