@@ -466,10 +466,7 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			"  -D --distance       to low minimum distance to win (<0 avoid VCs)  [" + to_str(player.dists) + "]\n" +
 			"Rollout policy:\n" +
 			"  -h --weightrand  Weight the moves according to computed gammas     [" + to_str(player.weightedrandom) + "]\n" +
-			"  -C --checkrings  Check for rings only this often in rollouts       [" + to_str(player.checkrings) + "]\n" +
 			"  -R --ringdepth   Check for rings for this depth, < 0 for % moves   [" + to_str(player.checkringdepth) + "]\n" +
-			"  -Z --ringsize    Starting minimum ring size in rollouts            [" + to_str(player.minringsize) + "]\n" +
-			"  -z --ringincr    Incr min ring size every z moves, < 0 for % moves [" + to_str(player.ringincr) + "]\n" +
 			"  -G --ringperm    Num stones placed before rollout to form a ring   [" + to_str(player.ringperm) + "]\n" +
 			"  -p --pattern     Maintain the virtual connection pattern           [" + to_str(player.rolloutpattern) + "]\n" +
 			"  -g --goodreply   Reuse the last good reply (1), remove losses (2)  [" + to_str(player.lastgoodreply) + "]\n" +
@@ -548,14 +545,8 @@ GTPResponse GTP::gtp_player_params(vecstr args){
 			player.dists = from_str<int>(args[++i]);
 		}else if((arg == "-h" || arg == "--weightrand") && i+1 < args.size()){
 			player.weightedrandom = from_str<bool>(args[++i]);
-		}else if((arg == "-C" || arg == "--checkrings") && i+1 < args.size()){
-			player.checkrings = from_str<float>(args[++i]);
 		}else if((arg == "-R" || arg == "--ringdepth") && i+1 < args.size()){
 			player.checkringdepth = from_str<float>(args[++i]);
-		}else if((arg == "-z" || arg == "--ringincr") && i+1 < args.size()){
-			player.ringincr = from_str<float>(args[++i]);
-		}else if((arg == "-Z" || arg == "--ringsize") && i+1 < args.size()){
-			player.minringsize = from_str<float>(args[++i]);
 		}else if((arg == "-G" || arg == "--ringperm") && i+1 < args.size()){
 			player.ringperm = from_str<int>(args[++i]);
 		}else if((arg == "-p" || arg == "--pattern") && i+1 < args.size()){

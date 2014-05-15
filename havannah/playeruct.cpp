@@ -445,33 +445,24 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 	if(doinstwin < 0)
 		doinstwin *= - board.get_size();
 
-	bool checkrings = (unitrand() < player->checkrings);
-
 	//only check rings to the specified depth
 	int  checkdepth = (int)player->checkringdepth;
 	//if it's negative, check for that fraction of the remaining moves
 	if(player->checkringdepth < 0)
-		checkdepth = (int)ceil(num * player->checkringdepth * -1);
+		checkdepth = (int)ceil(board.movesremain() * player->checkringdepth * -1);
 
-	//only allow rings bigger than the minimum ring size, incrementing by the ringincr after each move
-	int minringsize = (int)player->minringsize;
-	int ringcounterfull = (int)player->ringincr;
-	//if it's negative, scale by the fraction of remaining moves
-	if(player->ringincr < 0)
-		ringcounterfull = (int)ceil(num * player->ringincr * -1);
-
-	int ringcounter = ringcounterfull;
-
-	int ringperm = player->ringperm;
+	board.perm_rings = player->ringperm;
 
 	Move * nextmove = moves;
 	Move forced = M_UNKNOWN;
 	while((won = board.won()) < 0){
 		int turn = board.toplay();
 
+		board.check_rings = (depth < checkdepth);
+
 		if(forced == M_UNKNOWN){
 			//do a complex choice
-			PairMove pair = rollout_choose_move(board, move, doinstwin, checkrings);
+			PairMove pair = rollout_choose_move(board, move, doinstwin);
 			move = pair.a;
 			forced = pair.b;
 
@@ -497,13 +488,8 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 		movelist.addrollout(move, turn);
 
-		board.move(move, true, false, (checkrings ? minringsize : 0), ringperm);
-		if(--ringcounter == 0){
-			minringsize++;
-			ringcounter = ringcounterfull;
-		}
+		board.move(move, true, false, false );
 		depth++;
-		checkrings &= (depth < checkdepth);
 
 		if(wrand){
 			//update neighbour weights
@@ -543,11 +529,11 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 	return won;
 }
 
-PairMove Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev, int & doinstwin, bool checkrings){
+PairMove Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev, int & doinstwin){
 	//look for instant wins
 	if(player->instantwin == 1 && --doinstwin >= 0){
 		for(Board::MoveIterator m = board.moveit(); !m.done(); ++m)
-			if(board.test_win(*m, board.toplay(), checkrings) > 0)
+			if(board.test_win(*m, board.toplay()) > 0)
 				return *m;
 	}
 
@@ -555,9 +541,9 @@ PairMove Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev
 	if(player->instantwin == 2 && --doinstwin >= 0){
 		Move loss = M_UNKNOWN;
 		for(Board::MoveIterator m = board.moveit(); !m.done(); ++m){
-			if(board.test_win(*m, board.toplay(), checkrings) > 0) //win
+			if(board.test_win(*m, board.toplay()) > 0) //win
 				return *m;
-			if(board.test_win(*m, 3 - board.toplay(), checkrings) > 0) //lose
+			if(board.test_win(*m, 3 - board.toplay()) > 0) //lose
 				loss = *m;
 		}
 		if(loss != M_UNKNOWN)
@@ -599,7 +585,7 @@ PairMove Player::PlayerUCT::rollout_choose_move(Board & board, const Move & prev
 		do{
 //			logerr(" " + to_str((int)cur.y) + "," + to_str((int)cur.x));
 			//check the current cell
-			if(board.onboard(cur) && board.get(cur) == 0 && board.test_win(cur, turn, checkrings) > 0){
+			if(board.onboard(cur) && board.get(cur) == 0 && board.test_win(cur, turn) > 0){
 //				logerr(" loss");
 				if(loss == M_UNKNOWN)
 					loss = cur;

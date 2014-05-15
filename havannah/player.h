@@ -272,7 +272,7 @@ public:
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
 
 		int rollout(Board & board, Move move, int depth);
-		PairMove rollout_choose_move(Board & board, const Move & prev, int & doinstwin, bool checkrings);
+		PairMove rollout_choose_move(Board & board, const Move & prev, int & doinstwin);
 		Move rollout_pattern(const Board & board, const Move & move);
 	};
 
@@ -317,10 +317,7 @@ public:
 	int   dists;      //boost based on minimum number of stones needed to finish a non-ring win
 //rollout
 	bool  weightedrandom; //use weighted random for move ordering based on gammas
-	float checkrings;     //how often to allow rings as a win condition in a rollout
 	float checkringdepth; //how deep to allow rings as a win condition in a rollout
-	float minringsize;    //how big is the minimum starting ring size (<6 is good)
-	float ringincr;       //a growth rate on how big must the ring be to be valid
 	int   ringperm;       //how many stones in a ring must be in place before the rollout begins
 	bool  rolloutpattern; //play the response to a virtual connection threat in rollouts
 	int   lastgoodreply;  //use the last-good-reply rollout heuristic

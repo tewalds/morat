@@ -61,16 +61,26 @@ public:
 mutable uint16_t parent; //parent for this group of cells
 		uint8_t corner; //which corners are this group connected to
 		uint8_t edge;   //which edges are this group connected to
+mutable uint8_t mark;   //when doing a ring search, has this position been seen?
 		unsigned perm : 4;   //is this a permanent piece or a randomly placed piece?
 		unsigned local: 4;  //0 for far, 1 for distance 2, 2 for virtual connection, 3 for neighbour
-mutable uint8_t ringdepth; //when doing a ring search, what depth was this position found
 
-		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), perm(0), local(0), ringdepth(0) { }
+		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), mark(0), perm(0), local(0) { }
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, unsigned int l) :
-			piece(p), size(s), parent(a), corner(c), edge(e), perm(0), local(l), ringdepth(0) { }
+			piece(p), size(s), parent(a), corner(c), edge(e), mark(0), perm(0), local(l) { }
 
 		int numcorners() const { return BitsSetTable64[corner]; }
 		int numedges()   const { return BitsSetTable64[edge];   }
+
+		string to_s(int i) const {
+			return "Cell " + to_str(i) +": "
+				"piece: " + to_str((int)piece)+
+				", size: " + to_str((int)size) +
+				", parent: " + to_str((int)parent) +
+				", corner: " + to_str((int)corner) + "/" + to_str(numcorners()) +
+				", edge: " + to_str((int)edge) + "/" + to_str(numedges()) +
+				", perm: " + to_str((int)perm);
+		}
 	};
 
 	class MoveIterator { //only returns valid moves...
@@ -142,6 +152,9 @@ private:
 	const MoveValid * neighbourlist;
 
 public:
+	bool check_rings; // whether to look for rings at all
+	int perm_rings;   // how many permanent stones are needed for a ring to count
+
 	Board(){
 		size = 0;
 	}
@@ -156,6 +169,8 @@ public:
 		toPlay = 1;
 		outcome = -3;
 		wintype = 0;
+		check_rings = true;
+		perm_rings = 0;
 		neighbourlist = get_neighbour_list();
 		num_cells = vecsize() - size*sizem1;
 
@@ -494,14 +509,9 @@ public:
 	}
 
 	// do a depth first search for a ring
-	// can take a minimum length of the ring, any ring shorter than ringsize is ignored
-	// ignores tails on small rings correctly (ie an old 6-ring plus a new stone will still be only a 6-ring)
-	// two 6-rings next to each other may count as a bigger ring
-	// can be done before or after placing the stone and joining neighbouring groups
-	// using a ringsize smaller than a previous ring check could lead to weird results
-	bool checkring_df(const Move & pos, const int turn, const int ringsize = 6, const int permsneeded = 0) const {
+	bool checkring_df(const Move & pos, const int turn) const {
 		const Cell * start = & cells[xy(pos)];
-		start->ringdepth = 1;
+		start->mark = 1;
 		bool success = false;
 		for(int i = 0; i < 4; i++){ //4 instead of 6 since any ring must have its first endpoint in the first 4
 			Move loc = pos + neighbours[i];
@@ -514,19 +524,19 @@ public:
 			if(turn != g->piece)
 				continue;
 
-			g->ringdepth = 2;
-			success = followring(loc, i, turn, 3, ringsize, (permsneeded - g->perm));
-			g->ringdepth = 0;
+			g->mark = 1;
+			success = followring(loc, i, turn, (perm_rings - g->perm));
+			g->mark = 0;
 
 			if(success)
 				break;
 		}
-		start->ringdepth = 0;
+		start->mark = 0;
 		return success;
 	}
 	// only take the 3 directions that are valid in a ring
 	// the backwards directions are either invalid or not part of the shortest loop
-	bool followring(const Move & cur, const int & dir, const int & turn, const int & depth, const int & ringsize, const int & permsneeded) const {
+	bool followring(const Move & cur, const int & dir, const int & turn, const int & permsneeded) const {
 		for(int i = 5; i <= 7; i++){
 			int nd = (dir + i) % 6;
 			Move next = cur + neighbours[nd];
@@ -536,15 +546,15 @@ public:
 
 			const Cell * g = & cells[xy(next)];
 
-			if(g->ringdepth)
-				return (depth - g->ringdepth >= ringsize && permsneeded <= 0);
+			if(g->mark)
+				return (permsneeded <= 0);
 
 			if(turn != g->piece)
 				continue;
 
-			g->ringdepth = depth;
-			bool success = followring(next, nd, turn, depth+1, ringsize, (permsneeded - g->perm));
-			g->ringdepth = 0;
+			g->mark = 1;
+			bool success = followring(next, nd, turn, (permsneeded - g->perm));
+			g->mark = 0;
 
 			if(success)
 				return true;
@@ -786,10 +796,10 @@ public:
 		return m;
 	}
 
-	bool move(const Move & pos, bool checkwin = true, bool locality = false, int ringsize = 6, int permring = 0){
-		return move(MoveValid(pos, xy(pos)), checkwin, locality, ringsize, permring);
+	bool move(const Move & pos, bool checkwin = true, bool locality = false, bool permanent = true){
+		return move(MoveValid(pos, xy(pos)), checkwin, locality, permanent);
 	}
-	bool move(const MoveValid & pos, bool checkwin = true, bool locality = false, int ringsize = 6, int permring = 0){
+	bool move(const MoveValid & pos, bool checkwin = true, bool locality = false, bool permanent = true){
 		assert(outcome < 0);
 
 		if(!valid_move(pos))
@@ -798,7 +808,7 @@ public:
 		char turn = toplay();
 		char localshift = (turn & 2); //0 for p1, 2 for p2
 
-		set(pos, !permring);
+		set(pos, permanent);
 
 		if(locality){
 			for(int i = 6; i < 18; i++){
@@ -830,7 +840,7 @@ public:
 			}else if(g->numcorners() >= 2){
 				outcome = turn;
 				wintype = 2;
-			}else if(ringsize && alreadyjoined && g->size >= max(6, ringsize) && checkring_df(pos, turn, ringsize, permring)){
+			}else if(check_rings && alreadyjoined && g->size >= 6 && checkring_df(pos, turn)){
 				outcome = turn;
 				wintype = 3;
 			}else if(nummoves == num_cells){
@@ -845,7 +855,7 @@ public:
 	}
 
 	//test if making this move would win, but don't actually make the move
-	int test_win(const Move & pos, char turn = 0, bool checkrings = true) const {
+	int test_win(const Move & pos, char turn = 0) const {
 		if(turn == 0)
 			turn = toplay();
 
@@ -864,7 +874,7 @@ public:
 				}
 			}
 
-			if(testcell.numcorners() >= 2 || testcell.numedges() >= 3 || (checkrings && numgroups >= 2 && testcell.size >= 6 && checkring_o1(pos, turn)))
+			if(testcell.numcorners() >= 2 || testcell.numedges() >= 3 || (check_rings && numgroups >= 2 && testcell.size >= 6 && checkring_o1(pos, turn)))
 				return turn;
 		}
 
