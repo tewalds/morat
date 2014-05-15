@@ -35,6 +35,7 @@ struct Move {
 		if(y == M_NONE)    return "none";
 		if(y == M_SWAP)    return "swap";
 		if(y == M_RESIGN)  return "resign";
+
 		return std::string() + char(y + 'a') + to_str(x + 1);
 	}
 

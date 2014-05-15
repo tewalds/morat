@@ -29,7 +29,7 @@ void SolverAB::solve(double time){
 			nodes_seen++;
 
 			Board next = rootboard;
-			next.move(*move, true, false);
+			next.move(*move);
 
 			int value = -negamax(next, maxdepth - 1, -beta, -alpha);
 
@@ -83,7 +83,7 @@ int SolverAB::negamax(const Board & board, const int depth, int alpha, int beta)
 				losses++;
 		}else{
 			Board next = board;
-			next.move(*move, true, false);
+			next.move(*move);
 
 			value = -negamax(next, depth - 1, -b, -alpha);
 

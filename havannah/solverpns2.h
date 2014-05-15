@@ -217,7 +217,7 @@ public:
 	void move(const Move & m){
 		stop_threads();
 
-		rootboard.move(m, true, true);
+		rootboard.move(m);
 		reset();
 
 

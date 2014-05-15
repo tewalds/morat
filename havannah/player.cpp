@@ -296,7 +296,7 @@ void Player::move(const Move & m){
 	}
 	assert(nodes == root.size());
 
-	rootboard.move(m, true, true);
+	rootboard.move(m);
 
 	root.exp.addwins(visitexpand+1); //+1 to compensate for the virtual loss
 	if(rootboard.won() < 0)

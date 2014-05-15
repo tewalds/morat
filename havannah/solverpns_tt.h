@@ -96,7 +96,7 @@ public:
 			clear_mem();
 	}
 	void move(const Move & m){
-		rootboard.move(m, true, true);
+		rootboard.move(m);
 		reset();
 	}
 	void set_memlimit(uint64_t lim){

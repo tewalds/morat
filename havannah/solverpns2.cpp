@@ -199,7 +199,7 @@ bool SolverPNS2::SolverThread::pns(const Board & board, PNSNode * node, int dept
 
 			if(solver->ab){
 				Board next = board;
-				next.move(*move, false, false);
+				next.move(*move);
 
 				pd = 0;
 				outcome = (solver->ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
@@ -255,7 +255,7 @@ bool SolverPNS2::SolverThread::pns(const Board & board, PNSNode * node, int dept
 		}
 
 		Board next = board;
-		next.move(child->move, false, false);
+		next.move(child->move);
 
 		child->ref();
 		uint64_t itersbefore = iters;
