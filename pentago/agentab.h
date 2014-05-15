@@ -50,7 +50,7 @@ public:
 	XORShift_uint32 rand;
 	int randomness;
 
-	AgentAB() : rand(std::rand()) {
+	AgentAB() {
 		maxdepth = 0;
 		nodes_seen = 0;
 		time_used = 0;
