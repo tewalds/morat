@@ -244,8 +244,9 @@ public:
 	bool valid_move_fast(const Move & m)      const { return !get(m); }
 	bool valid_move_fast(const MoveValid & m) const { return !get(m.xy); }
 	//checks array bounds too
-	bool valid_move(int x, int y)   const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
-	bool valid_move(const Move & m) const { return (outcome == -3 && onboard(m) && !get(m)); }
+	bool valid_move(int x, int y)        const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
+	bool valid_move(const Move & m)      const { return (outcome == -3 && onboard(m) && !get(m)); }
+	bool valid_move(const MoveValid & m) const { return (outcome == -3 && m.onboard() && !get(m)); }
 
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }

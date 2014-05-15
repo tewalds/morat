@@ -18,6 +18,7 @@
 #include "board.h"
 #include "lbdist.h"
 #include "move.h"
+#include "movelist.h"
 #include "policy_bridge.h"
 #include "policy_instantwin.h"
 #include "policy_lastgoodreply.h"

@@ -3,9 +3,9 @@
 
 //A single-threaded, transposition table based, proof number search solver.
 
-#include "solver.h"
 #include "../lib/zobrist.h"
 
+#include "solver.h"
 
 class SolverPNSTT : public Solver {
 	static const uint32_t LOSS  = (1<<30)-1;
