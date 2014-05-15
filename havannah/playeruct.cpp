@@ -510,7 +510,7 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 	//update the last good reply table
 	if(player->lastgoodreply && won > 0){
-		MoveList::RaveMove * rave = movelist.begin(), *raveend = movelist.end();
+		MovePlayer * rave = movelist.begin(), *raveend = movelist.end();
 
 		int m = -1;
 		while(rave != raveend){
