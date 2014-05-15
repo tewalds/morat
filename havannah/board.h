@@ -55,6 +55,9 @@ public:
 	static const int min_size = 3;
 	static const int max_size = 10;
 
+	static const int pattern_cells = 18;
+	typedef uint64_t Pattern;
+
 	struct Cell {
 		uint8_t piece;  //who controls this cell, 0 for none, 1,2 for players
 		uint8_t size;   //size of this group of cells
@@ -63,11 +66,11 @@ mutable uint16_t parent; //parent for this group of cells
 		uint8_t edge;   //which edges are this group connected to
 mutable uint8_t mark;   //when doing a ring search, has this position been seen?
 		unsigned perm : 4;   //is this a permanent piece or a randomly placed piece?
-		unsigned local: 4;  //0 for far, 1 for distance 2, 2 for virtual connection, 3 for neighbour
+		Pattern  pattern: 36; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
 
-		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), mark(0), perm(0), local(0) { }
-		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, unsigned int l) :
-			piece(p), size(s), parent(a), corner(c), edge(e), mark(0), perm(0), local(l) { }
+		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), mark(0), perm(0), pattern(0) { }
+		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, Pattern t) :
+			piece(p), size(s), parent(a), corner(c), edge(e), mark(0), perm(0), pattern(t) { }
 
 		int numcorners() const { return BitsSetTable64[corner]; }
 		int numedges()   const { return BitsSetTable64[edge];   }
@@ -79,7 +82,8 @@ mutable uint8_t mark;   //when doing a ring search, has this position been seen?
 				", parent: " + to_str((int)parent) +
 				", corner: " + to_str((int)corner) + "/" + to_str(numcorners()) +
 				", edge: " + to_str((int)edge) + "/" + to_str(numedges()) +
-				", perm: " + to_str((int)perm);
+				", perm: " + to_str((int)perm) +
+				", pattern: " + to_str((int)pattern);
 		}
 	};
 
@@ -178,8 +182,14 @@ public:
 
 		for(int y = 0; y < size_d; y++){
 			for(int x = 0; x < size_d; x++){
-				int i = xy(x, y);
-				cells[i] = Cell(0, i, 1, (1 << iscorner(x, y)), (1 << isedge(x, y)), 0);
+				int posxy = xy(x, y);
+				Pattern p = 0, j = 3;
+				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
+					if(!i->onboard())
+						p |= j;
+					j <<= 2;
+				}
+				cells[posxy] = Cell(0, posxy, 1, (1 << iscorner(x, y)), (1 << isedge(x, y)), pattern_reverse(p));
 			}
 		}
 	}
@@ -220,8 +230,12 @@ public:
 
 	int local(const Move & m, char turn) const { return local(xy(m), turn); }
 	int local(int i,          char turn) const {
-		char localshift = (turn & 2); //0 for p1, 2 for p2
-		return ((cells[i].local >> localshift) & 3);
+		Pattern p = pattern(i);
+		Pattern x = ((p & 0xAAAAAAAAAull) >> 1) ^ (p & 0x555555555ull); // p1 is now when p1 or p2 but not both (ie off the board)
+		p = x & (turn == 1 ? p : p >> 1); // now just the selected player
+		return (p & 0x000000FFF ? 3 : 0) |
+		       (p & 0x000FFF000 ? 2 : 0) |
+		       (p & 0xFFF000000 ? 1 : 0);
 	}
 
 
@@ -754,34 +768,54 @@ public:
 		return m;
 	}
 
-	unsigned int sympattern(const Move & pos) const { return sympattern(xy(pos)); }
-	unsigned int sympattern(int posxy)        const { return pattern_symmetry(pattern(posxy)); }
+	Pattern sympattern(const MoveValid & pos) const { return sympattern(pos.xy); }
+	Pattern sympattern(const Move & pos)      const { return sympattern(xy(pos)); }
+	Pattern sympattern(int posxy)             const { return pattern_symmetry(pattern(posxy)); }
 
-	unsigned int pattern(const Move & pos) const { return pattern(xy(pos)); }
-	unsigned int pattern(int posxy)        const {
-		unsigned int p = 0;
-		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
-			p <<= 2;
-			if(i->onboard())
-				p |= cells[i->xy].piece;
-			else
-				p |= 3;
-		}
-		return p;
+	Pattern pattern(const MoveValid & pos) const { return pattern(pos.xy); }
+	Pattern pattern(const Move & pos)      const { return pattern(xy(pos)); }
+	Pattern pattern(int posxy)             const {
+		// this is from the opposite perspective
+		// so rotate into this move's perspective
+		return pattern_reverse(cells[posxy].pattern);
 	}
 
-	static unsigned int pattern_invert(unsigned int p){ //switch players
-		return ((p & 0xAAA) >> 1) | ((p & 0x555) << 1);
+	Pattern pattern_medium(const MoveValid & pos) const { return pattern_medium(pos.xy); }
+	Pattern pattern_medium(const Move & pos)      const { return pattern_medium(xy(pos)); }
+	Pattern pattern_medium(int posxy)             const {
+		return pattern(posxy) & ((1ull << 24) - 1);
 	}
-	static unsigned int pattern_rotate(unsigned int p){
-		return (((p & 3) << 10) | (p >> 2));
+
+	Pattern pattern_small(const MoveValid & pos) const { return pattern_small(pos.xy); }
+	Pattern pattern_small(const Move & pos)      const { return pattern_small(xy(pos)); }
+	Pattern pattern_small(int posxy)             const {
+		return pattern(posxy) & ((1ull << 12) - 1);
 	}
-	static unsigned int pattern_mirror(unsigned int p){
-		//012345 -> 054321, mirrors along the 0,3 axis to move fewer bits
-		return (p & ((3 << 10) | (3 << 4))) | ((p & (3 << 8)) >> 8) | ((p & (3 << 6)) >> 4) | ((p & (3 << 2)) << 4) | ((p & (3 << 0)) << 8);
+
+	static Pattern pattern_reverse(Pattern p) { // switch perspectives (position out, or position in)
+		return (((p & 0x03F03F03Full) << 6) | ((p & 0xFC0FC0FC0ull) >> 6));
 	}
-	static unsigned int pattern_symmetry(unsigned int p){ //takes a pattern and returns the representative version
-		unsigned int m = p;                 //012345
+
+	static Pattern pattern_invert(Pattern p){ //switch players
+		return ((p & 0xAAAAAAAAAull) >> 1) | ((p & 0x555555555ull) << 1);
+	}
+	static Pattern pattern_rotate(Pattern p){
+		return (((p & 0x003003003ull) << 10) | ((p & 0xFFCFFCFFCull) >> 2));
+	}
+	static Pattern pattern_mirror(Pattern p){
+		// HGFEDC BA9876 543210 -> DEFGHC 6789AB 123450
+		return ((p & (3ull <<  6))      ) | ((p & (3ull <<  0))     ) | // 0,3 stay in place
+		       ((p & (3ull << 10)) >>  8) | ((p & (3ull <<  2)) << 8) | // 1,5 swap
+		       ((p & (3ull <<  8)) >>  4) | ((p & (3ull <<  4)) << 4) | // 2,4 swap
+		       ((p & (3ull << 22)) >> 10) | ((p & (3ull << 12)) <<10) | // 6,B swap
+		       ((p & (3ull << 20)) >>  6) | ((p & (3ull << 14)) << 6) | // 7,A swap
+		       ((p & (3ull << 18)) >>  2) | ((p & (3ull << 16)) << 2) | // 8,9 swap
+		       ((p & (3ull << 30))      ) | ((p & (3ull << 24))     ) | // F,C stay in place
+		       ((p & (3ull << 34)) >>  8) | ((p & (3ull << 26)) << 8) | // H,D swap
+		       ((p & (3ull << 32)) >>  4) | ((p & (3ull << 28)) << 4);  // G,E swap
+	}
+	static Pattern pattern_symmetry(Pattern p){ //takes a pattern and returns the representative version
+		Pattern m = p;                 //012345
 		m = min(m, (p = pattern_rotate(p)));//501234
 		m = min(m, (p = pattern_rotate(p)));//450123
 		m = min(m, (p = pattern_rotate(p)));//345012
@@ -796,39 +830,34 @@ public:
 		return m;
 	}
 
-	bool move(const Move & pos, bool checkwin = true, bool locality = false, bool permanent = true){
-		return move(MoveValid(pos, xy(pos)), checkwin, locality, permanent);
+	bool move(const Move & pos, bool checkwin = true, bool permanent = true){
+		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
-	bool move(const MoveValid & pos, bool checkwin = true, bool locality = false, bool permanent = true){
+	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true){
 		assert(outcome < 0);
 
 		if(!valid_move(pos))
 			return false;
 
 		char turn = toplay();
-		char localshift = (turn & 2); //0 for p1, 2 for p2
-
 		set(pos, permanent);
 
-		if(locality){
-			for(int i = 6; i < 18; i++){
-				MoveScore loc = neighbours[i] + pos;
-
-				if(onboard(loc))
-					cells[xy(loc)].local |= (loc.score << localshift);
+		// update the nearby patterns
+		Pattern p = turn;
+		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
+			if(i->onboard()){
+				cells[i->xy].pattern |= p;
 			}
+			p <<= 2;
 		}
 
-		bool islocal = (local(pos, turn) == 3);
+		// join the groups for win detection
 		bool alreadyjoined = false; //useful for finding rings
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end(i); i < e; i++){
-			if(i->onboard()){
-				cells[i->xy].local |= (3 << localshift);
-				if(islocal && turn == get(i->xy)){
-					alreadyjoined |= join_groups(pos.xy, i->xy);
-					i++; //skip the next one. If it is the same group,
-						 //it is already connected and forms a corner, which we can ignore
-				}
+			if(i->onboard() && turn == get(i->xy)){
+				alreadyjoined |= join_groups(pos.xy, i->xy);
+				i++; //skip the next one. If it is the same group,
+					 //it is already connected and forms a corner, which we can ignore
 			}
 		}
 

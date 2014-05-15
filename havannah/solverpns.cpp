@@ -91,7 +91,7 @@ bool SolverPNS::pns(const Board & board, PNSNode * node, int depth, uint32_t tp,
 
 			if(ab){
 				Board next = board;
-				next.move(*move, false, false);
+				next.move(*move);
 
 				pd = 0;
 				outcome = (ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
@@ -144,7 +144,7 @@ bool SolverPNS::pns(const Board & board, PNSNode * node, int depth, uint32_t tp,
 		}
 
 		Board next = board;
-		next.move(child->move, false, false);
+		next.move(child->move);
 
 		uint64_t itersbefore = iters;
 		mem = pns(next, child, depth + 1, tpc, tdc);

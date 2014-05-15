@@ -41,7 +41,7 @@ void Player::PlayerUCT::walk_tree(Board & board, Node * node, int depth){
 			if(child->outcome < 0){
 				movelist.addtree(child->move, toplay);
 
-				if(!board.move(child->move, (player->minimax == 0), (player->locality || player->weightedrandom) )){
+				if(!board.move(child->move)){
 					logerr("move failed: " + child->move.to_s() + "\n" + board.to_s(false));
 					assert(false && "move failed");
 				}
@@ -488,7 +488,7 @@ int Player::PlayerUCT::rollout(Board & board, Move move, int depth){
 
 		movelist.addrollout(move, turn);
 
-		board.move(move, true, false, false );
+		board.move(move, true, false);
 		depth++;
 
 		if(wrand){
