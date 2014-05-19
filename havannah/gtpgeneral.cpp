@@ -2,7 +2,27 @@
 #include "gtp.h"
 #include "lbdist.h"
 
+GTPResponse GTP::gtp_mcts(vecstr args){
+	delete agent;
+	agent = new AgentMCTS();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
 
+GTPResponse GTP::gtp_pns(vecstr args){
+	delete agent;
+	agent = new AgentPNS();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
+/*
+GTPResponse GTP::gtp_ab(vecstr args){
+	delete agent;
+	agent = new AgentAB();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
+*/
 GTPResponse GTP::gtp_print(vecstr args){
 	Board board = *hist;
 	for(auto arg : args)

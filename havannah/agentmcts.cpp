@@ -7,12 +7,12 @@
 #include "../lib/string.h"
 #include "../lib/time.h"
 
+#include "agentmcts.h"
 #include "board.h"
-#include "player.h"
 
-const float Player::min_rave = 0.1;
+const float AgentMCTS::min_rave = 0.1;
 
-void Player::PlayerThread::run(){
+void AgentMCTS::MCTSThread::run(){
 	while(true){
 		switch(player->threadstate){
 		case Thread_Cancelled:  //threads should exit
@@ -73,12 +73,11 @@ void Player::PlayerThread::run(){
 	}
 }
 
-Player::Node * Player::genmove(double time, int max_runs, bool flexible){
-	time_used = 0;
+void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	int toplay = rootboard.toplay();
 
 	if(rootboard.won() >= 0 || (time <= 0 && max_runs == 0))
-		return NULL;
+		return;
 
 	Time starttime;
 
@@ -92,36 +91,95 @@ Player::Node * Player::genmove(double time, int max_runs, bool flexible){
 	for(unsigned int i = 0; i < threads.size(); i++)
 		threads[i]->reset();
 
-	// if the move is forced and the time can be added to the clock, don't bother running at all
-	if(!flexible || root.children.num() != 1){
-		//let them run!
-		start_threads();
 
-		Alarm timer;
-		if(time > 0)
-			timer(time - (Time() - starttime), std::bind(&Player::timedout, this));
+	//let them run!
+	start_threads();
 
-		//wait for the timer to stop them
-		runbarrier.wait();
-		CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
-		assert(threadstate == Thread_Wait_Start);
+	Alarm timer;
+	if(time > 0)
+		timer(time - (Time() - starttime), std::bind(&AgentMCTS::timedout, this));
+
+	//wait for the timer to stop them
+	runbarrier.wait();
+	CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
+	assert(threadstate == Thread_Wait_Start);
+
+	double time_used = Time() - starttime;
+
+
+	if(verbose){
+		DepthStats gamelen, treelen;
+		DepthStats wintypes[2][4];
+		uint64_t games = 0;
+		double times[4] = {0,0,0,0};
+		for(auto & t : threads){
+			gamelen += t->gamelen;
+			treelen += t->treelen;
+
+			for(int a = 0; a < 2; a++){
+				for(int b = 0; b < 4; b++){
+					wintypes[a][b] += t->wintypes[a][b];
+					games += t->wintypes[a][b].num;
+				}
+			}
+
+			for(int a = 0; a < 4; a++)
+				times[a] += t->times[a];
+		}
+
+		logerr("Finished:    " + to_str(runs) + " runs in " + to_str(time_used*1000, 0) + " msec: " + to_str(runs/time_used, 0) + " Games/s\n");
+		if(runs > 0){
+			logerr("Game length: " + gamelen.to_s() + "\n");
+			logerr("Tree depth:  " + treelen.to_s() + "\n");
+			if(profile)
+				logerr("Times:       " + to_str(times[0], 3) + ", " + to_str(times[1], 3) + ", " + to_str(times[2], 3) + ", " + to_str(times[3], 3) + "\n");
+
+			logerr("Win Types:   ");
+			logerr("W: f " + to_str(wintypes[0][1].num*100.0/games,0) + "%, b " + to_str(wintypes[0][2].num*100.0/games,0) + "%, r " + to_str(wintypes[0][3].num*100.0/games,0) + "%; ");
+			logerr("B: f " + to_str(wintypes[1][1].num*100.0/games,0) + "%, b " + to_str(wintypes[1][2].num*100.0/games,0) + "%, r " + to_str(wintypes[1][3].num*100.0/games,0) + "%\n");
+
+			if(verbose >= 2){
+				logerr("  W fork:    " + wintypes[0][1].to_s() + "\n");
+				logerr("  W bridge:  " + wintypes[0][2].to_s() + "\n");
+				logerr("  W ring:    " + wintypes[0][3].to_s() + "\n");
+				logerr("  B fork:    " + wintypes[1][1].to_s() + "\n");
+				logerr("  B bridge:  " + wintypes[1][2].to_s() + "\n");
+				logerr("  B ring:    " + wintypes[1][3].to_s() + "\n");
+			}
+		}
+
+		if(root.outcome != -3){
+			logerr("Solved as a ");
+			if(     root.outcome == 0)        logerr("draw\n");
+			else if(root.outcome == 3)        logerr("draw by simultaneous win\n");
+			else if(root.outcome == toplay)   logerr("win\n");
+			else if(root.outcome == 3-toplay) logerr("loss\n");
+			else if(root.outcome == -toplay)  logerr("win or draw\n");
+			else if(root.outcome == toplay-3) logerr("loss or draw\n");
+		}
+
+		string pvstr;
+		for(auto m : get_pv())
+			pvstr += " " + m.to_s();
+		logerr("PV:         " + pvstr + "\n");
+
+		if(verbose >= 3 && !root.children.empty())
+			logerr("Move stats:\n" + move_stats(vector<Move>()));
 	}
+
+	for(unsigned int i = 0; i < threads.size(); i++)
+		threads[i]->reset();
+	runs = 0;
+
 
 	if(ponder && root.outcome < 0)
 		start_threads();
-
-	time_used = Time() - starttime;
-
-//return the best one
-	return return_move(& root, toplay);
 }
 
-
-
-Player::Player() {
+AgentMCTS::AgentMCTS() {
 	nodes = 0;
+	runs = 0;
 	gclimit = 5;
-	time_used = 0;
 
 	profile     = false;
 	ponder      = false;
@@ -172,7 +230,7 @@ Player::Player() {
 	//no threads started until a board is set
 	threadstate = Thread_Wait_Start;
 }
-Player::~Player(){
+AgentMCTS::~AgentMCTS(){
 	stop_threads();
 
 	numthreads = 0;
@@ -181,12 +239,12 @@ Player::~Player(){
 	root.dealloc(ctmem);
 	ctmem.compact();
 }
-void Player::timedout() {
+void AgentMCTS::timedout() {
 	CAS(threadstate, Thread_Running, Thread_Wait_End);
 	CAS(threadstate, Thread_GC, Thread_GC_End);
 }
 
-string Player::statestring(){
+string AgentMCTS::statestring(){
 	switch(threadstate){
 	case Thread_Cancelled:  return "Thread_Wait_Cancelled";
 	case Thread_Wait_Start: return "Thread_Wait_Start";
@@ -199,7 +257,7 @@ string Player::statestring(){
 	return "Thread_State_Unknown!!!";
 }
 
-void Player::stop_threads(){
+void AgentMCTS::stop_threads(){
 	if(threadstate != Thread_Wait_Start){
 		timedout();
 		runbarrier.wait();
@@ -208,13 +266,13 @@ void Player::stop_threads(){
 	}
 }
 
-void Player::start_threads(){
+void AgentMCTS::start_threads(){
 	assert(threadstate == Thread_Wait_Start);
 	runbarrier.wait();
 	CAS(threadstate, Thread_Wait_Start, Thread_Running);
 }
 
-void Player::reset_threads(){ //start and end with threadstate = Thread_Wait_Start
+void AgentMCTS::reset_threads(){ //start and end with threadstate = Thread_Wait_Start
 	assert(threadstate == Thread_Wait_Start);
 
 //wait for them to all get to the barrier
@@ -236,10 +294,10 @@ void Player::reset_threads(){ //start and end with threadstate = Thread_Wait_Sta
 
 //start new threads
 	for(int i = 0; i < numthreads; i++)
-		threads.push_back(new PlayerUCT(this));
+		threads.push_back(new MCTSThread(this));
 }
 
-void Player::set_ponder(bool p){
+void AgentMCTS::set_ponder(bool p){
 	if(ponder != p){
 		ponder = p;
 		stop_threads();
@@ -249,7 +307,7 @@ void Player::set_ponder(bool p){
 	}
 }
 
-void Player::set_board(const Board & board){
+void AgentMCTS::set_board(const Board & board, bool clear){
 	stop_threads();
 
 	nodes -= root.dealloc(ctmem);
@@ -263,7 +321,7 @@ void Player::set_board(const Board & board){
 	if(ponder)
 		start_threads();
 }
-void Player::move(const Move & m){
+void AgentMCTS::move(const Move & m){
 	stop_threads();
 
 	uword nodesbefore = nodes;
@@ -302,24 +360,23 @@ void Player::move(const Move & m){
 		start_threads();
 }
 
-double Player::gamelen(){
+double AgentMCTS::gamelen() const {
 	DepthStats len;
 	for(unsigned int i = 0; i < threads.size(); i++)
 		len += threads[i]->gamelen;
 	return len.avg();
 }
 
-vector<Move> Player::get_pv(){
+vector<Move> AgentMCTS::get_pv() const {
 	vector<Move> pv;
 
-	Node * r, * n = & root;
+	const Node * n = & root;
 	char turn = rootboard.toplay();
-	while(!n->children.empty()){
-		r = return_move(n, turn);
-		if(!r) break;
-		pv.push_back(r->move);
+	while(n && !n->children.empty()){
+		Move m = return_move(n, turn);
+		pv.push_back(m);
+		n = find_child(n, m);
 		turn = 3 - turn;
-		n = r;
 	}
 
 	if(pv.size() == 0)
@@ -328,7 +385,32 @@ vector<Move> Player::get_pv(){
 	return pv;
 }
 
-Player::Node * Player::return_move(Node * node, int toplay) const {
+string AgentMCTS::move_stats(vector<Move> moves) const {
+	string s = "";
+	const Node * node = & root;
+
+	if(moves.size()){
+		s += "path:\n";
+		for(auto m : moves){
+			if(node){
+				node = find_child(node, m);
+				s += node->to_s() + "\n";
+			}
+		}
+	}
+
+	if(node){
+		s += "children:\n";
+		for(auto & n : node->children)
+			s += n.to_s() + "\n";
+	}
+	return s;
+}
+
+Move AgentMCTS::return_move(const Node * node, int toplay, int verbose) const {
+	if(node->outcome >= 0)
+		return node->bestmove;
+
 	double val, maxval = -1000000000000.0; //1 trillion
 
 	Node * ret = NULL,
@@ -355,23 +437,15 @@ Player::Node * Player::return_move(Node * node, int toplay) const {
 		}
 	}
 
-//set bestmove, but don't touch outcome, if it's solved that will already be set, otherwise it shouldn't be set
-	if(ret){
-		node->bestmove = ret->move;
-	}else if(node->bestmove == M_UNKNOWN){
-		// TODO: Is this needed?
-//		SolverAB solver;
-//		solver.set_board(rootboard);
-//		solver.solve(0.1);
-//		node->bestmove = solver.bestmove;
-	}
+	assert(ret);
 
-	assert(node->bestmove != M_UNKNOWN);
+	if(verbose)
+		logerr("Score:       " + to_str(ret->exp.avg()*100., 2) + "% / " + to_str(ret->exp.num()) + "\n");
 
-	return ret;
+	return ret->move;
 }
 
-void Player::garbage_collect(Board & board, Node * node){
+void AgentMCTS::garbage_collect(Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
@@ -391,7 +465,7 @@ void Player::garbage_collect(Board & board, Node * node){
 	}
 }
 
-Player::Node * Player::find_child(Node * node, const Move & move){
+AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) const {
 	for(Node * i = node->children.begin(); i != node->children.end(); i++)
 		if(i->move == move)
 			return i;
@@ -399,7 +473,7 @@ Player::Node * Player::find_child(Node * node, const Move & move){
 	return NULL;
 }
 
-void Player::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
+void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
 	string s = string("\n") + string(depth, ' ') + "(;" + (board.toplay() == 2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
 	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)(node->outcome)) + ", best:" + node->bestmove.to_s() + "]";
 	fprintf(fd, "%s", s.c_str());
@@ -424,7 +498,7 @@ void Player::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned in
 	fprintf(fd, ")");
 }
 
-void Player::create_children_simple(const Board & board, Node * node){
+void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
 
 	node->children.alloc(board.movesremain(), ctmem);
@@ -447,7 +521,7 @@ void Player::create_children_simple(const Board & board, Node * node){
 }
 
 //reads the format from gen_hgf.
-void Player::load_hgf(Board board, Node * node, FILE * fd){
+void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 	char c, buf[101];
 
 	eat_whitespace(fd);

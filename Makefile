@@ -29,15 +29,11 @@ all: castro moy pentagod
 
 castro: \
 		havannah/castro.o \
+		havannah/agentmcts.o \
+		havannah/agentmctsthread.o \
+		havannah/agentpns.o \
 		havannah/gtpgeneral.o \
-		havannah/gtpplayer.o \
-		havannah/gtpsolver.o \
-		havannah/solverab.o \
-		havannah/solverpns.o \
-		havannah/solverpns2.o \
-		havannah/solverpns_tt.o \
-		havannah/player.o \
-		havannah/playeruct.o \
+		havannah/gtpagent.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
 		lib/string.o \

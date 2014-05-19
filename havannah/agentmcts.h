@@ -15,6 +15,7 @@
 #include "../lib/types.h"
 #include "../lib/xorshift.h"
 
+#include "agent.h"
 #include "board.h"
 #include "lbdist.h"
 #include "move.h"
@@ -25,7 +26,7 @@
 #include "policy_random.h"
 
 
-class Player {
+class AgentMCTS : public Agent{
 public:
 
 	struct Node {
@@ -74,7 +75,7 @@ public:
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", rave " + to_str(rave.avg(), 2) + "/" + to_str(rave.num()) +
 					", know " + to_str(know) +
-					", outcome " + to_str(outcome) + "/" + to_str(proofdepth) +
+					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
 					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -137,27 +138,12 @@ public:
 		}
 	};
 
-	class PlayerThread {
-	protected:
-	public:
-		mutable XORShift_uint32 rand32;
+
+	class MCTSThread {
 		mutable XORShift_float unitrand;
 		Thread thread;
-		Player * player;
-	public:
-		DepthStats treelen, gamelen;
-		DepthStats wintypes[2][4]; //player,wintype
-		double times[4]; //time spent in each of the stages
+		AgentMCTS * player;
 
-		PlayerThread() {}
-		virtual ~PlayerThread() { }
-		virtual void reset() { }
-		int join(){ return thread.join(); }
-		void run(); //thread runner, calls iterate on each iteration
-		virtual void iterate() { } //handles each iteration
-	};
-
-	class PlayerUCT : public PlayerThread {
 		LastGoodReply last_good_reply;
 		RandomPolicy random_policy;
 		ProtectBridge protect_bridge;
@@ -166,16 +152,21 @@ public:
 		bool use_rave;    //whether to use rave for this simulation
 		bool use_explore; //whether to use exploration for this simulation
 		LBDists dists;    //holds the distances to the various non-ring wins as a heuristic for the minimum moves needed to win
+
 		MoveList movelist;
 		int stage; //which of the four MCTS stages is it on
-		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
 	public:
-		PlayerUCT(Player * p) : PlayerThread() {
-			player = p;
+		DepthStats treelen, gamelen;
+		DepthStats wintypes[2][4]; //player,wintype
+		double times[4]; //time spent in each of the stages
+		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
+
+		MCTSThread(AgentMCTS * p) : player(p) {
 			reset();
-			thread(bind(&PlayerUCT::run, this));
+			thread(bind(&MCTSThread::run, this));
 		}
+		~MCTSThread() { }
 
 		void reset(){
 			treelen.reset();
@@ -192,11 +183,14 @@ public:
 				times[a] = 0;
 		}
 
+		int join(){ return thread.join(); }
+
 	private:
-		void iterate();
+		void run(); //thread runner, calls iterate on each iteration
+		void iterate(); //handles each iteration
 		void walk_tree(Board & board, Node * node, int depth);
-		bool create_children(Board & board, Node * node, int toplay);
-		void add_knowledge(Board & board, Node * node, Node * child);
+		bool create_children(const Board & board, Node * node);
+		void add_knowledge(const Board & board, Node * node, Node * child);
 		Node * choose_move(const Node * node, int toplay, int remain) const;
 		void update_rave(const Node * node, int toplay);
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
@@ -238,6 +232,7 @@ public:
 	uint  visitexpand;//number of visits before expanding a node
 	bool  prunesymmetry; //prune symmetric children from the move list, useful for proving but likely not for playing
 	uint  gcsolved;   //garbage collect solved nodes or keep them in the tree, assuming they meet the required amount of work
+
 //knowledge
 	int   localreply; //boost for a local reply, ie a move near the previous move
 	int   locality;   //boost for playing near previous stones
@@ -274,15 +269,11 @@ public:
 		Thread_Wait_End,   //threads are waiting to end
 	};
 	volatile ThreadState threadstate;
-	vector<PlayerThread *> threads;
+	vector<MCTSThread *> threads;
 	Barrier runbarrier, gcbarrier;
 
-	double time_used;
-
-	Player();
-	~Player();
-
-	void timedout();
+	AgentMCTS();
+	~AgentMCTS();
 
 	string statestring();
 
@@ -290,24 +281,31 @@ public:
 	void start_threads();
 	void reset_threads();
 
+	void set_memlimit(uint64_t lim) { }; // in bytes
+	void clear_mem() { };
+
 	void set_ponder(bool p);
-	void set_board(const Board & board);
+	void set_board(const Board & board, bool clear = true);
 
 	void move(const Move & m);
 
-	double gamelen();
+	void search(double time, uint64_t maxruns, int verbose);
+	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
-	Node * genmove(double time, int max_runs, bool flexible);
-	vector<Move> get_pv();
+	double gamelen() const;
+	vector<Move> get_pv() const;
+	string move_stats(const vector<Move> moves) const;
+
+	void timedout();
+protected:
+
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-
 	bool do_backup(Node * node, Node * backup, int toplay);
+	Move return_move(const Node * node, int toplay, int verbose = 0) const;
 
-	Node * find_child(Node * node, const Move & move);
+	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);
 	void gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd);
 	void load_hgf(Board board, Node * node, FILE * fd);
 
-protected:
-	Node * return_move(Node * node, int toplay) const;
 };
