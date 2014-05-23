@@ -9,6 +9,28 @@
 #include "time.h"
 #include "types.h"
 
+/*
+This implements a thread pool for agents to use to be multithreaded.
+
+The Agent subclass must define a subclass of AgentThreadBase named AgentThread which
+implements AgentThread::iterate() , which gets called repeatedly. AgentThread can have
+whichever thread-local variables it wants and can access the base agent through
+the agent pointer.
+
+The Agent subclass must also define 3 methods:
+	bool done();
+	bool need_gc();
+	void start_gc();
+for telling the thread pool when it should stop the threads to garbage collect, to
+call garbage collection, and when the threads have no more work to do, potentially
+returning control to the caller of wait_pause()
+
+The threads run in separate threads, not including the main thread, allowing the main
+thread to go do something else, allowing pondering.
+
+The main thread and the worker threads are coordinated with a simple state machine and
+two barriers.
+*/
 
 enum ThreadState {
 	Thread_Cancelled,  //threads should exit
@@ -28,7 +50,8 @@ class AgentThreadPool {
 	volatile ThreadState thread_state;
 	unsigned int num_threads;
 	std::vector<typename AgentType::AgentThread *> threads;
-	Barrier run_barrier, gc_barrier;
+	Barrier run_barrier, // coordinates starting and finishing
+	        gc_barrier;  // coordinates garbage collection
 	AgentType * agent;
 
 public:
