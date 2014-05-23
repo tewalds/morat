@@ -575,15 +575,17 @@ public:
 		return m;
 	}
 
-	bool move(const Move & pos){ return move(MoveValid(pos, xy(pos))); }
-	bool move(const MoveValid & pos){
+	bool move(const Move & pos, bool checkwin = true, bool permanent = true){
+		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
+	}
+	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true){
 		assert(outcome < 0);
 
 		if(!valid_move(pos))
 			return false;
 
 		char turn = toplay();
-		set(pos);
+		set(pos, permanent);
 
 		// update the nearby patterns
 		Pattern p = turn;

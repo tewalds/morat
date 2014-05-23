@@ -60,15 +60,11 @@ pentagod: \
 
 moy: \
 		y/moy.o \
+		y/agentmcts.o \
+		y/agentmctsthread.o \
+		y/agentpns.o \
+		y/gtpagent.o \
 		y/gtpgeneral.o \
-		y/gtpplayer.o \
-		y/gtpsolver.o \
-		y/solverab.o \
-		y/solverpns.o \
-		y/solverpns2.o \
-		y/solverpns_tt.o \
-		y/player.o \
-		y/playeruct.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
 		lib/string.o \

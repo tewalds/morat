@@ -119,7 +119,7 @@ public:
 		assert(thread_state == Thread_Wait_Start);
 	}
 
-	void set_num_threads(int new_num_threads) { // destroys the existing threads and creates the specified number of new ones
+	void set_num_threads(unsigned int new_num_threads) { // destroys the existing threads and creates the specified number of new ones
 		//start and end with thread_state = Thread_Wait_Start
 		assert(thread_state == Thread_Wait_Start);
 
@@ -143,7 +143,7 @@ public:
 		gc_barrier.reset(num_threads);
 
 		//start new threads
-		for(int i = 0; i < num_threads; i++)
+		for(unsigned int i = 0; i < num_threads; i++)
 			threads.push_back(new typename AgentType::AgentThread(this, agent));
 
 		assert(thread_state == Thread_Wait_Start);
