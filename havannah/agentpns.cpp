@@ -13,22 +13,18 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 
 	Time starttime;
 
-	start_threads();
+	pool.reset();
+	pool.resume();
 
-	timeout = false;
-	Alarm timer(time, std::bind(&AgentPNS::timedout, this));
+	pool.wait_pause(time);
 
-	//wait for the timer to stop them
-	runbarrier.wait();
-	CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
-	assert(threadstate == Thread_Wait_Start);
 
 	double time_used = Time() - starttime;
 
 
 	if(verbose){
 		DepthStats treelen;
-		for(auto & t : threads)
+		for(auto & t : pool)
 			treelen += t->treelen;
 
 		logerr("Finished:    " + to_str(nodes_seen) + " nodes created in " + to_str(time_used*1000, 0) + " msec: " + to_str(nodes_seen/time_used, 0) + " Nodes/s\n");
@@ -58,131 +54,13 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 		if(verbose >= 3 && !root.children.empty())
 			logerr("Move stats:\n" + move_stats(vector<Move>()));
 	}
-
-
 }
 
-void AgentPNS::PNSThread::run(){
-	while(true){
-		switch(agent->threadstate){
-		case Thread_Cancelled:  //threads should exit
-			return;
-
-		case Thread_Wait_Start: //threads are waiting to start
-		case Thread_Wait_Start_Cancelled:
-			agent->runbarrier.wait();
-			CAS(agent->threadstate, Thread_Wait_Start, Thread_Running);
-			CAS(agent->threadstate, Thread_Wait_Start_Cancelled, Thread_Cancelled);
-			break;
-
-		case Thread_Wait_End:   //threads are waiting to end
-			agent->runbarrier.wait();
-			CAS(agent->threadstate, Thread_Wait_End, Thread_Wait_Start);
-			break;
-
-		case Thread_Running:    //threads are running
-			if(agent->root.terminal()){ //solved
-				CAS(agent->threadstate, Thread_Running, Thread_Wait_End);
-				break;
-			}
-			if(agent->ctmem.memalloced() >= agent->memlimit){ //out of memory, start garbage collection
-				CAS(agent->threadstate, Thread_Running, Thread_GC);
-				break;
-			}
-
-			pns(agent->rootboard, &agent->root, 0, INF32/2, INF32/2);
-			break;
-
-		case Thread_GC:         //one thread is running garbage collection, the rest are waiting
-		case Thread_GC_End:     //once done garbage collecting, go to wait_end instead of back to running
-			if(agent->gcbarrier.wait()){
-				logerr("Starting GC with limit " + to_str(agent->gclimit) + " ... ");
-
-				Time starttime;
-				agent->garbage_collect(& agent->root);
-
-				Time gctime;
-				agent->ctmem.compact(1.0, 0.75);
-
-				Time compacttime;
-				logerr(to_str(100.0*agent->ctmem.meminuse()/agent->memlimit, 1) + " % of tree remains - " +
-					to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
-
-				if(agent->ctmem.meminuse() >= agent->memlimit/2)
-					agent->gclimit = (unsigned int)(agent->gclimit*1.3);
-				else if(agent->gclimit > 5)
-					agent->gclimit = (unsigned int)(agent->gclimit*0.9); //slowly decay to a minimum of 5
-
-				CAS(agent->threadstate, Thread_GC,     Thread_Running);
-				CAS(agent->threadstate, Thread_GC_End, Thread_Wait_End);
-			}
-			agent->gcbarrier.wait();
-			break;
-		}
-	}
+void AgentPNS::AgentThread::iterate(){
+	pns(agent->rootboard, &agent->root, 0, INF32/2, INF32/2);
 }
 
-void AgentPNS::timedout() {
-	CAS(threadstate, Thread_Running, Thread_Wait_End);
-	CAS(threadstate, Thread_GC, Thread_GC_End);
-	timeout = true;
-}
-
-string AgentPNS::statestring(){
-	switch(threadstate){
-	case Thread_Cancelled:  return "Thread_Wait_Cancelled";
-	case Thread_Wait_Start: return "Thread_Wait_Start";
-	case Thread_Wait_Start_Cancelled: return "Thread_Wait_Start_Cancelled";
-	case Thread_Running:    return "Thread_Running";
-	case Thread_GC:         return "Thread_GC";
-	case Thread_GC_End:     return "Thread_GC_End";
-	case Thread_Wait_End:   return "Thread_Wait_End";
-	}
-	return "Thread_State_Unknown!!!";
-}
-
-void AgentPNS::stop_threads(){
-	if(threadstate != Thread_Wait_Start){
-		timedout();
-		runbarrier.wait();
-		CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
-		assert(threadstate == Thread_Wait_Start);
-	}
-}
-
-void AgentPNS::start_threads(){
-	assert(threadstate == Thread_Wait_Start);
-	runbarrier.wait();
-	CAS(threadstate, Thread_Wait_Start, Thread_Running);
-}
-
-void AgentPNS::reset_threads(){ //start and end with threadstate = Thread_Wait_Start
-	assert(threadstate == Thread_Wait_Start);
-
-//wait for them to all get to the barrier
-	assert(CAS(threadstate, Thread_Wait_Start, Thread_Wait_Start_Cancelled));
-	runbarrier.wait();
-
-//make sure they exited cleanly
-	for(unsigned int i = 0; i < threads.size(); i++){
-		threads[i]->join();
-		delete threads[i];
-	}
-
-	threads.clear();
-
-	threadstate = Thread_Wait_Start;
-
-	runbarrier.reset(numthreads + 1);
-	gcbarrier.reset(numthreads);
-
-//start new threads
-	for(int i = 0; i < numthreads; i++)
-		threads.push_back(new PNSThread(this));
-}
-
-
-bool AgentPNS::PNSThread::pns(const Board & board, Node * node, int depth, uint32_t tp, uint32_t td){
+bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uint32_t tp, uint32_t td){
 	// no children, create them
 	if(node->children.empty()){
 		treelen.add(depth);
@@ -190,7 +68,7 @@ bool AgentPNS::PNSThread::pns(const Board & board, Node * node, int depth, uint3
 		if(node->terminal())
 			return true;
 
-		if(agent->ctmem.memalloced() >= agent->memlimit)
+		if(agent->need_gc())
 			return false;
 
 		if(!node->children.lock())
@@ -280,7 +158,7 @@ bool AgentPNS::PNSThread::pns(const Board & board, Node * node, int depth, uint3
 	return mem;
 }
 
-bool AgentPNS::PNSThread::updatePDnum(Node * node){
+bool AgentPNS::AgentThread::updatePDnum(Node * node){
 	Node * i = node->children.begin();
 	Node * end = node->children.end();
 

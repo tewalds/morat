@@ -12,67 +12,6 @@
 
 const float AgentMCTS::min_rave = 0.1;
 
-void AgentMCTS::MCTSThread::run(){
-	while(true){
-		switch(player->threadstate){
-		case Thread_Cancelled:  //threads should exit
-			return;
-
-		case Thread_Wait_Start: //threads are waiting to start
-		case Thread_Wait_Start_Cancelled:
-			player->runbarrier.wait();
-			CAS(player->threadstate, Thread_Wait_Start, Thread_Running);
-			CAS(player->threadstate, Thread_Wait_Start_Cancelled, Thread_Cancelled);
-			break;
-
-		case Thread_Wait_End:   //threads are waiting to end
-			player->runbarrier.wait();
-			CAS(player->threadstate, Thread_Wait_End, Thread_Wait_Start);
-			break;
-
-		case Thread_Running:    //threads are running
-			if(player->rootboard.won() >= 0 || player->root.outcome >= 0 || (player->maxruns > 0 && player->runs >= player->maxruns)){ //solved or finished runs
-				if(CAS(player->threadstate, Thread_Running, Thread_Wait_End) && player->root.outcome >= 0)
-					logerr("Solved as " + to_str((int)player->root.outcome) + "\n");
-				break;
-			}
-			if(player->ctmem.memalloced() >= player->maxmem){ //out of memory, start garbage collection
-				CAS(player->threadstate, Thread_Running, Thread_GC);
-				break;
-			}
-
-			INCR(player->runs);
-			iterate();
-			break;
-
-		case Thread_GC:         //one thread is running garbage collection, the rest are waiting
-		case Thread_GC_End:     //once done garbage collecting, go to wait_end instead of back to running
-			if(player->gcbarrier.wait()){
-				Time starttime;
-				logerr("Starting player GC with limit " + to_str(player->gclimit) + " ... ");
-				uint64_t nodesbefore = player->nodes;
-				Board copy = player->rootboard;
-				player->garbage_collect(copy, & player->root);
-				Time gctime;
-				player->ctmem.compact(1.0, 0.75);
-				Time compacttime;
-				logerr(to_str(100.0*player->nodes/nodesbefore, 1) + " % of tree remains - " +
-					to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
-
-				if(player->ctmem.meminuse() >= player->maxmem/2)
-					player->gclimit = (int)(player->gclimit*1.3);
-				else if(player->gclimit > player->rollouts*5)
-					player->gclimit = (int)(player->gclimit*0.9); //slowly decay to a minimum of 5
-
-				CAS(player->threadstate, Thread_GC,     Thread_Running);
-				CAS(player->threadstate, Thread_GC_End, Thread_Wait_End);
-			}
-			player->gcbarrier.wait();
-			break;
-		}
-	}
-}
-
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	int toplay = rootboard.toplay();
 
@@ -81,28 +20,19 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 
 	Time starttime;
 
-	stop_threads();
+	pool.pause();
 
 	if(runs)
 		logerr("Pondered " + to_str(runs) + " runs\n");
 
 	runs = 0;
 	maxruns = max_runs;
-	for(unsigned int i = 0; i < threads.size(); i++)
-		threads[i]->reset();
-
+	pool.reset();
 
 	//let them run!
-	start_threads();
+	pool.resume();
 
-	Alarm timer;
-	if(time > 0)
-		timer(time - (Time() - starttime), std::bind(&AgentMCTS::timedout, this));
-
-	//wait for the timer to stop them
-	runbarrier.wait();
-	CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
-	assert(threadstate == Thread_Wait_Start);
+	pool.wait_pause(time);
 
 	double time_used = Time() - starttime;
 
@@ -112,7 +42,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		DepthStats wintypes[2][4];
 		uint64_t games = 0;
 		double times[4] = {0,0,0,0};
-		for(auto & t : threads){
+		for(auto & t : pool){
 			gamelen += t->gamelen;
 			treelen += t->treelen;
 
@@ -167,16 +97,15 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 			logerr("Move stats:\n" + move_stats(vector<Move>()));
 	}
 
-	for(unsigned int i = 0; i < threads.size(); i++)
-		threads[i]->reset();
+	pool.reset();
 	runs = 0;
 
 
 	if(ponder && root.outcome < 0)
-		start_threads();
+		pool.resume();
 }
 
-AgentMCTS::AgentMCTS() {
+AgentMCTS::AgentMCTS() : pool(this) {
 	nodes = 0;
 	runs = 0;
 	gclimit = 5;
@@ -185,6 +114,7 @@ AgentMCTS::AgentMCTS() {
 	ponder      = false;
 //#ifdef SINGLE_THREAD ... make sure only 1 thread
 	numthreads  = 1;
+	pool.set_num_threads(numthreads);
 	maxmem      = 1000*1024*1024;
 
 	msrave      = -2;
@@ -226,89 +156,27 @@ AgentMCTS::AgentMCTS() {
 
 	for(int i = 0; i < 4096; i++)
 		gammas[i] = 1;
-
-	//no threads started until a board is set
-	threadstate = Thread_Wait_Start;
 }
 AgentMCTS::~AgentMCTS(){
-	stop_threads();
-
-	numthreads = 0;
-	reset_threads(); //shut down the theads properly
+	pool.pause();
+	pool.set_num_threads(0);
 
 	root.dealloc(ctmem);
 	ctmem.compact();
-}
-void AgentMCTS::timedout() {
-	CAS(threadstate, Thread_Running, Thread_Wait_End);
-	CAS(threadstate, Thread_GC, Thread_GC_End);
-}
-
-string AgentMCTS::statestring(){
-	switch(threadstate){
-	case Thread_Cancelled:  return "Thread_Wait_Cancelled";
-	case Thread_Wait_Start: return "Thread_Wait_Start";
-	case Thread_Wait_Start_Cancelled: return "Thread_Wait_Start_Cancelled";
-	case Thread_Running:    return "Thread_Running";
-	case Thread_GC:         return "Thread_GC";
-	case Thread_GC_End:     return "Thread_GC_End";
-	case Thread_Wait_End:   return "Thread_Wait_End";
-	}
-	return "Thread_State_Unknown!!!";
-}
-
-void AgentMCTS::stop_threads(){
-	if(threadstate != Thread_Wait_Start){
-		timedout();
-		runbarrier.wait();
-		CAS(threadstate, Thread_Wait_End, Thread_Wait_Start);
-		assert(threadstate == Thread_Wait_Start);
-	}
-}
-
-void AgentMCTS::start_threads(){
-	assert(threadstate == Thread_Wait_Start);
-	runbarrier.wait();
-	CAS(threadstate, Thread_Wait_Start, Thread_Running);
-}
-
-void AgentMCTS::reset_threads(){ //start and end with threadstate = Thread_Wait_Start
-	assert(threadstate == Thread_Wait_Start);
-
-//wait for them to all get to the barrier
-	assert(CAS(threadstate, Thread_Wait_Start, Thread_Wait_Start_Cancelled));
-	runbarrier.wait();
-
-//make sure they exited cleanly
-	for(unsigned int i = 0; i < threads.size(); i++){
-		threads[i]->join();
-		delete threads[i];
-	}
-
-	threads.clear();
-
-	threadstate = Thread_Wait_Start;
-
-	runbarrier.reset(numthreads + 1);
-	gcbarrier.reset(numthreads);
-
-//start new threads
-	for(int i = 0; i < numthreads; i++)
-		threads.push_back(new MCTSThread(this));
 }
 
 void AgentMCTS::set_ponder(bool p){
 	if(ponder != p){
 		ponder = p;
-		stop_threads();
+		pool.pause();
 
 		if(ponder)
-			start_threads();
+			pool.resume();
 	}
 }
 
 void AgentMCTS::set_board(const Board & board, bool clear){
-	stop_threads();
+	pool.pause();
 
 	nodes -= root.dealloc(ctmem);
 	root = Node();
@@ -316,13 +184,11 @@ void AgentMCTS::set_board(const Board & board, bool clear){
 
 	rootboard = board;
 
-	reset_threads(); //needed since the threads aren't started before a board it set
-
 	if(ponder)
-		start_threads();
+		pool.resume();
 }
 void AgentMCTS::move(const Move & m){
-	stop_threads();
+	pool.pause();
 
 	uword nodesbefore = nodes;
 
@@ -357,13 +223,13 @@ void AgentMCTS::move(const Move & m){
 		root.outcome = -3;
 
 	if(ponder)
-		start_threads();
+		pool.resume();
 }
 
 double AgentMCTS::gamelen() const {
 	DepthStats len;
-	for(unsigned int i = 0; i < threads.size(); i++)
-		len += threads[i]->gamelen;
+	for(auto & t : pool)
+		len += t->gamelen;
 	return len.avg();
 }
 

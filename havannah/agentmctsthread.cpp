@@ -6,21 +6,22 @@
 
 #include "agentmcts.h"
 
-void AgentMCTS::MCTSThread::iterate(){
-	if(player->profile){
+void AgentMCTS::AgentThread::iterate(){
+	INCR(agent->runs);
+	if(agent->profile){
 		timestamps[0] = Time();
 		stage = 0;
 	}
 
-	movelist.reset(&(player->rootboard));
-	player->root.exp.addvloss();
-	Board copy = player->rootboard;
-	use_rave    = (unitrand() < player->userave);
-	use_explore = (unitrand() < player->useexplore);
-	walk_tree(copy, & player->root, 0);
-	player->root.exp.addv(movelist.getexp(3-player->rootboard.toplay()));
+	movelist.reset(&(agent->rootboard));
+	agent->root.exp.addvloss();
+	Board copy = agent->rootboard;
+	use_rave    = (unitrand() < agent->userave);
+	use_explore = (unitrand() < agent->useexplore);
+	walk_tree(copy, & agent->root, 0);
+	agent->root.exp.addv(movelist.getexp(3-agent->rootboard.toplay()));
 
-	if(player->profile){
+	if(agent->profile){
 		times[0] += timestamps[1] - timestamps[0];
 		times[1] += timestamps[2] - timestamps[1];
 		times[2] += timestamps[3] - timestamps[2];
@@ -28,7 +29,7 @@ void AgentMCTS::MCTSThread::iterate(){
 	}
 }
 
-void AgentMCTS::MCTSThread::walk_tree(Board & board, Node * node, int depth){
+void AgentMCTS::AgentThread::walk_tree(Board & board, Node * node, int depth){
 	int toplay = board.toplay();
 
 	if(!node->children.empty() && node->outcome < 0){
@@ -52,42 +53,42 @@ void AgentMCTS::MCTSThread::walk_tree(Board & board, Node * node, int depth){
 
 				child->exp.addv(movelist.getexp(toplay));
 
-				if(!player->do_backup(node, child, toplay) && //not solved
-					player->ravefactor > min_rave &&  //using rave
+				if(!agent->do_backup(node, child, toplay) && //not solved
+					agent->ravefactor > min_rave &&  //using rave
 					node->children.num() > 1 &&       //not a macro move
-					50*remain*(player->ravefactor + player->decrrave*remain) > node->exp.num()) //rave is still significant
+					50*remain*(agent->ravefactor + agent->decrrave*remain) > node->exp.num()) //rave is still significant
 					update_rave(node, toplay);
 
 				return;
 			}
-		}while(!player->do_backup(node, child, toplay));
+		}while(!agent->do_backup(node, child, toplay));
 
 		return;
 	}
 
-	if(player->profile && stage == 0){
+	if(agent->profile && stage == 0){
 		stage = 1;
 		timestamps[1] = Time();
 	}
 
-	int won = (player->minimax ? node->outcome : board.won());
+	int won = (agent->minimax ? node->outcome : board.won());
 
 	//if it's not already decided
 	if(won < 0){
 		//create children if valid
-		if(node->exp.num() >= player->visitexpand+1 && create_children(board, node)){
+		if(node->exp.num() >= agent->visitexpand+1 && create_children(board, node)){
 			walk_tree(board, node, depth);
 			return;
 		}
 
-		if(player->profile){
+		if(agent->profile){
 			stage = 2;
 			timestamps[2] = Time();
 		}
 
 		//do random game on this node
 		random_policy.prepare(board);
-		for(int i = 0; i < player->rollouts; i++){
+		for(int i = 0; i < agent->rollouts; i++){
 			Board copy = board;
 			rollout(copy, node->move, depth);
 		}
@@ -99,7 +100,7 @@ void AgentMCTS::MCTSThread::walk_tree(Board & board, Node * node, int depth){
 
 	movelist.subvlosses(1);
 
-	if(player->profile){
+	if(agent->profile){
 		timestamps[3] = Time();
 		if(stage == 1)
 			timestamps[2] = timestamps[3];
@@ -113,14 +114,14 @@ bool sort_node_know(const AgentMCTS::Node & a, const AgentMCTS::Node & b){
 	return (a.know > b.know);
 }
 
-bool AgentMCTS::MCTSThread::create_children(const Board & board, Node * node){
+bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 	if(!node->children.lock())
 		return false;
 
-	if(player->dists || player->detectdraw){
-		dists.run(&board, (player->dists > 0), (player->detectdraw ? 0 : board.toplay()));
+	if(agent->dists || agent->detectdraw){
+		dists.run(&board, (agent->dists > 0), (agent->detectdraw ? 0 : board.toplay()));
 
-		if(player->detectdraw){
+		if(agent->detectdraw){
 //			assert(node->outcome == -3);
 			node->outcome = dists.isdraw(); //could be winnable by only one side
 
@@ -133,22 +134,22 @@ bool AgentMCTS::MCTSThread::create_children(const Board & board, Node * node){
 	}
 
 	CompactTree<Node>::Children temp;
-	temp.alloc(board.movesremain(), player->ctmem);
+	temp.alloc(board.movesremain(), agent->ctmem);
 
 	int losses = 0;
 
 	Node * child = temp.begin(),
 	     * end   = temp.end(),
 	     * loss  = NULL;
-	Board::MoveIterator move = board.moveit(player->prunesymmetry);
+	Board::MoveIterator move = board.moveit(agent->prunesymmetry);
 	int nummoves = 0;
 	for(; !move.done() && child != end; ++move, ++child){
 		*child = Node(*move);
 
-		if(player->minimax){
+		if(agent->minimax){
 			child->outcome = board.test_win(*move);
 
-			if(player->minimax >= 2 && board.test_win(*move, 3 - board.toplay()) > 0){
+			if(agent->minimax >= 2 && board.test_win(*move, 3 - board.toplay()) > 0){
 				losses++;
 				loss = child;
 			}
@@ -158,17 +159,17 @@ bool AgentMCTS::MCTSThread::create_children(const Board & board, Node * node){
 				node->proofdepth = 1;
 				node->bestmove = *move;
 				node->children.unlock();
-				temp.dealloc(player->ctmem);
+				temp.dealloc(agent->ctmem);
 				return true;
 			}
 		}
 
-		if(player->knowledge)
+		if(agent->knowledge)
 			add_knowledge(board, node, child);
 		nummoves++;
 	}
 
-	if(player->prunesymmetry)
+	if(agent->prunesymmetry)
 		temp.shrink(nummoves); //shrink the node to ignore the extra moves
 	else //both end conditions should happen in parallel
 		assert(move.done() && child == end);
@@ -176,37 +177,37 @@ bool AgentMCTS::MCTSThread::create_children(const Board & board, Node * node){
 	//Make a macro move, add experience to the move so the current simulation continues past this move
 	if(losses == 1){
 		Node macro = *loss;
-		temp.dealloc(player->ctmem);
-		temp.alloc(1, player->ctmem);
-		macro.exp.addwins(player->visitexpand);
+		temp.dealloc(agent->ctmem);
+		temp.alloc(1, agent->ctmem);
+		macro.exp.addwins(agent->visitexpand);
 		*(temp.begin()) = macro;
 	}else if(losses >= 2){ //proven loss, but at least try to block one of them
 		node->outcome = 3 - board.toplay();
 		node->proofdepth = 2;
 		node->bestmove = loss->move;
 		node->children.unlock();
-		temp.dealloc(player->ctmem);
+		temp.dealloc(agent->ctmem);
 		return true;
 	}
 
-	if(player->dynwiden > 0) //sort in decreasing order by knowledge
+	if(agent->dynwiden > 0) //sort in decreasing order by knowledge
 		sort(temp.begin(), temp.end(), sort_node_know);
 
-	PLUS(player->nodes, temp.num());
+	PLUS(agent->nodes, temp.num());
 	node->children.swap(temp);
 	assert(temp.unlock());
 
 	return true;
 }
 
-AgentMCTS::Node * AgentMCTS::MCTSThread::choose_move(const Node * node, int toplay, int remain) const {
+AgentMCTS::Node * AgentMCTS::AgentThread::choose_move(const Node * node, int toplay, int remain) const {
 	float val, maxval = -1000000000;
 	float logvisits = log(node->exp.num());
-	int dynwidenlim = (player->dynwiden > 0 ? (int)(logvisits/player->logdynwiden)+2 : 361);
+	int dynwidenlim = (agent->dynwiden > 0 ? (int)(logvisits/agent->logdynwiden)+2 : 361);
 
-	float raveval = use_rave * (player->ravefactor + player->decrrave*remain);
-	float explore = use_explore * player->explore;
-	if(player->parentexplore)
+	float raveval = use_rave * (agent->ravefactor + agent->decrrave*remain);
+	float explore = use_explore * agent->explore;
+	if(agent->parentexplore)
 		explore *= node->exp.avg();
 
 	Node * ret   = NULL,
@@ -220,7 +221,7 @@ AgentMCTS::Node * AgentMCTS::MCTSThread::choose_move(const Node * node, int topl
 
 			val = (child->outcome == 0 ? -1 : -2); //-1 for tie so any unknown is better, -2 for loss so it's even worse
 		}else{
-			val = child->value(raveval, player->knowledge, player->fpurgency);
+			val = child->value(raveval, agent->knowledge, agent->fpurgency);
 			if(explore > 0)
 				val += explore*sqrt(logvisits/(child->exp.num() + 1));
 			dynwidenlim--;
@@ -320,7 +321,7 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, int toplay){
 }
 
 //update the rave score of all children that were played
-void AgentMCTS::MCTSThread::update_rave(const Node * node, int toplay){
+void AgentMCTS::AgentThread::update_rave(const Node * node, int toplay){
 	Node * child = node->children.begin(),
 	     * childend = node->children.end();
 
@@ -329,35 +330,35 @@ void AgentMCTS::MCTSThread::update_rave(const Node * node, int toplay){
 }
 
 
-void AgentMCTS::MCTSThread::add_knowledge(const Board & board, Node * node, Node * child){
-	if(player->localreply){ //boost for moves near the previous move
+void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Node * child){
+	if(agent->localreply){ //boost for moves near the previous move
 		int dist = node->move.dist(child->move);
 		if(dist < 4)
-			child->know += player->localreply * (4 - dist);
+			child->know += agent->localreply * (4 - dist);
 	}
 
-	if(player->locality) //boost for moves near previous stones
-		child->know += player->locality * board.local(child->move, board.toplay());
+	if(agent->locality) //boost for moves near previous stones
+		child->know += agent->locality * board.local(child->move, board.toplay());
 
 	Board::Cell cell;
-	if(player->connect || player->size)
+	if(agent->connect || agent->size)
 		cell = board.test_cell(child->move);
 
-	if(player->connect) //boost for moves that connect to edges/corners
-		child->know += player->connect * (cell.numcorners() + cell.numedges());
+	if(agent->connect) //boost for moves that connect to edges/corners
+		child->know += agent->connect * (cell.numcorners() + cell.numedges());
 
-	if(player->size) //boost for size of the group
-		child->know += player->size * cell.size;
+	if(agent->size) //boost for size of the group
+		child->know += agent->size * cell.size;
 
-	if(player->bridge && test_bridge_probe(board, node->move, child->move)) //boost for maintaining a virtual connection
-		child->know += player->bridge;
+	if(agent->bridge && test_bridge_probe(board, node->move, child->move)) //boost for maintaining a virtual connection
+		child->know += agent->bridge;
 
-	if(player->dists)
-		child->know += abs(player->dists) * max(0, board.get_size_d() - dists.get(child->move, board.toplay()));
+	if(agent->dists)
+		child->know += abs(agent->dists) * max(0, board.get_size_d() - dists.get(child->move, board.toplay()));
 }
 
 //test whether this move is a forced reply to the opponent probing your virtual connections
-bool AgentMCTS::MCTSThread::test_bridge_probe(const Board & board, const Move & move, const Move & test) const {
+bool AgentMCTS::AgentThread::test_bridge_probe(const Board & board, const Move & move, const Move & test) const {
 	//TODO: switch to the same method as policy_bridge.h, maybe even share code
 	if(move.dist(test) != 1)
 		return false;
@@ -406,21 +407,21 @@ bool AgentMCTS::MCTSThread::test_bridge_probe(const Board & board, const Move & 
 
 
 //play a random game starting from a board state, and return the results of who won
-int AgentMCTS::MCTSThread::rollout(Board & board, Move move, int depth){
+int AgentMCTS::AgentThread::rollout(Board & board, Move move, int depth){
 	int won;
 
-	if(player->instantwin)
-		instant_wins.rollout_start(board, player->instantwin);
+	if(agent->instantwin)
+		instant_wins.rollout_start(board, agent->instantwin);
 
 	random_policy.rollout_start(board);
 
 	//only check rings to the specified depth
-	int  checkdepth = (int)player->checkringdepth;
+	int  checkdepth = (int)agent->checkringdepth;
 	//if it's negative, check for that fraction of the remaining moves
-	if(player->checkringdepth < 0)
-		checkdepth = (int)ceil(board.movesremain() * player->checkringdepth * -1);
+	if(agent->checkringdepth < 0)
+		checkdepth = (int)ceil(board.movesremain() * agent->checkringdepth * -1);
 
-	board.perm_rings = player->ringperm;
+	board.perm_rings = agent->ringperm;
 
 	while((won = board.won()) < 0){
 		int turn = board.toplay();
@@ -441,30 +442,30 @@ int AgentMCTS::MCTSThread::rollout(Board & board, Move move, int depth){
 		wintypes[won-1][(int)board.getwintype()].add(depth);
 
 	//update the last good reply table
-	if(player->lastgoodreply)
+	if(agent->lastgoodreply)
 		last_good_reply.rollout_end(board, movelist, won);
 
 	movelist.finishrollout(won);
 	return won;
 }
 
-Move AgentMCTS::MCTSThread::rollout_choose_move(Board & board, const Move & prev){
+Move AgentMCTS::AgentThread::rollout_choose_move(Board & board, const Move & prev){
 	//look for instant wins
-	if(player->instantwin){
+	if(agent->instantwin){
 		Move move = instant_wins.choose_move(board, prev);
 		if(move != M_UNKNOWN)
 			return move;
 	}
 
 	//force a bridge reply
-	if(player->rolloutpattern){
+	if(agent->rolloutpattern){
 		Move move = protect_bridge.choose_move(board, prev);
 		if(move != M_UNKNOWN)
 			return move;
 	}
 
 	//reuse the last good reply
-	if(player->lastgoodreply){
+	if(agent->lastgoodreply){
 		Move move = last_good_reply.choose_move(board, prev);
 		if(move != M_UNKNOWN)
 			return move;

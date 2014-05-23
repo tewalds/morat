@@ -3,6 +3,7 @@
 
 //A multi-threaded, tree based, proof number search solver.
 
+#include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/log.h"
@@ -125,28 +126,24 @@ public:
 		}
 	};
 
-	class PNSThread {
-		Thread thread;
-		AgentPNS * agent;
+	class AgentThread : public AgentThreadBase<AgentPNS> {
 		LBDists dists;
 	public:
 		DepthStats treelen;
 		uint64_t nodes_seen;
 
-		PNSThread(AgentPNS * a) : agent(a), nodes_seen(0) {
-			thread(bind(&PNSThread::run, this));
-		}
-		virtual ~PNSThread() { }
+		AgentThread(AgentThreadPool<AgentPNS> * p, AgentPNS * a) : AgentThreadBase<AgentPNS>(p, a) { }
+
 		void reset(){
 			nodes_seen = 0;
 		}
-		int join(){ return thread.join(); }
-		void run(); //thread runner
 
-	//basic proof number search building a tree
+		void iterate(); //handles each iteration
+
+		//basic proof number search building a tree
 		bool pns(const Board & board, Node * node, int depth, uint32_t tp, uint32_t td);
 
-	//update the phi and delta for the node
+		//update the phi and delta for the node
 		bool updatePDnum(Node * node);
 	};
 
@@ -156,20 +153,10 @@ public:
 	unsigned int gclimit;
 	CompactTree<Node> ctmem;
 
-	uint64_t nodes_seen, max_nodes_seen;
+	AgentThreadPool<AgentPNS> pool;
 
-	enum ThreadState {
-		Thread_Cancelled,  //threads should exit
-		Thread_Wait_Start, //threads are waiting to start
-		Thread_Wait_Start_Cancelled, //once done waiting, go to cancelled instead of running
-		Thread_Running,    //threads are running
-		Thread_GC,         //one thread is running garbage collection, the rest are waiting
-		Thread_GC_End,     //once done garbage collecting, go to wait_end instead of back to running
-		Thread_Wait_End,   //threads are waiting to end
-	};
-	volatile ThreadState threadstate;
-	vector<PNSThread *> threads;
-	Barrier runbarrier, gcbarrier;
+
+	uint64_t nodes_seen, max_nodes_seen;
 
 
 	int   ab; // how deep of an alpha-beta search to run at each leaf node
@@ -181,29 +168,25 @@ public:
 
 	Node root;
 
-	AgentPNS() {
+	AgentPNS() : pool(this) {
 		ab = 2;
 		df = true;
 		epsilon = 0.25;
 		ties = 0;
 		lbdist = false;
 		numthreads = 1;
+		pool.set_num_threads(numthreads);
 		gclimit = 5;
 
 		nodes = 0;
 		reset();
 
 		set_memlimit(1000*1024*1024);
-
-		//no threads started until a board is set
-		threadstate = Thread_Wait_Start;
 	}
 
 	~AgentPNS(){
-		stop_threads();
-
-		numthreads = 0;
-		reset_threads(); //shut down the theads properly
+		pool.pause();
+		pool.set_num_threads(0);
 
 		root.dealloc(ctmem);
 		ctmem.compact();
@@ -215,22 +198,14 @@ public:
 		timeout = false;
 	}
 
-	string statestring();
-	void stop_threads();
-	void start_threads();
-	void reset_threads();
-	void timedout();
-
 	void set_board(const Board & board, bool clear = true){
 		rootboard = board;
 		reset();
 		if(clear)
 			clear_mem();
-
-		reset_threads(); //needed since the threads aren't started before a board it set
 	}
 	void move(const Move & m){
-		stop_threads();
+		pool.pause();
 
 		rootboard.move(m);
 		reset();
@@ -271,6 +246,35 @@ public:
 		ctmem.compact();
 		root = Node(0, 0, 1);
 		nodes = 0;
+	}
+
+	bool done() {
+		//solved or finished runs
+		return root.terminal();
+	}
+
+	bool need_gc() {
+		//out of memory, start garbage collection
+		return (ctmem.memalloced() >= memlimit);
+	}
+
+	void start_gc() {
+		Time starttime;
+		logerr("Starting GC with limit " + to_str(gclimit) + " ... ");
+
+		garbage_collect(& root);
+
+		Time gctime;
+		ctmem.compact(1.0, 0.75);
+
+		Time compacttime;
+		logerr(to_str(100.0*ctmem.meminuse()/memlimit, 1) + " % of tree remains - " +
+			to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
+
+		if(ctmem.meminuse() >= memlimit/2)
+			gclimit = (unsigned int)(gclimit*1.3);
+		else if(gclimit > 5)
+			gclimit = (unsigned int)(gclimit*0.9); //slowly decay to a minimum of 5
 	}
 
 	void search(double time, uint64_t maxiters, int verbose);
