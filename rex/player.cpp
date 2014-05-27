@@ -388,6 +388,14 @@ void Player::garbage_collect(Board & board, Node * node){
 	}
 }
 
+Player::Node * Player::find_child(Node * node, const Move & move){
+	for(Node * i = node->children.begin(); i != node->children.end(); i++)
+		if(i->move == move)
+			return i;
+
+	return NULL;
+}
+
 void Player::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
 	string s = string("\n") + string(depth, ' ') + "(;" + (board.toplay() == 2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
 	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)(node->outcome)) + ", best:" + node->bestmove.to_s() + "]";
@@ -434,15 +442,6 @@ void Player::create_children_simple(const Board & board, Node * node){
 
 	PLUS(nodes, node->children.num());
 }
-
-Player::Node * Player::find_child(Node * node, const Move & move){
-	for(Node * i = node->children.begin(); i != node->children.end(); i++)
-		if(i->move == move)
-			return i;
-
-	return NULL;
-}
-
 
 //reads the format from gen_hgf.
 void Player::load_hgf(Board board, Node * node, FILE * fd){

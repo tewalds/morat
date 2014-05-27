@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cassert>
 
+#include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/exppair.h"
@@ -15,6 +16,7 @@
 #include "../lib/types.h"
 #include "../lib/xorshift.h"
 
+#include "agent.h"
 #include "board.h"
 #include "lbdist.h"
 #include "move.h"
@@ -25,7 +27,7 @@
 #include "policy_random.h"
 
 
-class Player {
+class AgentMCTS : public Agent{
 public:
 
 	struct Node {
@@ -74,7 +76,7 @@ public:
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", rave " + to_str(rave.avg(), 2) + "/" + to_str(rave.num()) +
 					", know " + to_str(know) +
-					", outcome " + to_str(outcome) + "/" + to_str(proofdepth) +
+					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
 					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -137,25 +139,9 @@ public:
 		}
 	};
 
-	class PlayerThread {
-	protected:
-	public:
+
+	class AgentThread : public AgentThreadBase<AgentMCTS> {
 		mutable XORShift_float unitrand;
-		Thread thread;
-		Player * player;
-	public:
-		DepthStats treelen, gamelen;
-		double times[4]; //time spent in each of the stages
-
-		PlayerThread() {}
-		virtual ~PlayerThread() { }
-		virtual void reset() { }
-		int join(){ return thread.join(); }
-		void run(); //thread runner, calls iterate on each iteration
-		virtual void iterate() { } //handles each iteration
-	};
-
-	class PlayerUCT : public PlayerThread {
 		LastGoodReply last_good_reply;
 		RandomPolicy random_policy;
 		ProtectBridge protect_bridge;
@@ -164,16 +150,17 @@ public:
 		bool use_rave;    //whether to use rave for this simulation
 		bool use_explore; //whether to use exploration for this simulation
 		LBDists dists;    //holds the distances to the various non-ring wins as a heuristic for the minimum moves needed to win
+
 		MoveList movelist;
 		int stage; //which of the four MCTS stages is it on
-		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
 	public:
-		PlayerUCT(Player * p) : PlayerThread() {
-			player = p;
-			reset();
-			thread(bind(&PlayerUCT::run, this));
-		}
+		DepthStats treelen, gamelen;
+		double times[4]; //time spent in each of the stages
+		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
+
+		AgentThread(AgentThreadPool<AgentMCTS> * p, AgentMCTS * a) : AgentThreadBase<AgentMCTS>(p, a) { }
+
 
 		void reset(){
 			treelen.reset();
@@ -186,11 +173,12 @@ public:
 				times[a] = 0;
 		}
 
+
 	private:
-		void iterate();
+		void iterate(); //handles each iteration
 		void walk_tree(Board & board, Node * node, int depth);
-		bool create_children(Board & board, Node * node, int toplay);
-		void add_knowledge(Board & board, Node * node, Node * child);
+		bool create_children(const Board & board, Node * node);
+		void add_knowledge(const Board & board, Node * node, Node * child);
 		Node * choose_move(const Node * node, int toplay, int remain) const;
 		void update_rave(const Node * node, int toplay);
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
@@ -231,6 +219,7 @@ public:
 	uint  visitexpand;//number of visits before expanding a node
 	bool  prunesymmetry; //prune symmetric children from the move list, useful for proving but likely not for playing
 	uint  gcsolved;   //garbage collect solved nodes or keep them in the tree, assuming they meet the required amount of work
+
 //knowledge
 	int   localreply; //boost for a local reply, ie a move near the previous move
 	int   locality;   //boost for playing near previous stones
@@ -255,50 +244,64 @@ public:
 
 	CompactTree<Node> ctmem;
 
-	enum ThreadState {
-		Thread_Cancelled,  //threads should exit
-		Thread_Wait_Start, //threads are waiting to start
-		Thread_Wait_Start_Cancelled, //once done waiting, go to cancelled instead of running
-		Thread_Running,    //threads are running
-		Thread_GC,         //one thread is running garbage collection, the rest are waiting
-		Thread_GC_End,     //once done garbage collecting, go to wait_end instead of back to running
-		Thread_Wait_End,   //threads are waiting to end
-	};
-	volatile ThreadState threadstate;
-	vector<PlayerThread *> threads;
-	Barrier runbarrier, gcbarrier;
+	AgentThreadPool<AgentMCTS> pool;
 
-	double time_used;
+	AgentMCTS();
+	~AgentMCTS();
 
-	Player();
-	~Player();
-
-	void timedout();
-
-	string statestring();
-
-	void stop_threads();
-	void start_threads();
-	void reset_threads();
+	void set_memlimit(uint64_t lim) { }; // in bytes
+	void clear_mem() { };
 
 	void set_ponder(bool p);
-	void set_board(const Board & board);
+	void set_board(const Board & board, bool clear = true);
 
 	void move(const Move & m);
 
-	double gamelen();
+	void search(double time, uint64_t maxruns, int verbose);
+	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
-	Node * genmove(double time, int max_runs, bool flexible);
-	vector<Move> get_pv();
+	double gamelen() const;
+	vector<Move> get_pv() const;
+	string move_stats(const vector<Move> moves) const;
+
+	bool done() {
+		//solved or finished runs
+		return (rootboard.won() >= 0 || root.outcome >= 0 || (maxruns > 0 && runs >= maxruns));
+	}
+
+	bool need_gc() {
+		//out of memory, start garbage collection
+		return (ctmem.memalloced() >= maxmem);
+	}
+
+	void start_gc() {
+		Time starttime;
+		logerr("Starting player GC with limit " + to_str(gclimit) + " ... ");
+		uint64_t nodesbefore = nodes;
+		Board copy = rootboard;
+		garbage_collect(copy, & root);
+		Time gctime;
+		ctmem.compact(1.0, 0.75);
+		Time compacttime;
+		logerr(to_str(100.0*nodes/nodesbefore, 1) + " % of tree remains - " +
+			to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
+
+		if(ctmem.meminuse() >= maxmem/2)
+			gclimit = (int)(gclimit*1.3);
+		else if(gclimit > rollouts*5)
+			gclimit = (int)(gclimit*0.9); //slowly decay to a minimum of 5
+	}
+
+
+protected:
+
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-
 	bool do_backup(Node * node, Node * backup, int toplay);
+	Move return_move(const Node * node, int toplay, int verbose = 0) const;
 
-	Node * find_child(Node * node, const Move & move);
+	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);
 	void gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd);
 	void load_hgf(Board board, Node * node, FILE * fd);
 
-protected:
-	Node * return_move(Node * node, int toplay) const;
 };

@@ -25,7 +25,7 @@ public:
 					lookup[0][i] |= (1 << ((d+1)%6)); // +1 because we want to play in the empty spot
 				if((p & 0x2E) == 0x22) // 10 11 10 -> 10 00 10
 					lookup[1][i] |= (1 << ((d+1)%6));
-				p = ((p & 0xFFC)>>2) | ((p & 0x3) << 10);
+				p = ((p & 0xFFC)>>2) | ((p & 0x3) << 10);   
 			}
 		}
 	}
@@ -34,8 +34,8 @@ public:
 		uint32_t p = board.pattern_small(prev);
 		uint16_t r = lookup[board.toplay()-1][p];
 
-		if(!r) // nothing to save
-			return M_UNKNOWN;
+
+		return M_UNKNOWN;
 
 		unsigned int i;
 		if((r & (r - 1)) == 0){ // only one bit set

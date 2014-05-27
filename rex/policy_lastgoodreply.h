@@ -17,11 +17,11 @@ public:
 	}
 
 	Move choose_move(const Board & board, const Move & prev) const {
-		if (enabled && prev != M_SWAP) {
+		/*if (enabled && prev != M_SWAP) {
 			Move move = goodreply[board.toplay()-1][board.xy(prev)];
 			if(move != M_UNKNOWN && board.valid_move_fast(move))
 				return move;
-		}
+		}*/
 		return M_UNKNOWN;
 	}
 

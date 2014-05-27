@@ -294,11 +294,10 @@ public:
 
 	bool do_backup(Node * node, Node * backup, int toplay);
 
+	Node * find_child(Node * node, const Move & move);
+	void create_children_simple(const Board & board, Node * node);
 	void gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd);
 	void load_hgf(Board board, Node * node, FILE * fd);
-
-	void create_children_simple(const Board & board, Node * node);
-	Node * find_child(Node * node, const Move & move);
 
 protected:
 	Node * return_move(Node * node, int toplay) const;

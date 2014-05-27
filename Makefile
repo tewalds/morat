@@ -74,15 +74,11 @@ moy: \
 
 chex: \
 		hex/chex.o \
+		hex/agentmcts.o \
+		hex/agentmctsthread.o \
+		hex/agentpns.o \
+		hex/gtpagent.o \
 		hex/gtpgeneral.o \
-		hex/gtpplayer.o \
-		hex/gtpsolver.o \
-		hex/solverab.o \
-		hex/solverpns.o \
-		hex/solverpns2.o \
-		hex/solverpns_tt.o \
-		hex/player.o \
-		hex/playeruct.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
 		lib/string.o \
@@ -92,15 +88,11 @@ chex: \
 	
 trex: \
 		rex/trex.o \
+		rex/agentmcts.o \
+		rex/agentmctsthread.o \
+		rex/agentpns.o \
+		rex/gtpagent.o \
 		rex/gtpgeneral.o \
-		rex/gtpplayer.o \
-		rex/gtpsolver.o \
-		rex/solverab.o \
-		rex/solverpns.o \
-		rex/solverpns2.o \
-		rex/solverpns_tt.o \
-		rex/player.o \
-		rex/playeruct.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
 		lib/string.o \

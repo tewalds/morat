@@ -109,7 +109,7 @@ GTPResponse GTP::gtp_player_solve(vecstr args){
 		s.maxdepth = gamelen.maxdepth;
 		s.nodes_seen = runs;
 	}else{
-		s.outcome = toplay;		//Changed
+		s.outcome = 3-toplay;
 		s.bestmove = M_RESIGN;
 		s.maxdepth = 0;
 		s.nodes_seen = 0;

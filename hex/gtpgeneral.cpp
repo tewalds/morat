@@ -2,7 +2,27 @@
 #include "gtp.h"
 #include "lbdist.h"
 
+GTPResponse GTP::gtp_mcts(vecstr args){
+	delete agent;
+	agent = new AgentMCTS();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
 
+GTPResponse GTP::gtp_pns(vecstr args){
+	delete agent;
+	agent = new AgentPNS();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
+/*
+GTPResponse GTP::gtp_ab(vecstr args){
+	delete agent;
+	agent = new AgentAB();
+	agent->set_board(*hist);
+	return GTPResponse(true);
+}
+*/
 GTPResponse GTP::gtp_print(vecstr args){
 	Board board = *hist;
 	for(auto arg : args)
@@ -23,7 +43,6 @@ GTPResponse GTP::gtp_boardsize(vecstr args){
 	set_board();
 	time_control.new_game();
 
-		
 	return GTPResponse(true);
 }
 
@@ -80,7 +99,6 @@ GTPResponse GTP::gtp_history(vecstr args){
 }
 
 GTPResponse GTP::play(const string & pos, int toplay){
-
 	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 
