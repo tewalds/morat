@@ -192,7 +192,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 AgentMCTS::Node * AgentMCTS::AgentThread::choose_move(const Node * node, int toplay, int remain) const {
 	float val, maxval = -1000000000;
 	float logvisits = log(node->exp.num());
-	int dynwidenlim = (agent->dynwiden > 0 ? (int)(logvisits/agent->logdynwiden)+2 : 361);
+	int dynwidenlim = (agent->dynwiden > 0 ? (int)(logvisits/agent->logdynwiden)+2 : Board::max_vecsize);
 
 	float raveval = use_rave * (agent->ravefactor + agent->decrrave*remain);
 	float explore = use_explore * agent->explore;
@@ -333,8 +333,8 @@ void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Nod
 	if(agent->connect || agent->size)
 		cell = board.test_cell(child->move);
 
-	if(agent->connect) //boost for moves that connect to edges
-		child->know += agent->connect * cell.numedges();
+//	if(agent->connect) //boost for moves that connect to edges
+//		child->know += agent->connect * cell.numedges();
 
 	if(agent->size) //boost for size of the group
 		child->know += agent->size * cell.size;

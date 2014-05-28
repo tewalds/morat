@@ -6,22 +6,22 @@
 #include "policy.h"
 
 class LastGoodReply : public Policy {
-	Move goodreply[2][256]; //256 is big enough for size 16, but no bigger...
+	Move goodreply[2][Board::max_vecsize];
 	int enabled;
 public:
 
 	LastGoodReply(int _enabled = 2) : enabled(_enabled) {
 		for(int p = 0; p < 2; p++)
-			for(int i = 0; i < 256; i++)
+			for(int i = 0; i < Board::max_vecsize; i++)
 				goodreply[p][i] = M_UNKNOWN;
 	}
 
 	Move choose_move(const Board & board, const Move & prev) const {
-		/*if (enabled && prev != M_SWAP) {
+		if (enabled && prev != M_SWAP) {
 			Move move = goodreply[board.toplay()-1][board.xy(prev)];
 			if(move != M_UNKNOWN && board.valid_move_fast(move))
 				return move;
-		}*/
+		}
 		return M_UNKNOWN;
 	}
 

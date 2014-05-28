@@ -11,7 +11,7 @@
 
 class RandomPolicy : public Policy {
 	XORShift_uint32 rand;
-	Move moves[256];
+	Move moves[Board::max_vecsize];
 	int num;
 	int cur;
 public:

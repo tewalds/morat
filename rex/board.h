@@ -1,4 +1,4 @@
- 
+
 #pragma once
 
 #include <algorithm>
@@ -16,19 +16,12 @@
 
 using namespace std;
 
-static const int BitsSetTable64[] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-};
-
 /*
  * the board is represented as a flattened 2d array of the form:
  *   1 2 3
  * A 0 1 2     0 1 2     0 1 2
- * B 3 4 5 <=> 3 4   <=>  3 4
- * C 6 7 8     6           6
+ * B 3 4 5 <=> 3 4 5 <=>  3 4 5
+ * C 6 7 8     6 7 8       6 7 8
  */
 
 /* neighbours are laid out in this pattern:
@@ -44,13 +37,12 @@ const MoveScore neighbours[18] = {
 	MoveScore( 0,-2, 1), MoveScore(2,-2, 1), MoveScore(2, 0, 1), MoveScore( 0, 2, 1), MoveScore(-2, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
 	};
 
-static MoveValid * staticneighbourlist[23] = {
+static MoveValid * staticneighbourlist[17] = {
 	NULL,NULL,NULL,NULL,
 	NULL,NULL,NULL,NULL,
 	NULL,NULL,NULL,NULL,
 	NULL,NULL,NULL,NULL,
-	NULL,NULL,NULL,NULL,
-	NULL,NULL,NULL}; //one per boardsize
+	NULL}; //one per boardsize
 
 
 class Board{
@@ -58,31 +50,30 @@ public:
 
 	static const int default_size = 8;
 	static const int min_size = 3;
-	static const int max_size = 11;
+	static const int max_size = 16;
+	static const int max_vecsize = max_size * max_size;
 
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
 
 	struct Cell {
-		uint16_t piece;  //who controls this cell, 0 for none, 1,2 for players
-		uint16_t size;   //size of this group of cells
-mutable uint16_t parent; //parent for this group of cells. 8 bits limits board size to 16 until it's no longer stored as a square
-		unsigned edge : 3;  //which edges are this group connected to
-		unsigned perm : 1;  //is this a permanent piece or a randomly placed piece?
-		Pattern  pattern: 36; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
+		uint16_t piece;   //who controls this cell, 0 for none, 1,2 for players
+		uint16_t size;    //size of this group of cells
+mutable uint16_t parent;  //parent for this group of cells. 8 bits limits board size to 16 until it's no longer stored as a square
+		uint8_t  edge;    //which edges are this group connected to
+		uint8_t  perm;    //is this a permanent piece or a randomly placed piece?
+		Pattern  pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
 
 		Cell() : piece(73), size(0), parent(0), edge(0), perm(0), pattern(0) { }
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
 			piece(p), size(s), parent(a), edge(e), perm(0), pattern(t) { }
 
-		int numedges()   const { return BitsSetTable64[(int)edge]; }
-
 		string to_s(int i) const {
-			return "Cell " + to_str(i) +": "
+			return "Cell " + to_str((int)i) +": "
 				"piece: " + to_str((int)piece)+
 				", size: " + to_str((int)size) +
 				", parent: " + to_str((int)parent) +
-				", edge: " + to_str((int)edge) + "/" + to_str(numedges()) +
+				", edge: " + to_str((int)edge) +
 				", perm: " + to_str((int)perm) +
 				", pattern: " + to_str((int)pattern);
 		}
@@ -143,7 +134,6 @@ mutable uint16_t parent; //parent for this group of cells. 8 bits limits board s
 private:
 	char size; //the length of one side of the hexagon
 	char sizem1; //size - 1
-	char hex_size; //The length of the actual hex board
 
 	short num_cells;
 	short nummoves;
@@ -162,16 +152,15 @@ public:
 	}
 
 	Board(int s){
-		size = 2*s;
-		sizem1 = size - 1;
-		hex_size = s;
+		size = s;
+		sizem1 = s - 1;
 		last = M_NONE;
 		nummoves = 0;
 		unique_depth = 5;
 		toPlay = 1;
 		outcome = -3;
 		neighbourlist = get_neighbour_list();
-		num_cells = vecsize() - (size*sizem1/2);
+		num_cells = vecsize();
 
 		cells.resize(vecsize());
 
@@ -184,71 +173,9 @@ public:
 						p |= j;
 					j <<= 2;
 				}
-					cells[posxy] = Cell(0, posxy, 1, edges(x, y), pattern_reverse(p));
+				cells[posxy] = Cell(0, posxy, 1, edges(x, y), pattern_reverse(p));
 			}
 		}
-		initializeHex(size);
-	}
-		
-		
-	/**
-	 * Create the Hex board from the initial Y board
-	 */
-	void initializeHex(int ySize) {	
-		int hexSize = ySize / 2;
-		
-		
-		char yInCharWhite = 'a';		//Y axis in alpha numerals for White
-		char yInCharBlack = yInCharWhite + hexSize;  //Y axis in alpha numerals for Black
-			
-
-		
-		//Create moves to fill unnecessary spaces
-		//to 'create' the hex board
-		for(int y = 1; y <= hexSize; y++) {			
-			for(int x = hexSize + 1; x <=hexSize * 2 -y + 1; x++) {
-				char whiteMove[10];
-				char blackMove[10];
-				sprintf(whiteMove, "%c%d", yInCharWhite, x);
-				play(whiteMove, 1);
-				sprintf(blackMove, "%c%d", yInCharBlack, x - hexSize);
-				play(blackMove, 2);
-			}
-			yInCharWhite++;
-			yInCharBlack++;
-		}
-		//If the size of Y board is odd then add last row
-		//of moves to fix empty spaces															
-		if(ySize % 2 == 1) {  	 
-			char whiteMove[10];
-			char blackMove[10];
-			yInCharWhite = 'a';
-			yInCharBlack = 'a' + ySize - 1;
-			for(int i = ySize; i > hexSize + 1; i--) {
-				sprintf(whiteMove, "%c%d", yInCharWhite, i);
-				play(whiteMove, 1);
-				sprintf(blackMove, "%c%d", yInCharBlack, ySize - i + 1);
-				play(blackMove,2);
-				yInCharWhite++;
-				yInCharBlack--;
-				if (i == hexSize + 2) {
-					sprintf(whiteMove, "%c%d", yInCharWhite, i-1);
-					play(whiteMove, 1);
-				}
-			}			
-		}		
-	}
-	
-	/**
-	 * Play a move to the specified position
-	 * from the specified player
-	 */
-	void play(const string & pos, int toplay){
-		
-	Move m(pos);
-
-	move(m);
-
 	}
 
 /*	~Board(){
@@ -297,8 +224,8 @@ public:
 
 
 	//assumes x, y are in array bounds
-	bool onboard_fast(int x, int y)   const { return (  y +   x < size); }
-	bool onboard_fast(const Move & m) const { return (m.y + m.x < size); }
+	bool onboard_fast(int x, int y)   const { return (  y < size &&   x < size); }
+	bool onboard_fast(const Move & m) const { return (m.y < size && m.x < size); }
 	//checks array bounds too
 	bool onboard(int x, int y)  const { return (  x >= 0 &&   y >= 0 && onboard_fast(x, y) ); }
 	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && onboard_fast(m) ); }
@@ -326,7 +253,10 @@ public:
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
 	int edges(int x, int y) const {
-		return (x == 0 ? 1 : 0) | (y == 0 ? 2 : 0) | (x + y == sizem1 ? 4 : 0);
+		return (x == 0      ? 1 : 0) |
+		       (x == sizem1 ? 2 : 0) |
+		       (y == 0      ? 4 : 0) |
+		       (y == sizem1 ? 8 : 0);
 	}
 
 	MoveValid * get_neighbour_list(){
@@ -352,7 +282,7 @@ public:
 	}
 
 
-	int lineend(int y)   const { return (size - y); }
+	int lineend(int y)   const { return size; }
 
 	string to_s(bool color) const {
 		string white = "O",
@@ -370,15 +300,15 @@ public:
 		}
 
 		string s;
-		for(int i = 0; i < hex_size; i++)
+		for(int i = 0; i < size; i++)
 			s += " " + coord + to_str(i+1);
 		s += "\n";
 
-		for(int y = 0; y < hex_size + 1; y++){
+		for(int y = 0; y < size; y++){
 			s += string(y, ' ');
 			s += coord + char('A' + y);
 			int end = lineend(y);
-			for(int x = 0; x < hex_size + 1; x++){
+			for(int x = 0; x < size; x++){
 				s += (last == Move(x, y)   ? coord + "[" :
 				      last == Move(x-1, y) ? coord + "]" : " ");
 				int p = get(x, y);
@@ -388,8 +318,13 @@ public:
 				if(p >= 3) s += "?";
 			}
 			s += (last == Move(end-1, y) ? coord + "]" : " ");
+			s += white + reset;
 			s += '\n';
 		}
+		s += string(size + 2, ' ');
+		for(int i = 0; i < size; i++)
+			s += black + " ";
+		s += "\n";
 
 		s += reset;
 		return s;
@@ -430,7 +365,7 @@ public:
 	int win() const{ // 0 for draw or unknown, 1 for win, -1 for loss
 		if(outcome <= 0)
 			return 0;
-		return (outcome == toplay() ? -1 : 1);
+		return (outcome == toplay() ? 1 : -1);
 	}
 
 	char toplay() const {
@@ -512,8 +447,10 @@ public:
 	}
 
 	int test_connectivity(const Move & pos) const {
-		Cell testcell = test_cell(pos);
-		return testcell.numedges();
+		return 0;
+		//TODO: Return whether the cell touches an edge of the right color, needs toplay
+//		Cell testcell = test_cell(pos);
+//		return testcell.numedges();
 	}
 
 	int test_size(const Move & pos) const {
@@ -640,7 +577,6 @@ public:
 		return m;
 	}
 
-	
 	bool move(const Move & pos, bool checkwin = true, bool permanent = true){
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
@@ -673,13 +609,9 @@ public:
 
 		// did I win?
 		Cell * g = & cells[find_group(pos.xy)];
-		if(g->numedges() == 3){
-			if (turn == 1) {
-				outcome = 2;
-			}
-			else {
-				outcome = 1;
-			}
+		uint8_t winmask = (turn == 1 ? 3 : 0xC);
+		if((g->edge & winmask) == winmask){
+			outcome = 3 - turn;
 		}
 		return true;
 	}
@@ -707,13 +639,10 @@ public:
 				}
 			}
 
-			if(testcell.numedges() == 3) {
-				if (turn == 1)
-					return 2;
-				else
-					return 1;
-			}
-		} 
+			int winmask = (turn == 1 ? 3 : 0xC);
+			if((testcell.edge & winmask) == winmask)
+				return 3 - turn;
+		}
 
 		return -3;
 	}

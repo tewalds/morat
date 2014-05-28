@@ -10,6 +10,7 @@ Increase distance when crossing an opponent virtual connection?
 Decrease distance when crossing your own virtual connection?
 */
 
+//TODO: Needs to be fixed for only one direction per player
 
 #include "board.h"
 #include "move.h"
@@ -30,7 +31,7 @@ class LBDists {
 	//new values must be the same as current smallest, or larger but smaller than min + maxvals
 	class IntPQueue {
 		static const int maxvals = 4; //maximum number of distinct values that can be stored
-		MoveDist vals[maxvals][256];
+		MoveDist vals[maxvals][Board::max_vecsize];
 		int counts[maxvals];
 		int current; //which vector
 		int num; //int num elements total
@@ -65,7 +66,7 @@ class LBDists {
 		}
 	};
 
-	int dists[3][2][256]; //[edge][player][cell]
+	int dists[3][2][Board::max_vecsize]; //[edge][player][cell]
 	static const int maxdist = 1000;
 	IntPQueue Q;
 	const Board * board;
