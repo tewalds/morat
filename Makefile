@@ -25,7 +25,7 @@ else
 endif
 
 
-all: castro moy pentagod
+all: castro chex moy trex pentagod 
 
 castro: \
 		havannah/castro.o \
@@ -72,9 +72,36 @@ moy: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
+chex: \
+		hex/chex.o \
+		hex/agentmcts.o \
+		hex/agentmctsthread.o \
+		hex/agentpns.o \
+		hex/gtpagent.o \
+		hex/gtpgeneral.o \
+		lib/fileio.o \
+		lib/gtpcommon.o \
+		lib/string.o \
+		lib/zobrist.o \
+		$(ALARM)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+	
+trex: \
+		rex/trex.o \
+		rex/agentmcts.o \
+		rex/agentmctsthread.o \
+		rex/agentpns.o \
+		rex/gtpagent.o \
+		rex/gtpgeneral.o \
+		lib/fileio.o \
+		lib/gtpcommon.o \
+		lib/string.o \
+		lib/zobrist.o \
+		$(ALARM)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean:
-	rm -f */*.o castro moy pentagod .Makefile
+	rm -f */*.o castro moy pentagod chex trex .Makefile
 
 fresh: clean all
 
