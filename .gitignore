@@ -7,10 +7,14 @@
 # executables
 castro
 castro-*
+chex
+chex-*
 moy
 moy-*
 pentagod
 pentagod-*
+trex
+trex-*
 
 # valgrind output
 callgrind.out.*
