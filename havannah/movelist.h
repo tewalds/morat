@@ -8,8 +8,8 @@
 
 struct MoveList {
 	ExpPair    exp[2];       //aggregated outcomes overall
-	ExpPair    rave[2][361]; //aggregated outcomes per move
-	MovePlayer moves[361];   //moves made in order
+	ExpPair    rave[2][Board::max_vecsize]; //aggregated outcomes per move
+	MovePlayer moves[Board::max_vecsize];   //moves made in order
 	int        tree;         //number of moves in the tree
 	int        rollout;      //number of moves in the rollout
 	Board *    board;        //reference to rootboard for xy()

@@ -203,7 +203,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 AgentMCTS::Node * AgentMCTS::AgentThread::choose_move(const Node * node, int toplay, int remain) const {
 	float val, maxval = -1000000000;
 	float logvisits = log(node->exp.num());
-	int dynwidenlim = (agent->dynwiden > 0 ? (int)(logvisits/agent->logdynwiden)+2 : 361);
+	int dynwidenlim = (agent->dynwiden > 0 ? (int)(logvisits/agent->logdynwiden)+2 : Board::max_vecsize);
 
 	float raveval = use_rave * (agent->ravefactor + agent->decrrave*remain);
 	float explore = use_explore * agent->explore;

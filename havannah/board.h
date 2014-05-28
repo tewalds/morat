@@ -54,6 +54,7 @@ public:
 	static const int default_size = 8;
 	static const int min_size = 3;
 	static const int max_size = 10;
+	static const int max_vecsize = 19*19;
 
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
