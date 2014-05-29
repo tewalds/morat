@@ -58,12 +58,12 @@ public:
 	typedef uint64_t Pattern;
 
 	struct Cell {
-		uint8_t piece;  //who controls this cell, 0 for none, 1,2 for players
-		uint8_t size;   //size of this group of cells
-mutable uint8_t parent; //parent for this group of cells. 8 bits limits board size to 16 until it's no longer stored as a square
-		unsigned edge : 3;  //which edges are this group connected to
-		unsigned perm : 1;  //is this a permanent piece or a randomly placed piece?
-		Pattern  pattern: 36; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
+		uint16_t piece;   //who controls this cell, 0 for none, 1,2 for players
+		uint16_t size;    //size of this group of cells
+mutable uint16_t parent;  //parent for this group of cells. 8 bits limits board size to 16 until it's no longer stored as a square
+		uint8_t  edge;    //which edges are this group connected to
+		uint8_t  perm;    //is this a permanent piece or a randomly placed piece?
+		Pattern  pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
 
 		Cell() : piece(73), size(0), parent(0), edge(0), perm(0), pattern(0) { }
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
@@ -256,7 +256,9 @@ public:
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
 	int edges(int x, int y) const {
-		return (x == 0 ? 1 : 0) | (y == 0 ? 2 : 0) | (x + y == sizem1 ? 4 : 0);
+		return (x == 0 ? 1 : 0) |
+		       (y == 0 ? 2 : 0) |
+		       (x + y == sizem1 ? 4 : 0);
 	}
 
 	MoveValid * get_neighbour_list(){

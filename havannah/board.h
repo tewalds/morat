@@ -55,14 +55,14 @@ public:
 	typedef uint64_t Pattern;
 
 	struct Cell {
-		uint8_t piece;  //who controls this cell, 0 for none, 1,2 for players
-		uint8_t size;   //size of this group of cells
+		uint8_t piece;   //who controls this cell, 0 for none, 1,2 for players
+		uint8_t size;    //size of this group of cells
 mutable uint16_t parent; //parent for this group of cells
-		uint8_t corner; //which corners are this group connected to
-		uint8_t edge;   //which edges are this group connected to
-mutable uint8_t mark;   //when doing a ring search, has this position been seen?
-		unsigned perm : 4;   //is this a permanent piece or a randomly placed piece?
-		Pattern  pattern: 36; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
+		uint8_t corner;  //which corners are this group connected to
+		uint8_t edge;    //which edges are this group connected to
+mutable uint8_t mark;    //when doing a ring search, has this position been seen?
+		uint8_t perm;    //is this a permanent piece or a randomly placed piece?
+		Pattern pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
 
 		Cell() : piece(0), size(0), parent(0), corner(0), edge(0), mark(0), perm(0), pattern(0) { }
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, Pattern t) :
