@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "../lib/bitcount.h"
 #include "../lib/hashset.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
@@ -15,13 +16,6 @@
 #include "move.h"
 
 using namespace std;
-
-static const int BitsSetTable64[] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-};
 
 /*
  * the board is represented as a flattened 2d array of the form:
@@ -75,7 +69,7 @@ mutable uint8_t parent; //parent for this group of cells. 8 bits limits board si
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
 			piece(p), size(s), parent(a), edge(e), perm(0), pattern(t) { }
 
-		int numedges()   const { return BitsSetTable64[(int)edge]; }
+		int numedges()   const { return BitsSetTable256[edge]; }
 
 		string to_s(int i) const {
 			return "Cell " + to_str(i) +": "

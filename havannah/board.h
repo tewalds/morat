@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "../lib/bitcount.h"
 #include "../lib/hashset.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
@@ -16,12 +17,6 @@
 
 using namespace std;
 
-static const int BitsSetTable64[] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-};
 
 /*
  * the board is represented as a flattened 2d array of the form:
@@ -73,8 +68,8 @@ mutable uint8_t mark;   //when doing a ring search, has this position been seen?
 		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, Pattern t) :
 			piece(p), size(s), parent(a), corner(c), edge(e), mark(0), perm(0), pattern(t) { }
 
-		int numcorners() const { return BitsSetTable64[corner]; }
-		int numedges()   const { return BitsSetTable64[edge];   }
+		int numcorners() const { return BitsSetTable256[corner]; }
+		int numedges()   const { return BitsSetTable256[edge];   }
 
 		string to_s(int i) const {
 			return "Cell " + to_str(i) +": "
