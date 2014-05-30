@@ -34,16 +34,10 @@ public:
 	std::vector<Move>::const_iterator begin() const { return hist.begin(); }
 	std::vector<Move>::const_iterator end()   const { return hist.end(); }
 
-	const Board get_board(int offset = 0) const {
+	const Board get_board() const {
 		Board b(board.get_size());
-		if(offset < 0)
-			offset += hist.size();
-		if(offset <= 0)
-			return b;
-		if(offset >= (int)hist.size())
-			return board;
-		for(int i = 0; i < offset; i++)
-			b.move(hist[i]);
+		for(auto m : hist)
+			b.move(m);
 		return b;
 	}
 
