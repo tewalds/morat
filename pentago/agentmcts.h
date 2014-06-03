@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cassert>
 
+#include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/exppair.h"
@@ -149,11 +150,9 @@ public:
 		}
 	};
 
-	class MCTSThread {
+	class AgentThread : public AgentThreadBase<AgentMCTS> {
 		mutable XORShift_uint64 rand64;
 		mutable XORShift_float unitrand;
-		Thread thread;
-		AgentMCTS * player;
 		bool use_explore; //whether to use exploration for this simulation
 		MoveList movelist;
 		int stage; //which of the four MCTS stages is it on
@@ -163,11 +162,8 @@ public:
 		double times[4]; //time spent in each of the stages
 		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
-		MCTSThread(AgentMCTS * p) : rand64(std::rand()), unitrand(std::rand()), player(p) {
-			reset();
-			thread(bind(&MCTSThread::run, this));
-		}
-		~MCTSThread() { }
+		AgentThread(AgentThreadPool<AgentMCTS> * p, AgentMCTS * a) : AgentThreadBase<AgentMCTS>(p, a) { }
+
 
 		void reset(){
 			treelen.reset();
@@ -177,18 +173,15 @@ public:
 				times[a] = 0;
 		}
 
-		int join(){ return thread.join(); }
 
 	private:
-		void run(); //thread runner, calls iterate on each iteration
 		void iterate(); //handles each iteration
 		void walk_tree(Board & board, Node * node, int depth);
-		bool create_children(const Board & board, Node * node, int toplay);
+		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
 		Node * choose_move(const Node * node, int toplay) const;
 
 		int rollout(Board & board, Move move, int depth);
-//		PairMove rollout_choose_move(Board & board, const Move & prev, int & doinstwin, bool checkrings);
 	};
 
 
@@ -231,29 +224,10 @@ public:
 
 	CompactTree<Node> ctmem;
 
-	enum ThreadState {
-		Thread_Cancelled,  //threads should exit
-		Thread_Wait_Start, //threads are waiting to start
-		Thread_Wait_Start_Cancelled, //once done waiting, go to cancelled instead of running
-		Thread_Running,    //threads are running
-		Thread_GC,         //one thread is running garbage collection, the rest are waiting
-		Thread_GC_End,     //once done garbage collecting, go to wait_end instead of back to running
-		Thread_Wait_End,   //threads are waiting to end
-	};
-	volatile ThreadState threadstate;
-	vector<MCTSThread *> threads;
-	Barrier runbarrier, gcbarrier;
-
-	double time_used;
+	AgentThreadPool<AgentMCTS> pool;
 
 	AgentMCTS();
 	~AgentMCTS();
-
-	string statestring();
-
-	void stop_threads();
-	void start_threads();
-	void reset_threads();
 
 	void set_memlimit(uint64_t lim) { }; // in bytes
 	void clear_mem() { };
@@ -270,7 +244,35 @@ public:
 	vector<Move> get_pv() const;
 	string move_stats(const vector<Move> moves) const;
 
-	void timedout();
+	bool done() {
+		//solved or finished runs
+		return (rootboard.won() >= 0 || root.outcome >= 0 || (maxruns > 0 && runs >= maxruns));
+	}
+
+	bool need_gc() {
+		//out of memory, start garbage collection
+		return (ctmem.memalloced() >= maxmem);
+	}
+
+	void start_gc() {
+		Time starttime;
+		logerr("Starting player GC with limit " + to_str(gclimit) + " ... ");
+		uint64_t nodesbefore = nodes;
+		Board copy = rootboard;
+		garbage_collect(copy, & root);
+		Time gctime;
+		ctmem.compact(1.0, 0.75);
+		Time compacttime;
+		logerr(to_str(100.0*nodes/nodesbefore, 1) + " % of tree remains - " +
+			to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
+
+		if(ctmem.meminuse() >= maxmem/2)
+			gclimit = (int)(gclimit*1.3);
+		else if(gclimit > rollouts*5)
+			gclimit = (int)(gclimit*0.9); //slowly decay to a minimum of 5
+	}
+
+
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy

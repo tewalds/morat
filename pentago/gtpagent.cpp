@@ -9,7 +9,10 @@ using namespace std;
 
 
 GTPResponse GTP::gtp_move_stats(vecstr args){
-	return GTPResponse(true, agent->move_stats());
+	vector<Move> moves;
+	for(auto s : args)
+		moves.push_back(Move(s));
+	return GTPResponse(true, agent->move_stats(moves));
 }
 
 GTPResponse GTP::gtp_solve(vecstr args){
@@ -142,11 +145,11 @@ GTPResponse GTP::gtp_mcts_params(vecstr args){
 		string arg = args[i];
 
 		if((arg == "-t" || arg == "--threads") && i+1 < args.size()){
+			mcts->pool.pause();
 			mcts->numthreads = from_str<int>(args[++i]);
-			bool p = mcts->ponder;
-			mcts->set_ponder(false); //stop the threads while resetting them
-			mcts->reset_threads();
-			mcts->set_ponder(p);
+			mcts->pool.set_num_threads(mcts->numthreads);
+			if(mcts->ponder)
+				mcts->pool.resume();
 		}else if((arg == "-o" || arg == "--ponder") && i+1 < args.size()){
 			mcts->set_ponder(from_str<bool>(args[++i]));
 		}else if((arg == "--profile") && i+1 < args.size()){
@@ -202,7 +205,7 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 
 		if((arg == "-t" || arg == "--threads") && i+1 < args.size()){
 			pns->numthreads = from_str<int>(args[++i]);
-			pns->reset_threads();
+			pns->pool.set_num_threads(pns->numthreads);
 		}else if((arg == "-m" || arg == "--memory") && i+1 < args.size()){
 			uint64_t mem = from_str<uint64_t>(args[++i]);
 			if(mem < 1) return GTPResponse(false, "Memory can't be less than 1mb");
