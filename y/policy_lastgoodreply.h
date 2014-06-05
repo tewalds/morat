@@ -26,7 +26,7 @@ public:
 	}
 
 	void rollout_end(const Board & board, const MoveList & movelist, int won) {
-		if(!enabled)
+		if(!enabled || won <= 0)
 			return;
 		int m = -1;
 		for(const MovePlayer * i = movelist.begin(), * e = movelist.end(); i != e; i++){
