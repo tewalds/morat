@@ -25,7 +25,7 @@ else
 endif
 
 
-all: castro chex moy trex pentagod 
+all: castro chex moy trex pentagod
 
 castro: \
 		havannah/castro.o \
@@ -50,7 +50,6 @@ pentagod: \
 		pentago/board.o \
 		pentago/gtpgeneral.o \
 		pentago/gtpagent.o \
-		pentago/move.o \
 		pentago/moveiterator.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
@@ -85,7 +84,7 @@ chex: \
 		lib/zobrist.o \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
-	
+
 trex: \
 		rex/trex.o \
 		rex/agentmcts.o \

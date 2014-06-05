@@ -41,7 +41,7 @@ void AgentMCTS::AgentThread::walk_tree(Board & board, Node * node, int depth){
 				movelist.addtree(child->move, toplay);
 
 				if(!board.move(child->move)){
-					logerr("move failed: " + child->move.to_s(true) + "\n" + board.to_s(true));
+					logerr("move failed: " + child->move.to_s() + "\n" + board.to_s(true));
 					assert(false && "move failed");
 				}
 

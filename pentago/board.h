@@ -42,7 +42,6 @@ class Board{
 	uint8_t nummoves;  // how many moves have been made so far
 	uint8_t to_play;   // who's turn is it next, 1|2
 	mutable int8_t outcome; //-3 = unknown, 0 = tie, 1,2 = player win
-	mutable uint8_t orientation;
 	mutable int16_t cached_score;
 	mutable uint64_t cached_hash;
 	static const int16_t default_score = 0xDEAD;
@@ -62,7 +61,6 @@ public:
 		nummoves = 0;
 		to_play = 1;
 		outcome = -4;
-		orientation = 8;
 		cached_score = default_score;
 		cached_hash = 0;
 	}
@@ -151,23 +149,8 @@ public:
 		return (to_play == 1 ? -s : s);
 	}
 
-	unsigned int orient() const {
-		if(!cached_hash)
-			hash();
-		return orientation;
-	}
-
-	uint64_t hash() const {
-		if(!cached_hash)
-			cached_hash = (nummoves < fullhash_depth ? full_hash() : simple_hash());
-		return cached_hash;
-	}
-
-	bool move(Move mo){
+	bool move(Move m){
 		assert(outcome < 0);
-
-		orient();
-		Move m = mo.rotate(orientation);
 
 		//TODO: only call valid_move if the move didn't come from an iterator?
 		if(!valid_move(m))
@@ -195,11 +178,6 @@ public:
 		outcome = -4;
 		cached_score = default_score;
 		cached_hash = 0;
-		orientation = 8; //start with an unoriented board
-
-
-//		if(m != mo)
-//			logerr(mo.to_s(true) + " -> " + m.to_s(true) + " -> " + to_str(orient()) + "\n");
 
 		return true;
 	}
@@ -235,7 +213,6 @@ public:
 		outcome = -4;
 		cached_score = default_score;
 		cached_hash = 0;
-		orientation = 8;
 
 		return true;
 	}
@@ -268,12 +245,10 @@ public:
 		outcome = -4;
 		cached_score = default_score;
 		cached_hash = 0;
-		orientation = 8;
 
 		return true;
 	}
 
-private:
 
 	uint64_t simple_hash() const {
 		//Take 9 bits at a time from each player, merge them, convert to base 2
@@ -285,35 +260,39 @@ private:
 		h |= ((uint64_t)(lookup3to2[((w & (0x1FFull << 18)) | (b & (0x1FFull <<  9))) >>  9])) << 15;
 		h |= ((uint64_t)(lookup3to2[((w & (0x1FFull << 27)) | (b & (0x1FFull << 18))) >> 18])) << 30;
 		h |= ((uint64_t)(lookup3to2[((w & (0x1FFull << 36)) | (b & (0x1FFull << 27))) >> 27])) << 45;
-		orientation = 8;
 		return h;
 	}
 
-	static inline void choose(uint64_t & m, uint64_t h, uint8_t & o, uint8_t no){
-		if(m > h){
-			m = h;
-			o = no;
-		}
-	}
-
 	uint64_t full_hash() const {
-		//make sure this matches Move::rotate
+		if(nummoves >= fullhash_depth)
+			return simple_hash();
+
+		if(cached_hash)
+			return cached_hash;
+
 		Board b(*this);
 
-		uint64_t h, m = ~0;
-		uint8_t o = 0;
-		choose(m, (h = b.simple_hash()), o, 0);
-		choose(m, (h = rotate_hash(h) ), o, 1);
-		choose(m, (h = rotate_hash(h) ), o, 2);
-		choose(m, (    rotate_hash(h) ), o, 3);
+		uint64_t h, m = ~0ull;
+		choose(m, (h = b.simple_hash()));
+		choose(m, (h = rotate_hash(h) ));
+		choose(m, (h = rotate_hash(h) ));
+		choose(m, (    rotate_hash(h) ));
 		b.flip_board();
-		choose(m, (h = b.simple_hash()), o, 4);
-		choose(m, (h = rotate_hash(h) ), o, 5);
-		choose(m, (h = rotate_hash(h) ), o, 6);
-		choose(m, (    rotate_hash(h) ), o, 7);
+		choose(m, (h = b.simple_hash()));
+		choose(m, (h = rotate_hash(h) ));
+		choose(m, (h = rotate_hash(h) ));
+		choose(m, (    rotate_hash(h) ));
 
-		orientation = o;
+		cached_hash = m;
 		return m;
+	}
+
+private:
+
+	static inline void choose(uint64_t & m, uint64_t h){
+		if(m > h){
+			m = h;
+		}
 	}
 
 	static uint64_t rotate_hash(uint64_t h){ // rotate ccw

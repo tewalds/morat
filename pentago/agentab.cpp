@@ -94,11 +94,11 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 			Board n = board;
 			bool move_success = n.move(bestmove);
 
-//			if(!move_success){
-//				logerr("FAIL!!!\nhash: " + to_str(board.hash()) + ", orientation: " + to_str(board.orient()) + ", state: " + board.state() + "\n");
-//				logerr(node->to_s(board.orient()) + "\n");
-//				logerr(board.to_s());
-//			}
+			if(!move_success){
+				logerr("FAIL!!!\nhash: " + to_str(board.simple_hash()) + ", state: " + board.state() + "\n");
+				logerr(node->to_s() + "\n");
+				logerr(board.to_s());
+			}
 
 			assert(move_success);
 			score = -negamax(n, -beta, -alpha, depth-1);
@@ -125,7 +125,7 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if (TT) {
 		uint8_t flag = (score <= alpha ? UBOUND :
 		                score >= beta  ? LBOUND : VALID);
-		tt_set(Node(board.hash(), score, bestmove, depth, flag));
+		tt_set(Node(board.simple_hash(), score, bestmove, depth, flag));
 	}
 	return score;
 }
@@ -193,7 +193,7 @@ AgentAB::Node * AgentAB::tt(uint64_t hash) const {
 }
 
 AgentAB::Node * AgentAB::tt_get(const Board & b) const {
-	return tt_get(b.hash());
+	return tt_get(b.simple_hash());
 }
 AgentAB::Node * AgentAB::tt_get(uint64_t h) const {
 	Node * n = tt(h);

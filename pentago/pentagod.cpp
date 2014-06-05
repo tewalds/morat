@@ -15,7 +15,6 @@ void die(int code, const string & str){
 
 int main(int argc, char **argv){
 	Board::test();
-	Move::test();
 	MoveIterator::test();
 	RandomMoveIteratorTest();
 

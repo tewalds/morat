@@ -13,7 +13,7 @@ class MoveIterator { //only returns valid moves...
 	bool unique;
 	HashSet hashes;
 public:
-	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP, b.orient()) {
+	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP) {
 		unique = (Unique == -1 ? base_board.num_moves() <= Board::unique_depth : Unique);
 
 		if(base_board.won() >= 0){
@@ -44,7 +44,7 @@ public:
 			bool move_success = after.move(move);
 			assert(move_success);
 			if(unique){
-				uint64_t h = after.hash();
+				uint64_t h = after.full_hash();
 				if(!hashes.add(h))
 					continue;
 			}

@@ -155,5 +155,5 @@ GTPResponse GTP::gtp_colorboard(vecstr args){
 }
 
 GTPResponse GTP::gtp_hash(vecstr args){
-	return GTPResponse(true, to_str(hist->hash()));
+	return GTPResponse(true, to_str(hist->simple_hash()));
 }
