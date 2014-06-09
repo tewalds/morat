@@ -3,6 +3,7 @@
 
 //Interface for the various agents: players and solvers
 
+#include "../lib/outcome.h"
 #include "../lib/types.h"
 
 #include "board.h"
@@ -30,40 +31,40 @@ protected:
 	volatile bool timeout;
 	Board rootboard;
 
-	static int solve1ply(const Board & board, unsigned int & nodes) {
-		int outcome = -3;
-		int turn = board.toplay();
+	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
+		Outcome outcome = Outcome::UNKNOWN;
+		Side turn = board.toplay();
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
 			++nodes;
-			int won = board.test_win(*move, turn);
+			Outcome won = board.test_outcome(*move, turn);
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			if(won == 0)
-				outcome = 0;
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
 		}
 		return outcome;
 	}
 
-	static int solve2ply(const Board & board, unsigned int & nodes) {
+	static Outcome solve2ply(const Board & board, unsigned int & nodes) {
 		int losses = 0;
-		int outcome = -3;
-		int turn = board.toplay(), opponent = 3 - turn;
+		Outcome outcome = Outcome::UNKNOWN;
+		Side turn = board.toplay();
+		Side op = ~turn;
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
 			++nodes;
-			int won = board.test_win(*move, turn);
+			Outcome won = board.test_outcome(*move, turn);
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			if(won == 0)
-				outcome = 0;
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
 
-			if(board.test_win(*move, opponent) > 0)
+			if(board.test_outcome(*move, op) == +op)
 				losses++;
 		}
 		if(losses >= 2)
-			return opponent;
+			return (Outcome)op;
 		return outcome;
 	}
-
 };

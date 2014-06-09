@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string>
 
+#include "../lib/outcome.h"
 #include "../lib/time.h"
 
 #include "gtp.h"
@@ -14,6 +15,8 @@ void die(int code, const string & str){
 }
 
 int main(int argc, char **argv){
+	outcome_test();
+
 	srand((unsigned int)(Time().to_f()*1000));
 	GTP gtp;
 
