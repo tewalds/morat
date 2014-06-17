@@ -76,7 +76,7 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 		unsigned int p = board.pattern(*move);
 		if(symmetric)
 			p = board.pattern_symmetry(p);
-		if(invert && board.toplay() == 2)
+		if(invert && board.toplay() == Side::P2)
 			p = board.pattern_invert(p);
 		ret += to_str(p);
 		ret += "\n";
@@ -98,11 +98,11 @@ GTPResponse GTP::gtp_history(vecstr args){
 	return GTPResponse(true, ret);
 }
 
-GTPResponse GTP::play(const string & pos, int toplay){
+GTPResponse GTP::play(const string & pos, Side toplay){
 	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 
-	if(hist->won() >= 0)
+	if(hist->won() >= Outcome::DRAW)
 		return GTPResponse(false, "The game is already over.");
 
 	Move m(pos);
@@ -113,7 +113,7 @@ GTPResponse GTP::play(const string & pos, int toplay){
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + m.to_s() + ", outcome: " + hist->won_str() + "\n" + hist->to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + hist->won().to_s() + "\n" + hist->to_s(colorboard));
 
 	return GTPResponse(true);
 }
@@ -131,33 +131,29 @@ GTPResponse GTP::gtp_play(vecstr args){
 	if(args.size() != 2)
 		return GTPResponse(false, "Wrong number of arguments");
 
-	char toplay = 0;
 	switch(tolower(args[0][0])){
-		case 'w': toplay = 1; break;
-		case 'b': toplay = 2; break;
-		default:
-			return GTPResponse(false, "Invalid player selection");
+		case 'w': return play(args[1], Side::P1);
+		case 'b': return play(args[1], Side::P2);
+		default:  return GTPResponse(false, "Invalid player selection");
 	}
-
-	return play(args[1], toplay);
 }
 
 GTPResponse GTP::gtp_playwhite(vecstr args){
 	if(args.size() != 1)
 		return GTPResponse(false, "Wrong number of arguments");
 
-	return play(args[0], 1);
+	return play(args[0], Side::P1);
 }
 
 GTPResponse GTP::gtp_playblack(vecstr args){
 	if(args.size() != 1)
 		return GTPResponse(false, "Wrong number of arguments");
 
-	return play(args[0], 2);
+	return play(args[0], Side::P2);
 }
 
 GTPResponse GTP::gtp_winner(vecstr args){
-	return GTPResponse(true, hist->won_str());
+	return GTPResponse(true, hist->won().to_s());
 }
 
 GTPResponse GTP::gtp_name(vecstr args){
@@ -206,11 +202,11 @@ GTPResponse GTP::gtp_dists(vecstr args){
 	Board board = *hist;
 	LBDists dists(&board);
 
-	int side = 0;
+	Side side = Side::NONE;
 	if(args.size() >= 1){
 		switch(tolower(args[0][0])){
-			case 'w': side = 1; break;
-			case 'b': side = 2; break;
+			case 'w': side = Side::P1; break;
+			case 'b': side = Side::P2; break;
 			default:
 				return GTPResponse(false, "Invalid player selection");
 		}
@@ -243,17 +239,17 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		s += coord + char('A' + y);
 		int end = board.lineend(y);
 		for(int x = 0; x < end; x++){
-			int p = board.get(x, y);
+			Side p = board.get(x, y);
 			s += ' ';
-			if(p == 0){
-				int d = (side ? dists.get(Move(x, y), side) : dists.get(Move(x, y)));
+			if(p == Side::NONE){
+				int d = (side == Side::NONE ? dists.get(Move(x, y)) : dists.get(Move(x, y), side));
 				if(d < 30)
 					s += reset + to_str(d);
 				else
 					s += empty;
-			}else if(p == 1){
+			}else if(p == Side::P1){
 				s += white;
-			}else if(p == 2){
+			}else if(p == Side::P2){
 				s += black;
 			}
 		}
