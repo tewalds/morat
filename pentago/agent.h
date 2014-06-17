@@ -3,6 +3,7 @@
 
 //Interface for the various agents: players and solvers
 
+#include "../lib/outcome.h"
 #include "../lib/types.h"
 
 #include "board.h"
@@ -31,18 +32,18 @@ protected:
 	volatile bool timeout;
 	Board rootboard;
 
-	static int solve1ply(const Board & board, unsigned int & nodes) {
-		int outcome = -4;
-		int turn = board.toplay();
+	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
+		Outcome outcome = Outcome::UNDEF;
+		Side turn = board.toplay();
 		for(MoveIterator move(board); !move.done(); ++move){
 			++nodes;
-			int won = move.board().won();
+			Outcome won = move.board().won();
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			else if(won == 0)
-				outcome = 0;
-			else if(outcome == 3 - turn || outcome == -4)
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
+			else if(outcome == +~turn || outcome == Outcome::UNDEF)
 				outcome = won;
 		}
 		return outcome;

@@ -80,13 +80,12 @@ public:
 	GTPResponse gtp_state(vecstr args);
 	GTPResponse gtp_print(vecstr args);
 	GTPResponse gtp_hash(vecstr args);
-	string won_str(int outcome) const;
 	GTPResponse gtp_boardsize(vecstr args);
 	GTPResponse gtp_clearboard(vecstr args);
 	GTPResponse gtp_undo(vecstr args);
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
-	GTPResponse play(const string & pos, int toplay);
+	GTPResponse play(const string & pos, Side toplay);
 	GTPResponse gtp_playgame(vecstr args);
 	GTPResponse gtp_play(vecstr args);
 	GTPResponse gtp_playwhite(vecstr args);

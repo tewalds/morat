@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "../lib/outcome.h"
 #include "../lib/xorshift.h"
 
 #include "move.h"
@@ -40,8 +41,8 @@ class Board{
 
 	uint64_t sides[3]; // sides[0] = sides[1] | sides[2]; bitmap of position for each side
 	uint8_t nummoves;  // how many moves have been made so far
-	uint8_t to_play;   // who's turn is it next, 1|2
-	mutable int8_t outcome; //-3 = unknown, 0 = tie, 1,2 = player win
+	Side    to_play;   // who's turn is it next, 1|2
+	mutable Outcome outcome; //-3 = unknown, 0 = tie, 1,2 = player win
 	mutable int16_t cached_score;
 	mutable uint64_t cached_hash;
 	static const int16_t default_score = 0xDEAD;
@@ -59,8 +60,8 @@ public:
 		sides[1] = 0;
 		sides[2] = 0;
 		nummoves = 0;
-		to_play = 1;
-		outcome = -4;
+		to_play = Side::P1;
+		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 	}
@@ -71,7 +72,7 @@ public:
 	static void test();
 
 	int num_moves() const { return nummoves; }
-	int moves_remain() const { return (won() >= 0 ? 0 : 36 - nummoves); }
+	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : 36 - nummoves); }
 	int moves_avail() const { return moves_remain()*8; } //upper bound
 
 	int get_size() const {
@@ -97,32 +98,31 @@ public:
 
 	string won_str() const ;
 
-	uint8_t toplay() const {
+	Side toplay() const {
 		return to_play;
 	}
 
-	int8_t won() const {
-		if(outcome == -4)
+	Outcome won() const {
+		if(outcome == Outcome::UNDEF)
 			outcome = won_calc();
 		return outcome;
 	}
-	int8_t won_calc() const {
-		int8_t wonside = 0;
+	Outcome won_calc() const {
+		Outcome wonside = Outcome::DRAW;
 		uint64_t ws = sides[1];
 		uint64_t bs = sides[2];
 
 		for(int i = 0; i < 32; i++){
 			uint64_t wm = winmaps[i];
-			if     ((ws & wm) == wm) wonside |= 1;
-			else if((bs & wm) == wm) wonside |= 2;
+			if     ((ws & wm) == wm) wonside |= Outcome::P1;
+			else if((bs & wm) == wm) wonside |= Outcome::P2;
 		}
 
-		switch(wonside){
-			case 1:
-			case 2:  return wonside;
-			case 3:  return 0; //wonside == 3 when both sides win simultaneously
-			default: return (nummoves >= 36 ? 0 : -3);
-		}
+		if(wonside == Outcome::P1 || wonside == Outcome::P2)
+			return wonside;
+		if(wonside == Outcome::DRAW2) // both sides win simultaneously
+			return Outcome::DRAW;
+		return (nummoves >= 36 ? Outcome::DRAW : Outcome::UNKNOWN);
 	}
 
 	int16_t score() const {
@@ -146,7 +146,7 @@ public:
 		}
 		//return the score from the perspective of the player that just played
 		//ie not the player whose turn it is now
-		return (to_play == 1 ? -s : s);
+		return (to_play == Side::P1 ? -s : s);
 	}
 
 	bool move(Move m){
@@ -162,7 +162,7 @@ public:
 			return true;
 		}
 
-		sides[to_play] |= xybits[m.l];
+		sides[to_play.to_i()] |= xybits[m.l];
 
 		if (m.direction() == 0) {
 			sides[1] = rotate_quad_ccw(sides[1], m.quadrant());
@@ -174,8 +174,8 @@ public:
 		sides[0] = sides[1] | sides[2];
 
 		nummoves++;
-		to_play = 3 - to_play;
-		outcome = -4;
+		to_play = ~to_play;
+		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 
@@ -193,7 +193,7 @@ public:
 		} while(move & (move-1));
 //		} while(bitcount(move) > 1); // if there's only one bit left, that's our move
 
-		sides[to_play] |= move;
+		sides[to_play.to_i()] |= move;
 
 		uint64_t rotation = (mask >> 36); //mask is already a random number, so just re-use the unused high bits
 		uint64_t direction = rotation & 0x4;
@@ -209,8 +209,8 @@ public:
 		sides[0] = sides[1] | sides[2];
 
 		nummoves++;
-		to_play = 3 - to_play;
-		outcome = -4;
+		to_play = ~to_play;
+		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 
@@ -227,7 +227,7 @@ public:
 			return true;
 		}
 
-		to_play = 3 - to_play;
+		to_play = ~to_play;
 		nummoves--;
 
 		if (m.direction() == 0) {
@@ -238,11 +238,11 @@ public:
 			sides[2] = rotate_quad_ccw(sides[2], m.quadrant());
 		}
 
-		sides[to_play] &= ~xybits[m.l];
+		sides[to_play.to_i()] &= ~xybits[m.l];
 
 		sides[0] = sides[1] | sides[2];
 
-		outcome = -4;
+		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 

@@ -99,10 +99,10 @@ string Board::to_s(bool color) const {
 	for(int y = 0; y < 6; y++){
 		s += left[y] + " " + string(1, 'a' + y) + " ";
 		for(int x = 0; x < 6; x++){
-			int p = get(x, y);
-			if(p == 0) s += empty;
-			if(p == 1) s += white;
-			if(p == 2) s += black;
+			Side p = get(x, y);
+			if(p == Side::NONE) s += empty;
+			if(p == Side::P1) s += white;
+			if(p == Side::P2) s += black;
 			s += " ";
 		}
 		s += coord + right[y] + "\n";
@@ -112,19 +112,6 @@ string Board::to_s(bool color) const {
 		s += bottom[i];
 	s += reset + "\n";
 	return s;
-}
-
-string Board::won_str() const {
-	switch(won()){
-		case -3: return "none";
-		case -2: return "black_or_draw";
-		case -1: return "white_or_draw";
-		case 0:
-		case 3:  return "draw";
-		case 1:  return "white";
-		case 2:  return "black";
-	}
-	return "unknown";
 }
 
 

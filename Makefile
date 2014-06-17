@@ -54,6 +54,7 @@ pentagod: \
 		pentago/moveiterator.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
+		lib/outcome.o \
 		lib/string.o \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)

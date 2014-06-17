@@ -12,9 +12,9 @@
 const float AgentMCTS::min_rave = 0.1;
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
-	int toplay = rootboard.toplay();
+	Side toplay = rootboard.toplay();
 
-	if(rootboard.won() >= 0 || (time <= 0 && max_runs == 0))
+	if(rootboard.won() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
 		return;
 
 	Time starttime;
@@ -54,15 +54,8 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 				logerr("Times:       " + to_str(times[0], 3) + ", " + to_str(times[1], 3) + ", " + to_str(times[2], 3) + ", " + to_str(times[3], 3) + "\n");
 		}
 
-		if(root.outcome != -3){
-			logerr("Solved as a ");
-			if(     root.outcome == 0)        logerr("draw\n");
-			else if(root.outcome == 3)        logerr("draw by simultaneous win\n");
-			else if(root.outcome == toplay)   logerr("win\n");
-			else if(root.outcome == 3-toplay) logerr("loss\n");
-			else if(root.outcome == -toplay)  logerr("win or draw\n");
-			else if(root.outcome == toplay-3) logerr("loss or draw\n");
-		}
+		if(root.outcome != Outcome::UNKNOWN)
+			logerr("Solved as a " + root.outcome.to_s_rel(toplay));
 
 		string pvstr;
 		for(auto m : get_pv())
@@ -77,7 +70,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	runs = 0;
 
 
-	if(ponder && root.outcome < 0)
+	if(ponder && root.outcome < Outcome::DRAW)
 		pool.resume();
 }
 
@@ -173,8 +166,8 @@ void AgentMCTS::move(const Move & m){
 	rootboard.move(m);
 
 	root.exp.addwins(visitexpand+1); //+1 to compensate for the virtual loss
-	if(rootboard.won() < 0)
-		root.outcome = -3;
+	if(rootboard.won() < Outcome::DRAW)
+		root.outcome = Outcome::UNKNOWN;
 
 	if(ponder)
 		pool.resume();
@@ -191,12 +184,12 @@ vector<Move> AgentMCTS::get_pv() const {
 	vector<Move> pv;
 
 	const Node * n = & root;
-	char turn = rootboard.toplay();
+	Side turn = rootboard.toplay();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
 		n = find_child(n, m);
-		turn = 3 - turn;
+		turn = ~turn;
 	}
 
 	if(pv.size() == 0)
@@ -227,8 +220,8 @@ string AgentMCTS::move_stats(vector<Move> moves) const {
 	return s;
 }
 
-Move AgentMCTS::return_move(const Node * node, int toplay, int verbose) const {
-	if(node->outcome >= 0)
+Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
+	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
 	double val, maxval = -1000000000000.0; //1 trillion
@@ -238,10 +231,10 @@ Move AgentMCTS::return_move(const Node * node, int toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		if(child->outcome >= 0){
-			if(child->outcome == toplay) val =  800000000000.0 - child->exp.num(); //shortest win
-			else if(child->outcome == 0) val = -400000000000.0 + child->exp.num(); //longest tie
-			else                         val = -800000000000.0 + child->exp.num(); //longest loss
+		if(child->outcome >= Outcome::DRAW){
+			if(child->outcome == toplay)             val =  800000000000.0 - child->exp.num(); //shortest win
+			else if(child->outcome == Outcome::DRAW) val = -400000000000.0 + child->exp.num(); //longest tie
+			else                                     val = -800000000000.0 + child->exp.num(); //longest loss
 		}else{ //not proven
 //			val = child->exp.num(); //num simulations
 			val = child->exp.sum(); //num wins
@@ -265,13 +258,13 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
-	int toplay = board.toplay();
+	Side toplay = board.toplay();
 	for( ; child != end; child++){
 		if(child->children.num() == 0)
 			continue;
 
-		if(	(node->outcome >= 0 && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == 0)) || //parent is solved, only keep the proof tree, plus heavy draws
-			(node->outcome <  0 && child->exp.num() > (child->outcome >= 0 ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
+		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
+			(node->outcome <  Outcome::DRAW && child->exp.num() > (child->outcome >= Outcome::DRAW ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
 			board.move(child->move);
 			garbage_collect(board, child);
 			board.undo(child->move);

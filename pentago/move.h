@@ -89,10 +89,3 @@ direction = rotation & 1
 	bool operator!=(const Move & b) const { return (l != b.l || r != b.r); }
 	bool operator!=(const MoveSpecial & b) const { return (l != b); }
 };
-
-
-struct PairMove {
-	Move a, b;
-	PairMove(Move A = M_UNKNOWN, Move B = M_UNKNOWN) : a(A), b(B) { }
-	PairMove(MoveSpecial A) : a(Move(A)), b(M_UNKNOWN) { }
-};

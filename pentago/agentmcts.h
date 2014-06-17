@@ -27,7 +27,7 @@ public:
 	public:
 		ExpPair exp;
 		int16_t know;
-		int8_t  outcome;
+		Outcome outcome;
 		uint8_t proofdepth;
 		Move    move;
 		Move    bestmove; //if outcome is set, then bestmove is the way to get there
@@ -36,8 +36,8 @@ public:
 		//seems to need padding to multiples of 8 bytes or it segfaults?
 		//don't forget to update the copy constructor/operator
 
-		Node()                            : know(0), outcome(-3), proofdepth(0)          { }
-		Node(const Move & m, char o = -3) : know(0), outcome( o), proofdepth(0), move(m) { }
+		Node() : know(0), outcome(Outcome::UNKNOWN), proofdepth(0), move(M_NONE) { }
+		Node(const Move & m, Outcome o = Outcome::UNKNOWN) : know(0), outcome(o), proofdepth(0), move(m) { }
 		Node(const Node & n) { *this = n; }
 		Node & operator = (const Node & n){
 			if(this != & n){ //don't copy to self
@@ -66,7 +66,7 @@ public:
 			return "Node: move " + move.to_s() +
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", know " + to_str(know) +
-					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
+					", outcome " + to_str(outcome.to_i()) + "/" + to_str((int)proofdepth) +
 					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -123,30 +123,30 @@ public:
 
 		MoveList() { }
 
-		void addtree(const Move & move, char turn){
+		void addtree(const Move & move, Side turn){
 		}
-		void addrollout(const Move & move, char turn){
+		void addrollout(const Move & move, Side turn){
 		}
 		void reset(Board * b){
 			exp[0].clear();
 			exp[1].clear();
 		}
-		void finishrollout(int won){
+		void finishrollout(Outcome won){
 			exp[0].addloss();
 			exp[1].addloss();
-			if(won == 0){
+			if(won == Outcome::DRAW){
 				exp[0].addtie();
 				exp[1].addtie();
 			}else{
-				exp[won-1].addwin();
+				exp[won.to_i() - 1].addwin();
 			}
 		}
 		void subvlosses(int n){
 			exp[0].addlosses(-n);
 			exp[1].addlosses(-n);
 		}
-		const ExpPair & getexp(int turn) const {
-			return exp[turn-1];
+		const ExpPair & getexp(Side turn) const {
+			return exp[turn.to_i() - 1];
 		}
 	};
 
@@ -179,9 +179,9 @@ public:
 		void walk_tree(Board & board, Node * node, int depth);
 		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
-		Node * choose_move(const Node * node, int toplay) const;
+		Node * choose_move(const Node * node, Side toplay) const;
 
-		int rollout(Board & board, Move move, int depth);
+		Outcome rollout(Board & board, Move move, int depth);
 	};
 
 
@@ -246,7 +246,7 @@ public:
 
 	bool done() {
 		//solved or finished runs
-		return (rootboard.won() >= 0 || root.outcome >= 0 || (maxruns > 0 && runs >= maxruns));
+		return (rootboard.won() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
 	}
 
 	bool need_gc() {
@@ -276,7 +276,8 @@ public:
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, Node * backup, int toplay);
-	Move return_move(const Node * node, int toplay, int verbose = 0) const;
+	bool do_backup(Node * node, Node * backup, Side toplay);
+	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
+
 	Node * find_child(const Node * node, const Move & move) const ;
 };
