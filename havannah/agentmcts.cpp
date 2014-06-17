@@ -410,7 +410,7 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	entry = explode(parts[3], ":");
 	assert(entry[0] == "outcome");
-	node->outcome = (Outcome)from_str<int>(entry[1]);
+	node->outcome = Outcome(from_str<int>(entry[1]));
 
 	entry = explode(parts[4], ":");
 	assert(entry[0] == "best");

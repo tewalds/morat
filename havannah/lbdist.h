@@ -100,7 +100,7 @@ public:
 		if(side == Side::P2 || side == Side::BOTH) init_player(crossvcs, Side::P2);
 	}
 
-	void init_player(bool crossvcs = true, Side player = Side::BOTH){
+	void init_player(bool crossvcs, Side player){
 		int m = board->get_size()-1, e = board->get_size_d()-1;
 
 		init(0, 0, 0, player, 3); flood(0, player, crossvcs); //corner 0

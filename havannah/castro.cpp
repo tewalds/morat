@@ -1,6 +1,6 @@
 
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
 
 #include "../lib/outcome.h"
 #include "../lib/time.h"
@@ -17,7 +17,7 @@ void die(int code, const string & str){
 int main(int argc, char **argv){
 	outcome_test();
 
-	srand((unsigned int)(Time().to_f()*1000));
+	srand(Time().in_usec());
 	GTP gtp;
 
 	gtp.colorboard = isatty(fileno(stdout));
@@ -31,7 +31,6 @@ int main(int argc, char **argv){
 				"\t-n --nocolor  Don't output the board in color\n"
 				"\t-c --cmd      Pass a gtp command from the command line\n"
 				"\t-f --file     Run this gtp file before reading from stdin\n"
-//				"\t-s --server   Run in server mode\n"
 				);
 		}else if(arg == "-v" || arg == "--verbose"){
 			gtp.verbose = true;
@@ -50,8 +49,6 @@ int main(int argc, char **argv){
 			if(!gtp.run())
 				return 0;
 			fclose(fd);
-//		}else if(arg == "-s" || arg == "--server"){
-//			gtp.setservermode(true);
 		}else{
 			die(255, "Unknown argument: " + arg + ", try --help");
 		}
