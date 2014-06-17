@@ -44,7 +44,7 @@ public:
 		newcallback("showboard",       bind(&GTP::gtp_print,         this, _1), "Show the board");
 		newcallback("print",           bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
 		newcallback("dists",           bind(&GTP::gtp_dists,         this, _1), "Similar to print, but shows minimum win distances");
-//		newcallback("zobrist",         bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
+		newcallback("zobrist",         bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
 		newcallback("clear_board",     bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
 		newcallback("clear",           bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
 		newcallback("boardsize",       bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");

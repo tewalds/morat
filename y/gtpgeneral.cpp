@@ -243,7 +243,7 @@ GTPResponse GTP::gtp_dists(vecstr args){
 			s += ' ';
 			if(p == Side::NONE){
 				int d = (side == Side::NONE ? dists.get(Move(x, y)) : dists.get(Move(x, y), side));
-				if(d < 30)
+				if(d < 10)
 					s += reset + to_str(d);
 				else
 					s += empty;
