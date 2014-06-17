@@ -28,7 +28,7 @@ endif
 all: castro chex moy trex pentagod
 
 castro: \
-		havannah/castro.o \
+		havannah/main.o \
 		havannah/agentmcts.o \
 		havannah/agentmctsthread.o \
 		havannah/agentpns.o \
@@ -43,7 +43,7 @@ castro: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 pentagod: \
-		pentago/pentagod.o \
+		pentago/main.o \
 		pentago/agentab.o \
 		pentago/agentmcts.o \
 		pentago/agentmctsthread.o \
@@ -60,7 +60,7 @@ pentagod: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 moy: \
-		y/moy.o \
+		y/main.o \
 		y/agentmcts.o \
 		y/agentmctsthread.o \
 		y/agentpns.o \
@@ -75,7 +75,7 @@ moy: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 chex: \
-		hex/chex.o \
+		hex/main.o \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
 		hex/agentpns.o \
@@ -90,7 +90,7 @@ chex: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 trex: \
-		rex/trex.o \
+		rex/main.o \
 		rex/agentmcts.o \
 		rex/agentmctsthread.o \
 		rex/agentpns.o \
