@@ -94,7 +94,7 @@ public:
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
 	GTPResponse gtp_patterns(vecstr args);
-	GTPResponse play(const string & pos, int toplay);
+	GTPResponse play(const string & pos, Side toplay);
 	GTPResponse gtp_playgame(vecstr args);
 	GTPResponse gtp_play(vecstr args);
 	GTPResponse gtp_playwhite(vecstr args);

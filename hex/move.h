@@ -77,15 +77,8 @@ struct MoveValid : public Move {
 };
 
 struct MovePlayer : public Move {
-	char player;
+	Side player;
 
-	MovePlayer() : Move(M_UNKNOWN), player(0) { }
-	MovePlayer(const Move & m, char p = 0) : Move(m), player(p) { }
-};
-
-
-struct PairMove {
-	Move a, b;
-	PairMove(Move A = M_UNKNOWN, Move B = M_UNKNOWN) : a(A), b(B) { }
-	PairMove(MoveSpecial A) : a(Move(A)), b(M_UNKNOWN) { }
+	MovePlayer() : Move(M_UNKNOWN), player(Side::NONE) { }
+	MovePlayer(const Move & m, Side p = Side::NONE) : Move(m), player(p) { }
 };

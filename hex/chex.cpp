@@ -1,8 +1,8 @@
 
-
 #include <string>
 #include <unistd.h>
 
+#include "../lib/outcome.h"
 #include "../lib/time.h"
 
 #include "gtp.h"
@@ -15,6 +15,8 @@ void die(int code, const string & str){
 }
 
 int main(int argc, char **argv){
+	outcome_test();
+
 	srand(Time().in_usec());
 	GTP gtp;
 
@@ -52,7 +54,6 @@ int main(int argc, char **argv){
 		}
 	}
 
-		
 	gtp.setinfile(stdin);
 	gtp.setoutfile(stdout);
 	gtp.run();
