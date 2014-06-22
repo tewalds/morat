@@ -72,11 +72,11 @@ public:
 			printf("%s\n", to_s().c_str());
 		}
 		string to_s() const {
-			return "Node: move " + move.to_s() +
+			return "AgentMCTS::Node: move " + move.to_s() +
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", rave " + to_str(rave.avg(), 2) + "/" + to_str(rave.num()) +
 					", know " + to_str(know) +
-					", outcome " + to_str(outcome.to_i()) + "/" + to_str((int)proofdepth) +
+					", outcome " + to_str((int)outcome.to_i()) + "/" + to_str((int)proofdepth) +
 					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -300,6 +300,11 @@ public:
 			gclimit = (int)(gclimit*0.9); //slowly decay to a minimum of 5
 	}
 
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		if(limit < 0)
+			limit = root.exp.num()/1000;
+		gen_sgf(sgf, limit, root, rootboard.toplay());
+	}
 
 protected:
 
@@ -309,7 +314,7 @@ protected:
 
 	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);
-	void gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd);
-	void load_hgf(Board board, Node * node, FILE * fd);
 
+	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const ;
+	void load_hgf(Board board, Node * node, FILE * fd);
 };

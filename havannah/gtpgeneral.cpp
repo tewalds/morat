@@ -1,4 +1,7 @@
 
+#include "../lib/fileio.h"
+#include "../lib/sgf.h"
+
 #include "gtp.h"
 #include "lbdist.h"
 
@@ -263,4 +266,44 @@ GTPResponse GTP::gtp_dists(vecstr args){
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
 	return GTPResponse(true, hist->hashstr());
+}
+
+GTPResponse GTP::gtp_save_sgf(vecstr args){
+	int limit = -1;
+	if(args.size() == 0)
+		return GTPResponse(true, "save_hgf <filename> [work limit]");
+
+	FILE * fd = fopen(args[0].c_str(), "r");
+
+	if(fd) {
+		fclose(fd);
+		return GTPResponse(false, "File " + args[0] + " already exists");
+	}
+
+	fd = fopen(args[0].c_str(), "w");
+
+	if(!fd)
+		return GTPResponse(false, "Opening file " + args[0] + " for writing failed");
+
+	if(args.size() > 1)
+		limit = from_str<unsigned int>(args[1]);
+
+	SGFPrinter<Move> sgf(fd);
+	sgf.game("havannah");
+	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
+	sgf.size(hist->get_size());
+
+	sgf.end_root();
+
+	Side s = Side::P1;
+	for(auto m : hist){
+		sgf.move(s, m);
+		s = ~s;
+	}
+
+	agent->gen_sgf(sgf, limit);
+
+	sgf.end();
+	fclose(fd);
+	return true;
 }

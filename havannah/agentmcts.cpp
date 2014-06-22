@@ -79,7 +79,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		}
 
 		if(root.outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + root.outcome.to_s_rel(toplay));
+			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
 		string pvstr;
 		for(auto m : get_pv())
@@ -332,30 +332,18 @@ AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) co
 	return NULL;
 }
 
-void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
-	string s = string("\n") + string(depth, ' ') + "(;" + (board.toplay() == Side::P2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
-	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)node->outcome.to_i()) + ", best:" + node->bestmove.to_s() + "]";
-	fprintf(fd, "%s", s.c_str());
-
-	Node * child = node->children.begin(),
-		 * end = node->children.end();
-
-	Side toplay = board.toplay();
-
-	bool children = false;
-	for( ; child != end; child++){
-		if(child->exp.num() >= limit && (toplay != node->outcome || child->outcome == node->outcome) ){
-			board.set(child->move);
-			gen_hgf(board, child, limit, depth+1, fd);
-			board.unset(child->move);
-			children = true;
+void AgentMCTS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const {
+	for(auto & child : node.children){
+		if(child.exp.num() >= limit && (side != node.outcome || child.outcome == node.outcome)){
+			sgf.child_start();
+			sgf.move(side, child.move);
+			sgf.comment(child.to_s());
+			gen_sgf(sgf, limit, child, ~side);
+			sgf.child_end();
 		}
 	}
-
-	if(children)
-		fprintf(fd, "\n%s", string(depth, ' ').c_str());
-	fprintf(fd, ")");
 }
+
 
 void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());

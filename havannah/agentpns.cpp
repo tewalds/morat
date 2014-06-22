@@ -283,3 +283,15 @@ void AgentPNS::garbage_collect(Node * node){
 		}
 	}
 }
+
+void AgentPNS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const {
+	for(auto & child : node.children){
+		if(child.work >= limit && (side != node.to_outcome(~side) || child.to_outcome(side) == node.to_outcome(~side))){
+			sgf.child_start();
+			sgf.move(side, child.move);
+			sgf.comment(child.to_s());
+			gen_sgf(sgf, limit, child, ~side);
+			sgf.child_end();
+		}
+	}
+}

@@ -1,8 +1,4 @@
 
-#include <fstream>
-
-#include "../lib/fileio.h"
-
 #include "gtp.h"
 
 using namespace std;

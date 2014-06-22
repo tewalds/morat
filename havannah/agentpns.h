@@ -99,7 +99,7 @@ public:
 		}
 
 		string to_s() const {
-			return "Node: move " + move.to_s() +
+			return "AgentPNS::Node: move " + move.to_s() +
 					", phi " + to_str(phi) +
 					", delta " + to_str(delta) +
 					", work " + to_str(work) +
@@ -283,9 +283,22 @@ public:
 	vector<Move> get_pv() const;
 	string move_stats(const vector<Move> moves) const;
 
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		if(limit < 0){
+			limit = 0;
+			//TODO: Set the root.work properly
+			for(auto & child : root.children)
+				limit += child.work;
+			limit /= 1000;
+		}
+		gen_sgf(sgf, limit, root, rootboard.toplay());
+	}
+
 private:
 //remove all the nodes with little work to free up some memory
 	void garbage_collect(Node * node);
 	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
+
+	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const;
 };

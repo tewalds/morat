@@ -4,6 +4,7 @@
 //Interface for the various agents: players and solvers
 
 #include "../lib/outcome.h"
+#include "../lib/sgf.h"
 #include "../lib/types.h"
 
 #include "board.h"
@@ -26,6 +27,8 @@ public:
 	virtual double gamelen() const = 0;
 
 	virtual void timedout(){ timeout = true; }
+
+	virtual void gen_sgf(SGFPrinter<Move> & sgf, int limit) const = 0;
 
 protected:
 	volatile bool timeout;
