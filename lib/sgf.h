@@ -1,12 +1,14 @@
 
 #pragma once
 
-#include <string>
 #include <cassert>
+#include <unordered_map>
+#include <string>
 
 #include "fileio.h"
 #include "outcome.h"
 #include "string.h"
+
 
 template<typename Move>
 class SGFPrinter {
@@ -81,22 +83,66 @@ public:
 	}
 };
 
-/*
+
 template<typename Move>
 class SGFParser {
 
+	FILE * _fd;
+	std::unordered_map<std::string, std::string> _properties;
+
+	void read_node() {
+		_properties.clear();
+		char key[11], value[1025];
+		while(fscanf(_fd, " %10[A-Z][%1024[^]]]", key, value) > 0){
+			_properties[key] = value;
+		}
+	}
 
 public:
+	SGFParser(FILE * fd) : _fd(fd) {
+		next_child();
+	}
 
-	int size();
-	std::string game();
+	bool next_node() {
+		eat_whitespace(_fd);
+		if(eat_char(_fd, ';')){
+			read_node();
+			return true;
+		}
+		return false;
+	}
 
-	Move move();
-	std::string comment();
+	bool has_children() {
+		return (fpeek(_fd) == '(');
+	}
 
-	SGFParser begin();
-	SGFParser end();
+	bool next_child() {
+		eat_whitespace(_fd);
+		if(eat_char(_fd, '('))
+			return next_node();
+		return false;
+	}
 
+	bool done_child() {
+		eat_whitespace(_fd);
+		return eat_char(_fd, ')');
+	}
+
+	int size() {
+		return from_str<int>(_properties["SZ"]);
+	}
+	std::string game() {
+		return _properties["GM"];
+	}
+
+	Move move() {
+		if(_properties.count("W"))
+			return Move(_properties["W"]);
+		if(_properties.count("B"))
+			return Move(_properties["B"]);
+		assert(false && "No W or B property");
+	}
+	std::string comment() {
+		return _properties["C"];
+	}
 };
-
-*/

@@ -1,6 +1,6 @@
 
+#include <cassert>
 #include <cmath>
-#include <string>
 
 #include "../lib/alarm.h"
 #include "../lib/fileio.h"
@@ -11,6 +11,42 @@
 #include "board.h"
 
 const float AgentMCTS::min_rave = 0.1;
+
+std::string AgentMCTS::Node::to_s() const {
+	return "AgentMCTS::Node"
+	       ", move " + move.to_s() +
+	       ", exp " + exp.to_s() +
+	       ", rave " + rave.to_s() +
+	       ", know " + to_str(know) +
+	       ", outcome " + to_str((int)outcome.to_i()) +
+	       ", depth " + to_str((int)proofdepth) +
+	       ", best " + bestmove.to_s() +
+	       ", children " + to_str(children.num());
+}
+
+bool AgentMCTS::Node::from_s(std::string s) {
+	auto dict = parse_dict(s, ", ", " ");
+
+	if(dict.size() == 9){
+		move = Move(dict["move"]);
+		exp = ExpPair(dict["exp"]);
+		rave = ExpPair(dict["rave"]);
+		know = from_str<int>(dict["know"]);
+		outcome = Outcome(from_str<int>(dict["outcome"]));
+		proofdepth = from_str<int>(dict["depth"]);
+		bestmove = Move(dict["best"]);
+		// ignore children
+		return true;
+	}
+	return false;
+}
+
+void AgentMCTS::test() {
+	Node n(Move("a1"));
+	auto s = n.to_s();
+	Node k;
+	assert(k.from_s(s));
+}
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	Side toplay = rootboard.toplay();
@@ -325,10 +361,9 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 }
 
 AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) const {
-	for(Node * i = node->children.begin(); i != node->children.end(); i++)
-		if(i->move == move)
-			return i;
-
+	for(auto & c : node->children)
+		if(c.move == move)
+			return &c;
 	return NULL;
 }
 
@@ -367,64 +402,22 @@ void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	PLUS(nodes, node->children.num());
 }
 
-//reads the format from gen_hgf.
-void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
-	char c, buf[101];
+void AgentMCTS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node) {
+	assert(sgf.has_children());
+	create_children_simple(board, & node);
 
-	eat_whitespace(fd);
-
-	assert(fscanf(fd, "(;%c[%100[^]]]", &c, buf) > 0);
-
-	assert(board.toplay() == (c == 'W' ? Side::P1 : Side::P2));
-	node->move = Move(buf);
-	board.move(node->move);
-
-	assert(fscanf(fd, "C[%100[^]]]", buf) > 0);
-
-	vecstr entry, parts = explode(string(buf), ", ");
-	assert(parts[0] == "mcts");
-
-	entry = explode(parts[1], ":");
-	assert(entry[0] == "sims");
-	uword sims = from_str<uword>(entry[1]);
-
-	entry = explode(parts[2], ":");
-	assert(entry[0] == "avg");
-	double avg = from_str<double>(entry[1]);
-
-	uword wins = sims*avg;
-	node->exp.addwins(wins);
-	node->exp.addlosses(sims - wins);
-
-	entry = explode(parts[3], ":");
-	assert(entry[0] == "outcome");
-	node->outcome = Outcome(from_str<int>(entry[1]));
-
-	entry = explode(parts[4], ":");
-	assert(entry[0] == "best");
-	node->bestmove = Move(entry[1]);
-
-
-	eat_whitespace(fd);
-
-	if(fpeek(fd) != ')'){
-		create_children_simple(board, node);
-
-		while(fpeek(fd) != ')'){
-			Node child;
-			load_hgf(board, & child, fd);
-
-			Node * i = find_child(node, child.move);
-			*i = child;          //copy the child experience to the tree
-			i->swap_tree(child); //move the child subtree to the tree
-
-			assert(child.children.empty());
-
-			eat_whitespace(fd);
+	while(sgf.next_child()){
+		Move m = sgf.move();
+		Node & child = *find_child(&node, m);
+		child.from_s(sgf.comment());
+		if(sgf.done_child()){
+			continue;
+		}else{
+			// has children!
+			Board b = board;
+			b.move(m);
+			load_sgf(sgf, b, child);
+			assert(sgf.done_child());
 		}
 	}
-
-	eat_char(fd, ')');
-
-	return;
 }

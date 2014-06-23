@@ -271,7 +271,7 @@ GTPResponse GTP::gtp_zobrist(vecstr args){
 GTPResponse GTP::gtp_save_sgf(vecstr args){
 	int limit = -1;
 	if(args.size() == 0)
-		return GTPResponse(true, "save_hgf <filename> [work limit]");
+		return GTPResponse(true, "save_sgf <filename> [work limit]");
 
 	FILE * fd = fopen(args[0].c_str(), "r");
 
@@ -304,6 +304,52 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 	agent->gen_sgf(sgf, limit);
 
 	sgf.end();
+	fclose(fd);
+	return true;
+}
+
+
+GTPResponse GTP::gtp_load_sgf(vecstr args){
+	if(args.size() == 0)
+		return GTPResponse(true, "load_sgf <filename>");
+
+	FILE * fd = fopen(args[0].c_str(), "r");
+
+	if(!fd) {
+		fclose(fd);
+		return GTPResponse(false, "Error opening file " + args[0] + " for reading");
+	}
+
+	SGFParser<Move> sgf(fd);
+	if(sgf.game() != "havannah"){
+		fclose(fd);
+		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
+	}
+
+	int size = sgf.size();
+	if(size != hist->get_size()){
+		if(hist.len() == 0){
+			hist = History(size);
+			set_board();
+			time_control.new_game();
+		}else{
+			fclose(fd);
+			return GTPResponse(false, "File has the wrong boardsize to match the existing game");
+		}
+	}
+
+	Side s = Side::P1;
+
+	while(sgf.next_node()){
+		Move m = sgf.move();
+		move(m); // push the game forward
+		s = ~s;
+	}
+
+	if(sgf.has_children())
+		agent->load_sgf(sgf);
+
+	assert(sgf.done_child());
 	fclose(fd);
 	return true;
 }

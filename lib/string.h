@@ -6,8 +6,11 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
+
 
 typedef std::vector<std::string> vecstr;
+typedef std::unordered_map<std::string, std::string> dictstr;
 
 template <class T> std::string to_str(T a){
 	std::stringstream out;
@@ -29,5 +32,6 @@ void trim(std::string & str);
 void ltrim(std::string & str);
 void rtrim(std::string & str);
 
-vecstr explode(const std::string & str, const std::string & sep);
+vecstr explode(const std::string & str, const std::string & sep, int count=0);
 std::string implode(const vecstr & vec, const std::string & sep);
+dictstr parse_dict(const std::string & str, const std::string & sep1, const std::string & sep2);

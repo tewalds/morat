@@ -29,6 +29,7 @@ public:
 	virtual void timedout(){ timeout = true; }
 
 	virtual void gen_sgf(SGFPrinter<Move> & sgf, int limit) const = 0;
+	virtual void load_sgf(SGFParser<Move> & sgf) = 0;
 
 protected:
 	volatile bool timeout;

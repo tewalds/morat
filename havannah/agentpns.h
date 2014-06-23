@@ -98,15 +98,8 @@ public:
 			return num;
 		}
 
-		string to_s() const {
-			return "AgentPNS::Node: move " + move.to_s() +
-					", phi " + to_str(phi) +
-					", delta " + to_str(delta) +
-					", work " + to_str(work) +
-//					", outcome " + to_outcome().to_s() + "/" + to_str((int)proofdepth) +
-//					", best " + bestmove.to_s() +
-					", children " + to_str(children.num());
-		}
+		string to_s() const ;
+		bool from_s(string s);
 
 		void swap_tree(Node & n){
 			children.swap(n.children);
@@ -294,11 +287,19 @@ public:
 		gen_sgf(sgf, limit, root, rootboard.toplay());
 	}
 
+	void load_sgf(SGFParser<Move> & sgf) {
+		load_sgf(sgf, rootboard, root);
+	}
+
+	static void test();
+
 private:
 //remove all the nodes with little work to free up some memory
 	void garbage_collect(Node * node);
 	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
+	void create_children_simple(const Board & board, Node * node);
 
 	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const;
+	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };

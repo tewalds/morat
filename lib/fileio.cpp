@@ -12,13 +12,16 @@ int fpeek(FILE * fd){
 }
 void eat_whitespace(FILE * fd){
 	int c = fgetc(fd);
-	while(c == ' ' || c == '\n')
+	while(c == ' ' || c == '\n' || c == '\t')
 		c = fgetc(fd);
 	ungetc(c, fd);
 }
-void eat_char(FILE * fd, int expect){
+bool eat_char(FILE * fd, int expect){
 	int c = fgetc(fd);
-	assert(c == expect);
+	if (c == expect)
+		return true;
+	ungetc(c, fd);
+	return false;
 }
 string read_until(FILE * fd, char until, bool include){
 	string ret;
