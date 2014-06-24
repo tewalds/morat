@@ -15,6 +15,7 @@ pentagod
 pentagod-*
 trex
 trex-*
+test
 
 # valgrind output
 callgrind.out.*

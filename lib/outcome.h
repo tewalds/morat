@@ -103,7 +103,3 @@ inline Side    operator|(const Side    & a, const Side    & b) { return Side(a.t
 inline Outcome operator|(const Outcome & a, const Outcome & b) { return Outcome(a.to_i() | b.to_i()); }
 inline Side    & operator|=(Side    & o, const Side    & s) { return o = o | s; }
 inline Outcome & operator|=(Outcome & o, const Outcome & s) { return o = o | s; }
-
-void outcome_test();
-
-//std::string to_str_rel(Outcome o, Side to_play);

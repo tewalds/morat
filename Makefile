@@ -27,6 +27,15 @@ endif
 
 all: castro chex moy trex pentagod
 
+test: \
+		lib/test.o \
+		lib/outcome.o \
+		lib/outcome_test.o \
+		lib/string.o \
+		lib/string_test.o
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+	./test
+
 castro: \
 		havannah/main.o \
 		havannah/agentmcts.o \
@@ -104,7 +113,7 @@ trex: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean:
-	rm -f */*.o castro moy pentagod chex trex .Makefile
+	rm -f */*.o test castro moy pentagod chex trex .Makefile
 
 fresh: clean all
 

@@ -15,8 +15,6 @@ void die(int code, const string & str){
 }
 
 int main(int argc, char **argv){
-	outcome_test();
-
 	srand(Time().in_usec());
 	GTP gtp;
 
