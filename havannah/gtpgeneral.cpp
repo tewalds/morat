@@ -1,5 +1,6 @@
 
-#include "../lib/fileio.h"
+#include <fstream>
+
 #include "../lib/sgf.h"
 
 #include "gtp.h"
@@ -273,22 +274,22 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 	if(args.size() == 0)
 		return GTPResponse(true, "save_sgf <filename> [work limit]");
 
-	FILE * fd = fopen(args[0].c_str(), "r");
+	std::ifstream infile(args[0].c_str());
 
-	if(fd) {
-		fclose(fd);
+	if(infile) {
+		infile.close();
 		return GTPResponse(false, "File " + args[0] + " already exists");
 	}
 
-	fd = fopen(args[0].c_str(), "w");
+	std::ofstream outfile(args[0].c_str());
 
-	if(!fd)
+	if(!outfile)
 		return GTPResponse(false, "Opening file " + args[0] + " for writing failed");
 
 	if(args.size() > 1)
 		limit = from_str<unsigned int>(args[1]);
 
-	SGFPrinter<Move> sgf(fd);
+	SGFPrinter<Move> sgf(outfile);
 	sgf.game("havannah");
 	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
 	sgf.size(hist->get_size());
@@ -304,7 +305,7 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 	agent->gen_sgf(sgf, limit);
 
 	sgf.end();
-	fclose(fd);
+	outfile.close();
 	return true;
 }
 
@@ -313,16 +314,15 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	if(args.size() == 0)
 		return GTPResponse(true, "load_sgf <filename>");
 
-	FILE * fd = fopen(args[0].c_str(), "r");
+	std::ifstream infile(args[0].c_str());
 
-	if(!fd) {
-		fclose(fd);
+	if(!infile) {
 		return GTPResponse(false, "Error opening file " + args[0] + " for reading");
 	}
 
-	SGFParser<Move> sgf(fd);
+	SGFParser<Move> sgf(infile);
 	if(sgf.game() != "havannah"){
-		fclose(fd);
+		infile.close();
 		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
 	}
 
@@ -333,7 +333,7 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 			set_board();
 			time_control.new_game();
 		}else{
-			fclose(fd);
+			infile.close();
 			return GTPResponse(false, "File has the wrong boardsize to match the existing game");
 		}
 	}
@@ -350,6 +350,6 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 		agent->load_sgf(sgf);
 
 	assert(sgf.done_child());
-	fclose(fd);
+	infile.close();
 	return true;
 }

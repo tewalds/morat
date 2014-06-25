@@ -16,11 +16,26 @@ void eat_whitespace(FILE * fd){
 		c = fgetc(fd);
 	ungetc(c, fd);
 }
+void eat_whitespace(std::istream & is){
+	int c = is.peek();
+	while(c == ' ' || c == '\n' || c == '\t'){
+		is.get();
+		c = is.peek();
+	}
+}
 bool eat_char(FILE * fd, int expect){
 	int c = fgetc(fd);
 	if (c == expect)
 		return true;
 	ungetc(c, fd);
+	return false;
+}
+bool eat_char(std::istream & is, int expect){
+	int c = is.peek();
+	if (c == expect){
+		is.get();
+		return true;
+	}
 	return false;
 }
 string read_until(FILE * fd, char until, bool include){

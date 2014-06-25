@@ -29,8 +29,10 @@ all: castro chex moy trex pentagod
 
 test: \
 		lib/test.o \
+		lib/fileio.o \
 		lib/outcome.o \
 		lib/outcome_test.o \
+		lib/sgf_test.o \
 		lib/string.o \
 		lib/string_test.o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)

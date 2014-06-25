@@ -1,25 +1,27 @@
 
 #pragma once
 
+// SGF reader/parser, implements the SGF format: http://www.red-bean.com/sgf/
+
 #include <cassert>
-#include <unordered_map>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include "fileio.h"
 #include "outcome.h"
 #include "string.h"
 
-
 template<typename Move>
 class SGFPrinter {
-	FILE * _fd;
-	bool   _root;
-	int    _depth;
-	bool   _indent;
+	std::ostream & _os;
+	bool _root;
+	int  _depth;
+	bool _indent;
 
 	void print(std::string s) {
-		assert(_fd);
-		fprintf(_fd, "%s", s.c_str());
+		assert(_os.good());
+		_os << s;
 	}
 	void print(std::string key, std::string value) {
 		print(key + "[" + value + "]");
@@ -27,14 +29,13 @@ class SGFPrinter {
 
 public:
 
-	SGFPrinter(FILE * fd) : _fd(fd), _root(true), _depth(1) {
+	SGFPrinter(std::ostream & os) : _os(os), _root(true), _depth(1) {
 		print("(;");
 		print("FF", "4");
 	}
 
 	void end(){
 		print("\n)\n");
-		_fd = NULL;
 	}
 
 	void size(int s) {
@@ -87,25 +88,27 @@ public:
 template<typename Move>
 class SGFParser {
 
-	FILE * _fd;
+	std::istream & _is;
 	std::unordered_map<std::string, std::string> _properties;
 
 	void read_node() {
 		_properties.clear();
 		char key[11], value[1025];
-		while(fscanf(_fd, " %10[A-Z][%1024[^]]]", key, value) > 0){
+		for(int c = _is.peek(); _is.good() && 'A' <= c && c <= 'Z'; c = _is.peek()) {
+			_is.getline(key, 10, '[');
+			_is.getline(value, 1024, ']');
 			_properties[key] = value;
 		}
 	}
 
 public:
-	SGFParser(FILE * fd) : _fd(fd) {
+	SGFParser(std::istream & is) : _is(is) {
 		next_child();
 	}
 
 	bool next_node() {
-		eat_whitespace(_fd);
-		if(eat_char(_fd, ';')){
+		eat_whitespace(_is);
+		if(eat_char(_is, ';')){
 			read_node();
 			return true;
 		}
@@ -113,19 +116,20 @@ public:
 	}
 
 	bool has_children() {
-		return (fpeek(_fd) == '(');
+		eat_whitespace(_is);
+		return (_is.peek() == '(');
 	}
 
 	bool next_child() {
-		eat_whitespace(_fd);
-		if(eat_char(_fd, '('))
+		eat_whitespace(_is);
+		if(eat_char(_is, '('))
 			return next_node();
 		return false;
 	}
 
 	bool done_child() {
-		eat_whitespace(_fd);
-		return eat_char(_fd, ')');
+		eat_whitespace(_is);
+		return eat_char(_is, ')');
 	}
 
 	int size() {
@@ -140,7 +144,7 @@ public:
 			return Move(_properties["W"]);
 		if(_properties.count("B"))
 			return Move(_properties["B"]);
-		assert(false && "No W or B property");
+		return Move();
 	}
 	std::string comment() {
 		return _properties["C"];
