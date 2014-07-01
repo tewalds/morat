@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 struct TimeControl {
@@ -65,7 +66,7 @@ struct TimeControl {
 		if(flexible)
 			remain += move - used;
 		else
-			remain += min(0.0, move - used);
+			remain += std::min(0.0, move - used);
 
 		if(remain < 0)
 			remain = 0;

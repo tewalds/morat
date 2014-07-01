@@ -3,10 +3,13 @@
 
 //A multi-threaded, tree based, proof number search solver.
 
+#include <string>
+
 #include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/log.h"
+#include "../lib/string.h"
 
 #include "agent.h"
 #include "lbdist.h"
@@ -98,7 +101,7 @@ public:
 			return num;
 		}
 
-		string to_s() const {
+		std::string to_s() const {
 			return "Node: move " + move.to_s() +
 					", phi " + to_str(phi) +
 					", delta " + to_str(delta) +
@@ -228,7 +231,7 @@ public:
 		root.swap_tree(child);
 
 		if(nodesbefore > 0)
-			logerr(string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
+			logerr(std::string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
 
 		assert(nodes == root.size());
 
@@ -280,8 +283,8 @@ public:
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
 private:
 //remove all the nodes with little work to free up some memory

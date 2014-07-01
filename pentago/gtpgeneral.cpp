@@ -55,20 +55,20 @@ GTPResponse GTP::gtp_undo(vecstr args){
 }
 
 GTPResponse GTP::gtp_all_legal(vecstr args){
-	string ret;
+	std::string ret;
 	for(MoveIterator move(*hist); !move.done(); ++move)
 		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::gtp_history(vecstr args){
-	string ret;
+	std::string ret;
 	for(auto m : hist)
 		ret += m.to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
-GTPResponse GTP::play(const string & pos, Side toplay){
+GTPResponse GTP::play(const std::string & pos, Side toplay){
 	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 

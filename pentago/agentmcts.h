@@ -62,7 +62,7 @@ public:
 		void print() const {
 			printf("%s\n", to_s().c_str());
 		}
-		string to_s() const {
+		std::string to_s() const {
 			return "Node: move " + move.to_s() +
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", know " + to_str(know) +
@@ -241,8 +241,8 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
 	bool done() {
 		//solved or finished runs

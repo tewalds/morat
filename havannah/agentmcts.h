@@ -68,7 +68,7 @@ public:
 			children.swap(n.children);
 		}
 
-		string to_s() const ;
+		std::string to_s() const ;
 		bool from_s(std::string s);
 
 		unsigned int size() const {
@@ -261,8 +261,8 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
 	bool done() {
 		//solved or finished runs

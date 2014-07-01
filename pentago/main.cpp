@@ -18,7 +18,7 @@ int main(int argc, char **argv){
 	MoveIterator::test();
 	RandomMoveIteratorTest();
 
-	srand(Time().in_msec());
+	srand(Time().in_usec());
 	GTP gtp;
 
 	gtp.colorboard = isatty(fileno(stdout));

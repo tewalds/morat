@@ -4,12 +4,9 @@
 #include <cassert>
 #include <functional>
 #include <pthread.h>
+#include <stdint.h>
 #include <unistd.h>
 
-#include "types.h"
-
-using namespace std;
-using namespace placeholders; //for bind
 
 // http://gcc.gnu.org/onlinedocs/gcc/Atomic-Builtins.html
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2427.html
@@ -59,7 +56,7 @@ template<class A, class B> A PLUS(A & var, const B & val){
 class Thread {
 	pthread_t thread;
 	bool destruct;
-	function<void()> func;
+	std::function<void()> func;
 
 	static void * runner(void * blah){
 		Thread * t = (Thread *)blah;
@@ -71,7 +68,7 @@ class Thread {
 
 public:
 	Thread()                    : destruct(false), func(nullfunc) { }
-	Thread(function<void()> fn) : destruct(false), func(nullfunc) { (*this)(fn); }
+	Thread(std::function<void()> fn) : destruct(false), func(nullfunc) { (*this)(fn); }
 
 	//act as a move constructor, no copy constructor
 	Thread(Thread & o) { *this = o; }
@@ -90,7 +87,7 @@ public:
 		return *this;
 	}
 
-	int operator()(function<void()> fn){
+	int operator()(std::function<void()> fn){
 		assert(destruct == false);
 
 		func = fn;

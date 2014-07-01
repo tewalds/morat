@@ -69,13 +69,13 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 		if(outcome != Outcome::UNKNOWN)
 			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 }
 
@@ -155,8 +155,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				}
 			}
 
-			tpc = min(INF32/2, (td + child->phi - node->delta));
-			tdc = min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
+			tpc = std::min(INF32/2, (td + child->phi - node->delta));
+			tdc = std::min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
 		}else{
 			tpc = tdc = 0;
 			for(auto & i : node->children)
@@ -221,8 +221,8 @@ double AgentPNS::gamelen() const {
 	return rootboard.movesremain();
 }
 
-vector<Move> AgentPNS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentPNS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
@@ -239,8 +239,8 @@ vector<Move> AgentPNS::get_pv() const {
 	return pv;
 }
 
-string AgentPNS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentPNS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){

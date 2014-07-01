@@ -35,42 +35,42 @@ public:
 
 		set_board();
 
-		newcallback("name",            bind(&GTP::gtp_name,          this, _1), "Name of the program");
-		newcallback("version",         bind(&GTP::gtp_version,       this, _1), "Version of the program");
-		newcallback("verbose",         bind(&GTP::gtp_verbose,       this, _1), "Set verbosity, 0 for quiet, 1 for normal, 2+ for more output");
-		newcallback("extended",        bind(&GTP::gtp_extended,      this, _1), "Output extra stats from genmove in the response");
-		newcallback("debug",           bind(&GTP::gtp_debug,         this, _1), "Enable debug mode");
-		newcallback("colorboard",      bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
-		newcallback("showboard",       bind(&GTP::gtp_print,         this, _1), "Show the board");
-		newcallback("print",           bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
-		newcallback("dists",           bind(&GTP::gtp_dists,         this, _1), "Similar to print, but shows minimum win distances");
-		newcallback("zobrist",         bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
-		newcallback("clear_board",     bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
-		newcallback("clear",           bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
-		newcallback("boardsize",       bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");
-		newcallback("size",            bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
-		newcallback("play",            bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
-		newcallback("white",           bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
-		newcallback("black",           bind(&GTP::gtp_playblack,     this, _1), "Place a black stone: black <location>");
-		newcallback("undo",            bind(&GTP::gtp_undo,          this, _1), "Undo one or more moves: undo [amount to undo]");
-		newcallback("time",            bind(&GTP::gtp_time,          this, _1), "Set the time limits and the algorithm for per game time");
-		newcallback("genmove",         bind(&GTP::gtp_genmove,       this, _1), "Generate a move: genmove [color] [time]");
-		newcallback("solve",           bind(&GTP::gtp_solve,         this, _1), "Try to solve this position");
+		newcallback("name",            std::bind(&GTP::gtp_name,          this, _1), "Name of the program");
+		newcallback("version",         std::bind(&GTP::gtp_version,       this, _1), "Version of the program");
+		newcallback("verbose",         std::bind(&GTP::gtp_verbose,       this, _1), "Set verbosity, 0 for quiet, 1 for normal, 2+ for more output");
+		newcallback("extended",        std::bind(&GTP::gtp_extended,      this, _1), "Output extra stats from genmove in the response");
+		newcallback("debug",           std::bind(&GTP::gtp_debug,         this, _1), "Enable debug mode");
+		newcallback("colorboard",      std::bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
+		newcallback("showboard",       std::bind(&GTP::gtp_print,         this, _1), "Show the board");
+		newcallback("print",           std::bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
+		newcallback("dists",           std::bind(&GTP::gtp_dists,         this, _1), "Similar to print, but shows minimum win distances");
+		newcallback("zobrist",         std::bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
+		newcallback("clear_board",     std::bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
+		newcallback("clear",           std::bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
+		newcallback("boardsize",       std::bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");
+		newcallback("size",            std::bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
+		newcallback("play",            std::bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
+		newcallback("white",           std::bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
+		newcallback("black",           std::bind(&GTP::gtp_playblack,     this, _1), "Place a black stone: black <location>");
+		newcallback("undo",            std::bind(&GTP::gtp_undo,          this, _1), "Undo one or more moves: undo [amount to undo]");
+		newcallback("time",            std::bind(&GTP::gtp_time,          this, _1), "Set the time limits and the algorithm for per game time");
+		newcallback("genmove",         std::bind(&GTP::gtp_genmove,       this, _1), "Generate a move: genmove [color] [time]");
+		newcallback("solve",           std::bind(&GTP::gtp_solve,         this, _1), "Try to solve this position");
 
-//		newcallback("ab",              bind(&GTP::gtp_ab,            this, _1), "Switch to use the Alpha/Beta agent to play/solve");
-		newcallback("mcts",            bind(&GTP::gtp_mcts,          this, _1), "Switch to use the Monte Carlo Tree Search agent to play/solve");
-		newcallback("pns",             bind(&GTP::gtp_pns,           this, _1), "Switch to use the Proof Number Search agent to play/solve");
+//		newcallback("ab",              std::bind(&GTP::gtp_ab,            this, _1), "Switch to use the Alpha/Beta agent to play/solve");
+		newcallback("mcts",            std::bind(&GTP::gtp_mcts,          this, _1), "Switch to use the Monte Carlo Tree Search agent to play/solve");
+		newcallback("pns",             std::bind(&GTP::gtp_pns,           this, _1), "Switch to use the Proof Number Search agent to play/solve");
 
-		newcallback("all_legal",       bind(&GTP::gtp_all_legal,     this, _1), "List all legal moves");
-		newcallback("history",         bind(&GTP::gtp_history,       this, _1), "List of played moves");
-		newcallback("playgame",        bind(&GTP::gtp_playgame,      this, _1), "Play a list of moves");
-		newcallback("winner",          bind(&GTP::gtp_winner,        this, _1), "Check the winner of the game");
-		newcallback("patterns",        bind(&GTP::gtp_patterns,      this, _1), "List all legal moves plus their local pattern");
+		newcallback("all_legal",       std::bind(&GTP::gtp_all_legal,     this, _1), "List all legal moves");
+		newcallback("history",         std::bind(&GTP::gtp_history,       this, _1), "List of played moves");
+		newcallback("playgame",        std::bind(&GTP::gtp_playgame,      this, _1), "Play a list of moves");
+		newcallback("winner",          std::bind(&GTP::gtp_winner,        this, _1), "Check the winner of the game");
+		newcallback("patterns",        std::bind(&GTP::gtp_patterns,      this, _1), "List all legal moves plus their local pattern");
 
-		newcallback("pv",              bind(&GTP::gtp_pv,            this, _1), "Output the principle variation for the player tree as it stands now");
-		newcallback("move_stats",      bind(&GTP::gtp_move_stats,    this, _1), "Output the move stats for the player tree as it stands now");
+		newcallback("pv",              std::bind(&GTP::gtp_pv,            this, _1), "Output the principle variation for the player tree as it stands now");
+		newcallback("move_stats",      std::bind(&GTP::gtp_move_stats,    this, _1), "Output the move stats for the player tree as it stands now");
 
-		newcallback("params",          bind(&GTP::gtp_params,        this, _1), "Set the options for the player, no args gives options");
+		newcallback("params",          std::bind(&GTP::gtp_params,        this, _1), "Set the options for the player, no args gives options");
 
 //		newcallback("player_hgf",      bind(&GTP::gtp_player_hgf,    this, _1), "Output an hgf of the current tree");
 //		newcallback("player_load_hgf", bind(&GTP::gtp_player_load_hgf,this, _1), "Load an hgf generated by player_hgf");
@@ -94,7 +94,7 @@ public:
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
 	GTPResponse gtp_patterns(vecstr args);
-	GTPResponse play(const string & pos, Side toplay);
+	GTPResponse play(const std::string & pos, Side toplay);
 	GTPResponse gtp_playgame(vecstr args);
 	GTPResponse gtp_play(vecstr args);
 	GTPResponse gtp_playwhite(vecstr args);
@@ -127,5 +127,5 @@ public:
 //	GTPResponse gtp_player_hgf(vecstr args);
 //	GTPResponse gtp_player_load_hgf(vecstr args);
 
-	string solve_str(int outcome) const;
+	std::string solve_str(int outcome) const;
 };

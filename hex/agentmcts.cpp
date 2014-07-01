@@ -57,15 +57,15 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		}
 
 		if(root.outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + root.outcome.to_s_rel(toplay));
+			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 
 	pool.reset();
@@ -201,8 +201,8 @@ double AgentMCTS::gamelen() const {
 	return len.avg();
 }
 
-vector<Move> AgentMCTS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentMCTS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
@@ -219,8 +219,8 @@ vector<Move> AgentMCTS::get_pv() const {
 	return pv;
 }
 
-string AgentMCTS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentMCTS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){
@@ -308,7 +308,7 @@ AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) co
 }
 
 void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
-	string s = string("\n") + string(depth, ' ') + "(;" + (board.toplay() == Side::P2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
+	std::string s = std::string("\n") + std::string(depth, ' ') + "(;" + (board.toplay() == Side::P2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
 	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)node->outcome.to_i()) + ", best:" + node->bestmove.to_s() + "]";
 	fprintf(fd, "%s", s.c_str());
 
@@ -328,7 +328,7 @@ void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned
 	}
 
 	if(children)
-		fprintf(fd, "\n%s", string(depth, ' ').c_str());
+		fprintf(fd, "\n%s", std::string(depth, ' ').c_str());
 	fprintf(fd, ")");
 }
 
@@ -368,7 +368,7 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	assert(fscanf(fd, "C[%100[^]]]", buf) > 0);
 
-	vecstr entry, parts = explode(string(buf), ", ");
+	vecstr entry, parts = explode(std::string(buf), ", ");
 	assert(parts[0] == "mcts");
 
 	entry = explode(parts[1], ":");

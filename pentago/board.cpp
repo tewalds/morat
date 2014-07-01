@@ -26,7 +26,7 @@ const uint64_t Board::xybits[36] = {
 const int16_t Board::scoremap[6] = { 0, 1, 3, 9, 27, 127 };
 
 
-Board::Board(string str) {
+Board::Board(std::string str) {
 	sides[1] = 0;
 	sides[2] = 0;
 	nummoves = 0;
@@ -51,15 +51,16 @@ Board::Board(string str) {
 	to_play = (nummoves % 2) + 1;
 }
 
-string Board::state() const {
-	string s;
+std::string Board::state() const {
+	std::string s;
 	for(int y = 0; y < 6; y++)
 		for(int x = 0; x < 6; x++)
 			s += to_str((int)get(x, y));
 	return s;
 }
 
-string Board::to_s(bool color) const {
+std::string Board::to_s(bool color) const {
+	using std::string;
 	string white = "O",
 	       black = "@",
 	       empty = ".",

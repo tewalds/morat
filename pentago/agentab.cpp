@@ -41,14 +41,14 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	if(verbose){
 		logerr("Finished:    " + to_str(nodes_seen) + " nodes in " + to_str(time_used*1000, 0) + " msec: " + to_str((uint64_t)((double)nodes_seen/time_used)) + " Nodes/s\n");
 
-		vector<Move> pv = get_pv();
-		string pvstr;
-		for(vector<Move>::iterator m = pv.begin(); m != pv.end(); ++m)
+		vecmove pv = get_pv();
+		std::string pvstr;
+		for(vecmove::iterator m = pv.begin(); m != pv.end(); ++m)
 			pvstr += " " + m->to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3)
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 }
 
@@ -81,8 +81,8 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if(TT && (node = tt_get(board)) && node->depth >= depth){
 		switch(node->flag){
 		case VALID:  return node->score;
-		case LBOUND: alpha = max(alpha, node->score); break;
-		case UBOUND: beta  = min(beta,  node->score); break;
+		case LBOUND: alpha = std::max(alpha, node->score); break;
+		case UBOUND: beta  = std::min(beta,  node->score); break;
 		default:     assert(false && "Unknown flag!");
 		}
 		if(alpha >= beta)
@@ -111,7 +111,7 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 		//generate moves
 		for (RandomMoveIterator<XORShift_uint32> move(board, rand); !move.done(); ++move) {
 //		for (MoveIterator move(board); !move.done(); ++move) {
-			int16_t value = -negamax(move.board(), -beta, -max(alpha, score), depth-1);
+			int16_t value = -negamax(move.board(), -beta, -std::max(alpha, score), depth-1);
 			if (score < value) {
 				score = value;
 				bestmove = *move;
@@ -130,11 +130,11 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	return score;
 }
 
-string AgentAB::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentAB::move_stats(vecmove moves) const {
+	std::string s = "";
 
 	Board b = rootboard;
-	for(vector<Move>::iterator m = moves.begin(); m != moves.end(); ++m)
+	for(vecmove::iterator m = moves.begin(); m != moves.end(); ++m)
 		b.move(*m);
 
 	for(MoveIterator move(b); !move.done(); ++move){
@@ -167,8 +167,8 @@ Move AgentAB::return_move(const Board & board, int verbose) const {
 	return best;
 }
 
-vector<Move> AgentAB::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentAB::get_pv() const {
+	vecmove pv;
 
 	Board b = rootboard;
 	int i = 20;

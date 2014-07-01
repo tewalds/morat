@@ -9,6 +9,8 @@
 #include "board.h"
 
 class Agent {
+protected:
+	typedef std::vector<Move> vecmove;
 public:
 	Agent() { }
 	virtual ~Agent() { }
@@ -20,9 +22,9 @@ public:
 	virtual void set_memlimit(uint64_t lim) = 0; // in bytes
 	virtual void clear_mem() = 0;
 
-	virtual vector<Move> get_pv() const = 0;
-	        string move_stats() const { return move_stats(vector<Move>()); }
-	virtual string move_stats(const vector<Move> moves) const = 0;
+	virtual vecmove get_pv() const = 0;
+	        std::string move_stats() const { return move_stats(vecmove()); }
+	virtual std::string move_stats(const vecmove moves) const = 0;
 	virtual double gamelen() const = 0;
 
 	virtual void timedout(){ timeout = true; }

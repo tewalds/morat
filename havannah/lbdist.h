@@ -171,7 +171,7 @@ public:
 		return -outcome; // this isn't certainty, so negate
 	}
 
-	int get(Move pos){ return min(get(pos, Side::P1),  get(pos, Side::P2)); }
+	int get(Move pos){ return std::min(get(pos, Side::P1),  get(pos, Side::P2)); }
 	int get(Move pos, Side player){ return get(board->xy(pos), player); }
 	int get(int pos, Side player){
 		int list[6];
@@ -185,7 +185,7 @@ public:
 		partialsort(list, 3);
 		int edges = list[0] + list[1] + list[2] - 2;
 
-		return min(corners, edges);
+		return std::min(corners, edges);
 	}
 
 	//partially sort the list with selection sort

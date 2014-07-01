@@ -16,8 +16,6 @@
 
 #include "move.h"
 
-using namespace std;
-
 /*
  * the board is represented as a flattened 2d array of the form:
  *   1 2 3
@@ -72,7 +70,7 @@ mutable uint16_t parent;  //parent for this group of cells
 
 		int numedges()   const { return BitsSetTable256[edge]; }
 
-		string to_s(int i) const {
+		std::string to_s(int i) const {
 			return "Cell " + to_str(i) +": "
 				"piece: " + to_str(piece.to_i())+
 				", size: " + to_str((int)size) +
@@ -146,7 +144,7 @@ private:
 	Side toPlay;
 	Outcome outcome;
 
-	vector<Cell> cells;
+	std::vector<Cell> cells;
 	Zobrist<6> hash;
 	const MoveValid * neighbourlist;
 
@@ -289,7 +287,8 @@ public:
 
 	int lineend(int y)   const { return (size - y); }
 
-	string to_s(bool color) const {
+	std::string to_s(bool color) const {
+		using std::string;
 		string white = "O",
 		       black = "@",
 		       empty = ".",
@@ -392,7 +391,7 @@ public:
 			return true;
 
 		if(cells[i].size < cells[j].size) //force i's subtree to be bigger
-			swap(i, j);
+			std::swap(i, j);
 
 		cells[j].parent = i;
 		cells[i].size   += cells[j].size;
@@ -432,7 +431,7 @@ public:
 		return (nummoves > unique_depth ? hash.get(0) : hash.get());
 	}
 
-	string hashstr() const {
+	std::string hashstr() const {
 		static const char hexlookup[] = "0123456789abcdef";
 		char buf[19] = "0x";
 		hash_t val = gethash();
@@ -478,11 +477,11 @@ public:
 		    z = sizem1 - x - y;
 
 		hash_t m = hash.test(0,  3*xy(x, y) + turn);
-		m = min(m, hash.test(1,  3*xy(z, y) + turn));
-		m = min(m, hash.test(2,  3*xy(z, x) + turn));
-		m = min(m, hash.test(3,  3*xy(x, z) + turn));
-		m = min(m, hash.test(4,  3*xy(y, z) + turn));
-		m = min(m, hash.test(5,  3*xy(y, x) + turn));
+		m = std::min(m, hash.test(1,  3*xy(z, y) + turn));
+		m = std::min(m, hash.test(2,  3*xy(z, x) + turn));
+		m = std::min(m, hash.test(3,  3*xy(x, z) + turn));
+		m = std::min(m, hash.test(4,  3*xy(y, z) + turn));
+		m = std::min(m, hash.test(5,  3*xy(y, x) + turn));
 		return m;
 	}
 
@@ -534,17 +533,17 @@ public:
 	}
 	static Pattern pattern_symmetry(Pattern p){ //takes a pattern and returns the representative version
 		Pattern m = p;                 //012345
-		m = min(m, (p = pattern_rotate(p)));//501234
-		m = min(m, (p = pattern_rotate(p)));//450123
-		m = min(m, (p = pattern_rotate(p)));//345012
-		m = min(m, (p = pattern_rotate(p)));//234501
-		m = min(m, (p = pattern_rotate(p)));//123450
-		m = min(m, (p = pattern_mirror(pattern_rotate(p))));//012345 -> 054321
-		m = min(m, (p = pattern_rotate(p)));//105432
-		m = min(m, (p = pattern_rotate(p)));//210543
-		m = min(m, (p = pattern_rotate(p)));//321054
-		m = min(m, (p = pattern_rotate(p)));//432105
-		m = min(m, (p = pattern_rotate(p)));//543210
+		m = std::min(m, (p = pattern_rotate(p)));//501234
+		m = std::min(m, (p = pattern_rotate(p)));//450123
+		m = std::min(m, (p = pattern_rotate(p)));//345012
+		m = std::min(m, (p = pattern_rotate(p)));//234501
+		m = std::min(m, (p = pattern_rotate(p)));//123450
+		m = std::min(m, (p = pattern_mirror(pattern_rotate(p))));//012345 -> 054321
+		m = std::min(m, (p = pattern_rotate(p)));//105432
+		m = std::min(m, (p = pattern_rotate(p)));//210543
+		m = std::min(m, (p = pattern_rotate(p)));//321054
+		m = std::min(m, (p = pattern_rotate(p)));//432105
+		m = std::min(m, (p = pattern_rotate(p)));//543210
 		return m;
 	}
 

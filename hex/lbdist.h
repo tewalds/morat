@@ -145,7 +145,7 @@ public:
 		}
 	}
 
-	int get(Move pos){ return min(get(pos, Side::P1),  get(pos, Side::P2)); }
+	int get(Move pos){ return std::min(get(pos, Side::P1),  get(pos, Side::P2)); }
 	int get(Move pos, Side player){ return get(board->xy(pos), player); }
 	int get(int pos, Side player){
 		int sum = 0;

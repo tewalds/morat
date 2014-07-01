@@ -5,14 +5,11 @@
 #include <cassert>
 #include <cstdio>
 #include <string>
-#include <vector>
 
 #include "../lib/outcome.h"
 #include "../lib/xorshift.h"
 
 #include "move.h"
-
-using namespace std;
 
 //#include <bitset>
 //#define bitcount(x) std::bitset<typeof(x)>(x).count()
@@ -67,7 +64,7 @@ public:
 	}
 
 	//take a position as 01012200 ... of length 36, left to right, top to bottom, all [012]
-	Board(string str);
+	Board(std::string str);
 
 	static void test();
 
@@ -89,14 +86,14 @@ public:
 		return 0;
 	}
 
-	string to_s(bool color = true) const ;
-	string state() const ;
+	std::string to_s(bool color = true) const ;
+	std::string state() const ;
 
 	void print(bool color = true) const {
 		printf("%s", to_s(color).c_str());
 	}
 
-	string won_str() const ;
+	std::string won_str() const ;
 
 	Side toplay() const {
 		return to_play;
@@ -157,7 +154,7 @@ public:
 			return false;
 
 		if(m == M_SWAP){
-			swap(sides[1], sides[2]);
+			std::swap(sides[1], sides[2]);
 			to_play = 1;
 			return true;
 		}
@@ -222,7 +219,7 @@ public:
 			return false;
 
 		if(m == M_SWAP){
-			swap(sides[1], sides[2]);
+			std::swap(sides[1], sides[2]);
 			to_play = 1;
 			return true;
 		}

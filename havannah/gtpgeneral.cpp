@@ -73,7 +73,7 @@ GTPResponse GTP::gtp_undo(vecstr args){
 GTPResponse GTP::gtp_patterns(vecstr args){
 	bool symmetric = true;
 	bool invert = true;
-	string ret;
+	std::string ret;
 	const Board & board = *hist;
 	for(Board::MoveIterator move = board.moveit(); !move.done(); ++move){
 		ret += move->to_s() + " ";
@@ -89,20 +89,20 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 }
 
 GTPResponse GTP::gtp_all_legal(vecstr args){
-	string ret;
+	std::string ret;
 	for(Board::MoveIterator move = hist->moveit(); !move.done(); ++move)
 		ret += move->to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
 GTPResponse GTP::gtp_history(vecstr args){
-	string ret;
+	std::string ret;
 	for(auto m : hist)
 		ret += m.to_s() + " ";
 	return GTPResponse(true, ret);
 }
 
-GTPResponse GTP::play(const string & pos, Side toplay){
+GTPResponse GTP::play(const std::string & pos, Side toplay){
 	if(toplay != hist->toplay())
 		return GTPResponse(false, "It is the other player's turn!");
 
@@ -193,7 +193,7 @@ GTPResponse GTP::gtp_extended(vecstr args){
 }
 
 GTPResponse GTP::gtp_debug(vecstr args){
-	string str = "\n";
+	std::string str = "\n";
 	str += "Board size:  " + to_str(hist->get_size()) + "\n";
 	str += "Board cells: " + to_str(hist->numcells()) + "\n";
 	str += "Board vec:   " + to_str(hist->vecsize()) + "\n";
@@ -203,6 +203,7 @@ GTPResponse GTP::gtp_debug(vecstr args){
 }
 
 GTPResponse GTP::gtp_dists(vecstr args){
+	using std::string;
 	Board board = *hist;
 	LBDists dists(&board);
 

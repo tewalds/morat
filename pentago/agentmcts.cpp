@@ -42,6 +42,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		for(auto & t : pool){
 			gamelen += t->gamelen;
 			treelen += t->treelen;
+
 			for(int a = 0; a < 4; a++)
 				times[a] += t->times[a];
 		}
@@ -55,15 +56,15 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		}
 
 		if(root.outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + root.outcome.to_s_rel(toplay));
+			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 
 	pool.reset();
@@ -180,8 +181,8 @@ double AgentMCTS::gamelen() const {
 	return len.avg();
 }
 
-vector<Move> AgentMCTS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentMCTS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
@@ -198,8 +199,8 @@ vector<Move> AgentMCTS::get_pv() const {
 	return pv;
 }
 
-string AgentMCTS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentMCTS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){

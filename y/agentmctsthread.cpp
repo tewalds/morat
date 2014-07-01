@@ -182,7 +182,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 	}
 
 	if(agent->dynwiden > 0) //sort in decreasing order by knowledge
-		sort(temp.begin(), temp.end(), sort_node_know);
+		std::sort(temp.begin(), temp.end(), sort_node_know);
 
 	PLUS(agent->nodes, temp.num());
 	node->children.swap(temp);
@@ -345,7 +345,7 @@ void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Nod
 		child->know += agent->bridge;
 
 	if(agent->dists)
-		child->know += abs(agent->dists) * max(0, board.get_size() - dists.get(child->move, board.toplay()));
+		child->know += abs(agent->dists) * std::max(0, board.get_size() - dists.get(child->move, board.toplay()));
 }
 
 //test whether this move is a forced reply to the opponent probing your virtual connections

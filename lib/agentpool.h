@@ -80,7 +80,7 @@ public:
 		return *(threads[i]);
 	}
 
-	string state_string() const {
+	std::string state_string() const {
 		switch(thread_state){
 		case Thread_Cancelled:  return "Thread_Wait_Cancelled";
 		case Thread_Wait_Start: return "Thread_Wait_Start";
@@ -173,7 +173,7 @@ public:
 
 	AgentThreadBase(AgentThreadPool<AgentType> * p, AgentType * a) : pool(p), agent(a) {
 		reset();
-		thread(bind(&AgentThreadBase::run, this));
+		thread(std::bind(&AgentThreadBase::run, this));
 	}
 	virtual ~AgentThreadBase() { }
 

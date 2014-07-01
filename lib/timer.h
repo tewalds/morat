@@ -6,13 +6,10 @@
 
 #include "thread.h"
 
-using namespace std;
-using namespace placeholders; //for bind
-
 class Timer {
 	Thread thread;
 	bool destruct;
-	function<void()> callback;
+	std::function<void()> callback;
 	double timeout;
 
 	void waiter(){
@@ -27,15 +24,15 @@ public:
 	Timer() {
 		timeout = 0;
 		destruct = false;
-		callback = bind(&Timer::nullcallback, this);
+		callback = std::bind(&Timer::nullcallback, this);
 	}
 
-	Timer(double time, function<void()> fn){
+	Timer(double time, std::function<void()> fn){
 		destruct = false;
 		set(time, fn);
 	}
 
-	void set(double time, function<void()> fn){
+	void set(double time, std::function<void()> fn){
 		cancel();
 
 		timeout = time;
@@ -45,14 +42,14 @@ public:
 			fn();
 		}else{
 			destruct = true;
-			thread(bind(&Timer::waiter, this));
+			thread(std::bind(&Timer::waiter, this));
 		}
 	}
 
 	void cancel(){
 		if(destruct){
 			destruct = false;
-			callback = bind(&Timer::nullcallback, this);
+			callback = std::bind(&Timer::nullcallback, this);
 			thread.cancel();
 			thread.join();
 		}
