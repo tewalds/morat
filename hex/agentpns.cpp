@@ -9,6 +9,36 @@
 namespace Morat {
 namespace Hex {
 
+std::string AgentPNS::Node::to_s() const {
+	return "AgentPNS::Node"
+	       ", move " + move.to_s() +
+	       ", phi " + to_str(phi) +
+	       ", delta " + to_str(delta) +
+	       ", work " + to_str(work) +
+	       ", children " + to_str(children.num());
+}
+
+bool AgentPNS::Node::from_s(std::string s) {
+	auto dict = parse_dict(s, ", ", " ");
+
+	if(dict.size() == 6){
+		move = Move(dict["move"]);
+		phi = from_str<uint32_t>(dict["phi"]);
+		delta = from_str<uint32_t>(dict["delta"]);
+		work = from_str<uint64_t>(dict["work"]);
+		// ignore children
+		return true;
+	}
+	return false;
+}
+
+void AgentPNS::test() {
+	Node n(Move("a1"));
+	auto s = n.to_s();
+	Node k;
+	assert(k.from_s(s));
+}
+
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
@@ -284,6 +314,51 @@ void AgentPNS::garbage_collect(Node * node){
 			nodes -= child->dealloc(ctmem);
 		}else if(child->children.num() > 0){
 			garbage_collect(child);
+		}
+	}
+}
+
+void AgentPNS::create_children_simple(const Board & board, Node * node){
+	assert(node->children.empty());
+	node->children.alloc(board.movesremain(), ctmem);
+	unsigned int i = 0;
+	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		Outcome outcome = board.test_outcome(*move);
+		node->children[i] = Node(*move).outcome(outcome, board.toplay(), ties, 1);
+		i++;
+	}
+	PLUS(nodes, i);
+	node->children.shrink(i); //if symmetry, there may be extra moves to ignore
+}
+
+void AgentPNS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const {
+	for(auto & child : node.children){
+		if(child.work >= limit && (side != node.to_outcome(~side) || child.to_outcome(side) == node.to_outcome(~side))){
+			sgf.child_start();
+			sgf.move(side, child.move);
+			sgf.comment(child.to_s());
+			gen_sgf(sgf, limit, child, ~side);
+			sgf.child_end();
+		}
+	}
+}
+
+void AgentPNS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node) {
+	assert(sgf.has_children());
+	create_children_simple(board, &node);
+
+	while(sgf.next_child()){
+		Move m = sgf.move();
+		Node & child = *find_child(&node, m);
+		child.from_s(sgf.comment());
+		if(sgf.done_child()){
+			continue;
+		}else{
+			// has children!
+			Board b = board;
+			b.move(m);
+			load_sgf(sgf, b, child);
+			assert(sgf.done_child());
 		}
 	}
 }

@@ -97,8 +97,8 @@ public:
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(rootboard, verbose); }
 	double gamelen() const { return rootboard.movesremain(); }
-	vector<Move> get_pv() const;
-	string move_stats(vector<Move> moves) const;
+	vecmove get_pv() const;
+	string move_stats(vecmove moves) const;
 
 private:
 	int16_t negamax(const Board & board, int16_t alpha, int16_t beta, int depth);

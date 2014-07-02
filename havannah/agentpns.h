@@ -14,6 +14,7 @@
 #include "agent.h"
 #include "lbdist.h"
 
+
 namespace Morat {
 namespace Havannah {
 

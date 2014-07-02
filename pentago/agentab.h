@@ -3,6 +3,7 @@
 
 //An Alpha-beta solver, single threaded with an optional transposition table.
 
+#include "../lib/log.h"
 #include "../lib/xorshift.h"
 
 #include "agent.h"
@@ -99,6 +100,14 @@ public:
 	double gamelen() const { return rootboard.moves_remain(); }
 	vecmove get_pv() const;
 	std::string move_stats(vecmove moves) const;
+
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		logerr("gen_sgf not supported in the ab agent.");
+	}
+
+	void load_sgf(SGFParser<Move> & sgf) {
+		logerr("load_sgf not supported in the ab agent.");
+	}
 
 private:
 	int16_t negamax(const Board & board, int16_t alpha, int16_t beta, int depth);

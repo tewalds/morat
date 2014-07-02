@@ -9,9 +9,11 @@
 #include "agentpns.h"
 #include "gtp.h"
 
-using namespace std;
+
 using namespace Morat;
 using namespace Havannah;
+
+using namespace std;
 
 void die(int code, const string & str){
 	printf("%s\n", str.c_str());

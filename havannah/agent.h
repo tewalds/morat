@@ -9,6 +9,7 @@
 
 #include "board.h"
 
+
 namespace Morat {
 namespace Havannah {
 

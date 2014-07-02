@@ -45,8 +45,8 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	if(verbose){
 		logerr("Finished:    " + to_str(nodes_seen) + " nodes in " + to_str(time_used*1000, 0) + " msec: " + to_str((uint64_t)((double)nodes_seen/time_used)) + " Nodes/s\n");
 
-		vector<Move> pv = get_pv();
-		string pvstr;
+		vecmove pv = get_pv();
+		std::string pvstr;
 		for(auto m : pv)
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
@@ -129,11 +129,11 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	return score;
 }
 
-string AgentAB::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentAB::move_stats(vector<Move> moves) const {
+	std::string s = "";
 
 	Board b = rootboard;
-	for(vector<Move>::iterator m = moves.begin(); m != moves.end(); ++m)
+	for(vecmove::iterator m = moves.begin(); m != moves.end(); ++m)
 		b.move(*m);
 
 	for(MoveIterator move(b); !move.done(); ++move){
@@ -166,8 +166,8 @@ Move AgentAB::return_move(const Board & board, int verbose) const {
 	return best;
 }
 
-vector<Move> AgentAB::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentAB::get_pv() const {
+	vecmove pv;
 
 	Board b = rootboard;
 	int i = 20;

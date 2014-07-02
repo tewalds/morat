@@ -1,4 +1,8 @@
 
+#include <fstream>
+
+#include "../lib/sgf.h"
+
 #include "gtp.h"
 #include "lbdist.h"
 
@@ -265,6 +269,91 @@ GTPResponse GTP::gtp_dists(vecstr args){
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
 	return GTPResponse(true, hist->hashstr());
+}
+
+GTPResponse GTP::gtp_save_sgf(vecstr args){
+	int limit = -1;
+	if(args.size() == 0)
+		return GTPResponse(true, "save_sgf <filename> [work limit]");
+
+	std::ifstream infile(args[0].c_str());
+
+	if(infile) {
+		infile.close();
+		return GTPResponse(false, "File " + args[0] + " already exists");
+	}
+
+	std::ofstream outfile(args[0].c_str());
+
+	if(!outfile)
+		return GTPResponse(false, "Opening file " + args[0] + " for writing failed");
+
+	if(args.size() > 1)
+		limit = from_str<unsigned int>(args[1]);
+
+	SGFPrinter<Move> sgf(outfile);
+	sgf.game("rex");
+	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
+	sgf.size(hist->get_size());
+
+	sgf.end_root();
+
+	Side s = Side::P1;
+	for(auto m : hist){
+		sgf.move(s, m);
+		s = ~s;
+	}
+
+	agent->gen_sgf(sgf, limit);
+
+	sgf.end();
+	outfile.close();
+	return true;
+}
+
+
+GTPResponse GTP::gtp_load_sgf(vecstr args){
+	if(args.size() == 0)
+		return GTPResponse(true, "load_sgf <filename>");
+
+	std::ifstream infile(args[0].c_str());
+
+	if(!infile) {
+		return GTPResponse(false, "Error opening file " + args[0] + " for reading");
+	}
+
+	SGFParser<Move> sgf(infile);
+	if(sgf.game() != "rex"){
+		infile.close();
+		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
+	}
+
+	int size = sgf.size();
+	if(size != hist->get_size()){
+		if(hist.len() == 0){
+			hist = History(size);
+			set_board();
+			time_control.new_game();
+		}else{
+			infile.close();
+			return GTPResponse(false, "File has the wrong boardsize to match the existing game");
+		}
+	}
+
+	Side s = Side::P1;
+
+	while(sgf.next_node()){
+		Move m = sgf.move();
+		move(m); // push the game forward
+		s = ~s;
+	}
+
+	if(sgf.has_children())
+		agent->load_sgf(sgf);
+
+	assert(sgf.done_child());
+	infile.close();
+	return true;
 }
 
 }; // namespace Rex

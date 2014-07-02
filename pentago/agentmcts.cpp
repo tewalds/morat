@@ -15,6 +15,40 @@ namespace Pentago {
 
 const float AgentMCTS::min_rave = 0.1;
 
+std::string AgentMCTS::Node::to_s() const {
+	return "AgentMCTS::Node"
+	       ", move " + move.to_s() +
+	       ", exp " + exp.to_s() +
+	       ", know " + to_str(know) +
+	       ", outcome " + to_str((int)outcome.to_i()) +
+	       ", depth " + to_str((int)proofdepth) +
+	       ", best " + bestmove.to_s() +
+	       ", children " + to_str(children.num());
+}
+
+bool AgentMCTS::Node::from_s(std::string s) {
+	auto dict = parse_dict(s, ", ", " ");
+
+	if(dict.size() == 8){
+		move = Move(dict["move"]);
+		exp = ExpPair(dict["exp"]);
+		know = from_str<int>(dict["know"]);
+		outcome = Outcome(from_str<int>(dict["outcome"]));
+		proofdepth = from_str<int>(dict["depth"]);
+		bestmove = Move(dict["best"]);
+		// ignore children
+		return true;
+	}
+	return false;
+}
+
+void AgentMCTS::test() {
+	Node n(Move("a1z"));
+	auto s = n.to_s();
+	Node k;
+	assert(k.from_s(s));
+}
+
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	Side toplay = rootboard.toplay();
 
@@ -285,6 +319,60 @@ AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) co
 			return i;
 
 	return NULL;
+}
+
+void AgentMCTS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const {
+	for(auto & child : node.children){
+		if(child.exp.num() >= limit && (side != node.outcome || child.outcome == node.outcome)){
+			sgf.child_start();
+			sgf.move(side, child.move);
+			sgf.comment(child.to_s());
+			gen_sgf(sgf, limit, child, ~side);
+			sgf.child_end();
+		}
+	}
+}
+
+void AgentMCTS::create_children_simple(const Board & board, Node * node){
+	assert(node->children.empty());
+
+	node->children.alloc(board.moves_avail(), ctmem);
+
+	Node * child = node->children.begin(),
+		 * end   = node->children.end();
+	MoveIterator moveit(board, prunesymmetry);
+	int nummoves = 0;
+	for(; !moveit.done() && child != end; ++moveit, ++child){
+		*child = Node(*moveit);
+		nummoves++;
+	}
+
+	if(prunesymmetry)
+		node->children.shrink(nummoves); //shrink the node to ignore the extra moves
+	else //both end conditions should happen in parallel
+		assert(moveit.done() && child == end);
+
+	PLUS(nodes, node->children.num());
+}
+
+void AgentMCTS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node) {
+	assert(sgf.has_children());
+	create_children_simple(board, & node);
+
+	while(sgf.next_child()){
+		Move m = sgf.move();
+		Node & child = *find_child(&node, m);
+		child.from_s(sgf.comment());
+		if(sgf.done_child()){
+			continue;
+		}else{
+			// has children!
+			Board b = board;
+			b.move(m);
+			load_sgf(sgf, b, child);
+			assert(sgf.done_child());
+		}
+	}
 }
 
 }; // namespace Pentago

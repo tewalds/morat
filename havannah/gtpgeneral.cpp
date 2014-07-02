@@ -6,6 +6,7 @@
 #include "gtp.h"
 #include "lbdist.h"
 
+
 namespace Morat {
 namespace Havannah {
 

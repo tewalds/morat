@@ -1,6 +1,6 @@
 
-#include <cassert>
 #include <cmath>
+#include <string>
 
 #include "../lib/alarm.h"
 #include "../lib/fileio.h"
@@ -9,6 +9,7 @@
 
 #include "agentmcts.h"
 #include "board.h"
+
 
 namespace Morat {
 namespace Havannah {
@@ -364,9 +365,10 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 }
 
 AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) const {
-	for(auto & c : node->children)
-		if(c.move == move)
-			return &c;
+	for(Node * i = node->children.begin(); i != node->children.end(); i++)
+		if(i->move == move)
+			return i;
+
 	return NULL;
 }
 
@@ -381,7 +383,6 @@ void AgentMCTS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node &
 		}
 	}
 }
-
 
 void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());

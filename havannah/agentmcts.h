@@ -26,6 +26,7 @@
 #include "policy_lastgoodreply.h"
 #include "policy_random.h"
 
+
 namespace Morat {
 namespace Havannah {
 

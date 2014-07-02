@@ -1,11 +1,11 @@
 
 #include "gtp.h"
 
+
 namespace Morat {
 namespace Havannah {
 
 using namespace std;
-
 
 GTPResponse GTP::gtp_move_stats(vecstr args){
 	vector<Move> moves;

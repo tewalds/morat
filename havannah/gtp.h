@@ -12,6 +12,7 @@
 #include "history.h"
 #include "move.h"
 
+
 namespace Morat {
 namespace Havannah {
 

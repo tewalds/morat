@@ -63,17 +63,8 @@ public:
 			children.swap(n.children);
 		}
 
-		void print() const {
-			printf("%s\n", to_s().c_str());
-		}
-		std::string to_s() const {
-			return "Node: move " + move.to_s() +
-					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
-					", know " + to_str(know) +
-					", outcome " + to_str(outcome.to_i()) + "/" + to_str((int)proofdepth) +
-					", best " + bestmove.to_s() +
-					", children " + to_str(children.num());
-		}
+		std::string to_s() const ;
+		bool from_s(std::string s);
 
 		unsigned int size() const {
 			unsigned int num = children.num();
@@ -233,6 +224,8 @@ public:
 	AgentMCTS();
 	~AgentMCTS();
 
+	static void test();
+
 	void set_memlimit(uint64_t lim) { }; // in bytes
 	void clear_mem() { };
 
@@ -276,6 +269,15 @@ public:
 			gclimit = (int)(gclimit*0.9); //slowly decay to a minimum of 5
 	}
 
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		if(limit < 0)
+			limit = root.exp.num()/1000;
+		gen_sgf(sgf, limit, root, rootboard.toplay());
+	}
+
+	void load_sgf(SGFParser<Move> & sgf) {
+		load_sgf(sgf, rootboard, root);
+	}
 
 protected:
 
@@ -284,6 +286,10 @@ protected:
 	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 
 	Node * find_child(const Node * node, const Move & move) const ;
+	void create_children_simple(const Board & board, Node * node);
+
+	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const ;
+	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };
 
 }; // namespace Pentago
