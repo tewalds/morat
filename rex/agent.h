@@ -3,11 +3,18 @@
 
 //Interface for the various agents: players and solvers
 
+#include "../lib/outcome.h"
 #include "../lib/types.h"
 
 #include "board.h"
 
+
+namespace Morat {
+namespace Rex {
+
 class Agent {
+protected:
+	typedef std::vector<Move> vecmove;
 public:
 	Agent() { }
 	virtual ~Agent() { }
@@ -19,9 +26,9 @@ public:
 	virtual void set_memlimit(uint64_t lim) = 0; // in bytes
 	virtual void clear_mem() = 0;
 
-	virtual vector<Move> get_pv() const = 0;
-	        string move_stats() const { return move_stats(vector<Move>()); }
-	virtual string move_stats(const vector<Move> moves) const = 0;
+	virtual vecmove get_pv() const = 0;
+	        std::string move_stats() const { return move_stats(vecmove()); }
+	virtual std::string move_stats(const vecmove moves) const = 0;
 	virtual double gamelen() const = 0;
 
 	virtual void timedout(){ timeout = true; }
@@ -30,40 +37,43 @@ protected:
 	volatile bool timeout;
 	Board rootboard;
 
-	static int solve1ply(const Board & board, unsigned int & nodes) {
-		int outcome = -3;
-		int turn = board.toplay();
+	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
+		Outcome outcome = Outcome::UNKNOWN;
+		Side turn = board.toplay();
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
 			++nodes;
-			int won = board.test_win(*move, turn);
+			Outcome won = board.test_outcome(*move, turn);
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			if(won == 0)
-				outcome = 0;
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
 		}
 		return outcome;
 	}
 
-	static int solve2ply(const Board & board, unsigned int & nodes) {
+	static Outcome solve2ply(const Board & board, unsigned int & nodes) {
 		int losses = 0;
-		int outcome = -3;
-		int turn = board.toplay(), opponent = 3 - turn;
+		Outcome outcome = Outcome::UNKNOWN;
+		Side turn = board.toplay();
+		Side op = ~turn;
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
 			++nodes;
-			int won = board.test_win(*move, turn);
+			Outcome won = board.test_outcome(*move, turn);
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			if(won == 0)
-				outcome = 0;
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
 
-			if(board.test_win(*move, opponent) > 0)
+			if(board.test_outcome(*move, op) == +op)
 				losses++;
 		}
 		if(losses >= 2)
-			return opponent;
+			return (Outcome)op;
 		return outcome;
 	}
-
 };
+
+}; // namespace Rex
+}; // namespace Morat

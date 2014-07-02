@@ -3,14 +3,20 @@
 
 //A multi-threaded, tree based, proof number search solver.
 
+#include <string>
+
 #include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/log.h"
+#include "../lib/string.h"
 
 #include "agent.h"
 #include "lbdist.h"
 
+
+namespace Morat {
+namespace Rex {
 
 class AgentPNS : public Agent {
 	static const uint32_t LOSS  = (1<<30)-1;
@@ -51,33 +57,33 @@ public:
 			assert(children.empty());
 		}
 
-		Node & abval(int outcome, int toplay, int assign, int value = 1){
-			if(assign && (outcome == 1 || outcome == -1))
-				outcome = (toplay == assign ? 2 : -2);
+		Node & abval(int ab_outcome, Side toplay, Side assign, int value = 1){
+			if(assign != Side::NONE && (ab_outcome == 1 || ab_outcome == -1))
+				ab_outcome = (toplay == assign ? 2 : -2);
 
-			if(     outcome ==  0)   { phi = value; delta = value; }
-			else if(outcome ==  2)   { phi = LOSS;  delta = 0;     }
-			else if(outcome == -2)   { phi = 0;     delta = LOSS; }
-			else /*(outcome 1||-1)*/ { phi = 0;     delta = DRAW; }
+			if(     ab_outcome ==  0)   { phi = value; delta = value; }
+			else if(ab_outcome ==  2)   { phi = LOSS;  delta = 0;     }
+			else if(ab_outcome == -2)   { phi = 0;     delta = LOSS; }
+			else /*(ab_outcome 1||-1)*/ { phi = 0;     delta = DRAW; }
 			return *this;
 		}
 
-		Node & outcome(int outcome, int toplay, int assign, int value = 1){
-			if(assign && outcome == 0)
-				outcome = assign;
+		Node & outcome(Outcome outcome, Side toplay, Side assign, int value = 1){
+			if(assign != Side::NONE && outcome == Outcome::DRAW)
+				outcome = +assign;
 
-			if(     outcome == -3)       { phi = value; delta = value; }
-			else if(outcome ==   toplay) { phi = LOSS;  delta = 0;     }
-			else if(outcome == 3-toplay) { phi = 0;     delta = LOSS; }
-			else /*(outcome == 0)*/      { phi = 0;     delta = DRAW; }
+			if(     outcome == Outcome::UNKNOWN) { phi = value; delta = value; }
+			else if(outcome == +toplay)          { phi = LOSS;  delta = 0;     }
+			else if(outcome == +~toplay)         { phi = 0;     delta = LOSS; }
+			else /*(outcome == Outcome::DRAW)*/  { phi = 0;     delta = DRAW; }
 			return *this;
 		}
 
-		int to_outcome(int toplay) const {
-			if(phi   == LOSS) return toplay;
-			if(delta == LOSS) return 3 - toplay;
-			if(delta == DRAW) return 0;
-			return -3;
+		Outcome to_outcome(Side toplay) const {
+			if(phi   == LOSS) return +toplay;
+			if(delta == LOSS) return +~toplay;
+			if(delta == DRAW) return Outcome::DRAW;
+			return Outcome::UNKNOWN;
 		}
 
 		bool terminal(){ return (phi == 0 || delta == 0); }
@@ -98,12 +104,12 @@ public:
 			return num;
 		}
 
-		string to_s() const {
+		std::string to_s() const {
 			return "Node: move " + move.to_s() +
 					", phi " + to_str(phi) +
 					", delta " + to_str(delta) +
 					", work " + to_str(work) +
-//					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
+//					", outcome " + to_outcome().to_s() + "/" + to_str((int)proofdepth) +
 //					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -162,7 +168,7 @@ public:
 	int   ab; // how deep of an alpha-beta search to run at each leaf node
 	bool  df; // go depth first?
 	float epsilon; //if depth first, how wide should the threshold be?
-	int   ties;    //which player to assign ties to: 0 handle ties, 1 assign p1, 2 assign p2
+	Side  ties;    //which player to assign ties to: 0 handle ties, 1 assign p1, 2 assign p2
 	bool  lbdist;
 	int   numthreads;
 
@@ -172,7 +178,7 @@ public:
 		ab = 2;
 		df = true;
 		epsilon = 0.25;
-		ties = 0;
+		ties = Side::NONE;
 		lbdist = false;
 		numthreads = 1;
 		pool.set_num_threads(numthreads);
@@ -228,7 +234,7 @@ public:
 		root.swap_tree(child);
 
 		if(nodesbefore > 0)
-			logerr(string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
+			logerr(std::string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
 
 		assert(nodes == root.size());
 
@@ -280,12 +286,15 @@ public:
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
 private:
 //remove all the nodes with little work to free up some memory
 	void garbage_collect(Node * node);
-	Move return_move(const Node * node, int toplay, int verbose = 0) const;
+	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
 };
+
+}; // namespace Rex
+}; // namespace Morat

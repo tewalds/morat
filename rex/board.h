@@ -8,13 +8,16 @@
 #include <vector>
 
 #include "../lib/hashset.h"
+#include "../lib/outcome.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
 #include "../lib/zobrist.h"
 
 #include "move.h"
 
-using namespace std;
+
+namespace Morat {
+namespace Rex {
 
 /*
  * the board is represented as a flattened 2d array of the form:
@@ -57,20 +60,20 @@ public:
 	typedef uint64_t Pattern;
 
 	struct Cell {
-		uint16_t piece;   //who controls this cell, 0 for none, 1,2 for players
+		Side     piece;   //who controls this cell, 0 for none, 1,2 for players
 		uint16_t size;    //size of this group of cells
-mutable uint16_t parent;  //parent for this group of cells. 8 bits limits board size to 16 until it's no longer stored as a square
+mutable uint16_t parent;  //parent for this group of cells
 		uint8_t  edge;    //which edges are this group connected to
 		uint8_t  perm;    //is this a permanent piece or a randomly placed piece?
 		Pattern  pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
 
-		Cell() : piece(73), size(0), parent(0), edge(0), perm(0), pattern(0) { }
-		Cell(unsigned int p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
+		Cell() : piece(Side::NONE), size(0), parent(0), edge(0), perm(0), pattern(0) { }
+		Cell(Side p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
 			piece(p), size(s), parent(a), edge(e), perm(0), pattern(t) { }
 
-		string to_s(int i) const {
-			return "Cell " + to_str((int)i) +": "
-				"piece: " + to_str((int)piece)+
+		std::string to_s(int i) const {
+			return "Cell " + to_str(i) +": "
+				"piece: " + to_str(piece.to_i())+
 				", size: " + to_str((int)size) +
 				", parent: " + to_str((int)parent) +
 				", edge: " + to_str((int)edge) +
@@ -87,7 +90,7 @@ mutable uint16_t parent;  //parent for this group of cells. 8 bits limits board 
 		HashSet hashes;
 	public:
 		MoveIterator(const Board & b, bool Unique) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
-			if(board.outcome >= 0){
+			if(board.outcome >= Outcome::DRAW){
 				move = MoveValid(0, board.size, -1); //already done
 			} else {
 				if(unique)
@@ -139,10 +142,10 @@ private:
 	short nummoves;
 	short unique_depth; //update and test rotations/symmetry with less than this many pieces on the board
 	Move last;
-	char toPlay;
-	char outcome; //-3 = unknown, 0 = tie, 1,2 = player win
+	Side toPlay;
+	Outcome outcome;
 
-	vector<Cell> cells;
+	std::vector<Cell> cells;
 	Zobrist<6> hash;
 	const MoveValid * neighbourlist;
 
@@ -157,8 +160,8 @@ public:
 		last = M_NONE;
 		nummoves = 0;
 		unique_depth = 5;
-		toPlay = 1;
-		outcome = -3;
+		toPlay = Side::P1;
+		outcome = Outcome::UNKNOWN;
 		neighbourlist = get_neighbour_list();
 		num_cells = vecsize();
 
@@ -173,7 +176,8 @@ public:
 						p |= j;
 					j <<= 2;
 				}
-				cells[posxy] = Cell(0, posxy, 1, edges(x, y), pattern_reverse(p));
+				Side s = (onboard(x, y) ? Side::NONE : Side::UNDEF);
+				cells[posxy] = Cell(s, posxy, 1, edges(x, y), pattern_reverse(p));
 			}
 		}
 	}
@@ -190,7 +194,7 @@ public:
 	int numcells() const { return num_cells; }
 
 	int num_moves() const { return nummoves; }
-	int movesremain() const { return (won() >= 0 ? 0 : num_cells - nummoves); }
+	int movesremain() const { return (won() >= Outcome::DRAW ? 0 : num_cells - nummoves); }
 
 	int xy(int x, int y)   const { return   y*size +   x; }
 	int xy(const Move & m) const { return m.y*size + m.x; }
@@ -205,18 +209,18 @@ public:
 
 
 	//assumes valid x,y
-	int get(int i)          const { return cells[i].piece; }
-	int get(int x, int y)   const { return get(xy(x, y)); }
-	int get(const Move & m) const { return get(xy(m)); }
-	int get(const MoveValid & m) const { return get(m.xy); }
+	Side get(int i)          const { return cells[i].piece; }
+	Side get(int x, int y)   const { return get(xy(x, y)); }
+	Side get(const Move & m) const { return get(xy(m)); }
+	Side get(const MoveValid & m) const { return get(m.xy); }
 
-	int geton(const MoveValid & m) const { return (m.onboard() ? get(m.xy) : 0); }
+	Side geton(const MoveValid & m) const { return (m.onboard() ? get(m.xy) : Side::UNDEF); }
 
-	int local(const Move & m, char turn) const { return local(xy(m), turn); }
-	int local(int i,          char turn) const {
+	int local(const Move & m, Side turn) const { return local(xy(m), turn); }
+	int local(int i,          Side turn) const {
 		Pattern p = pattern(i);
 		Pattern x = ((p & 0xAAAAAAAAAull) >> 1) ^ (p & 0x555555555ull); // p1 is now when p1 or p2 but not both (ie off the board)
-		p = x & (turn == 1 ? p : p >> 1); // now just the selected player
+		p = x & (turn == Side::P1 ? p : p >> 1); // now just the selected player
 		return (p & 0x000000FFF ? 3 : 0) |
 		       (p & 0x000FFF000 ? 2 : 0) |
 		       (p & 0xFFF000000 ? 1 : 0);
@@ -232,13 +236,14 @@ public:
 	bool onboard(const MoveValid & m) const { return m.onboard(); }
 
 	//assumes x, y are in bounds and the game isn't already finished
-	bool valid_move_fast(int x, int y)        const { return !get(x,y); }
-	bool valid_move_fast(const Move & m)      const { return !get(m); }
-	bool valid_move_fast(const MoveValid & m) const { return !get(m.xy); }
+	bool valid_move_fast(int i)               const { return get(i) == Side::NONE; }
+	bool valid_move_fast(int x, int y)        const { return valid_move_fast(xy(x, y)); }
+	bool valid_move_fast(const Move & m)      const { return valid_move_fast(xy(m)); }
+	bool valid_move_fast(const MoveValid & m) const { return valid_move_fast(m.xy); }
 	//checks array bounds too
-	bool valid_move(int x, int y)        const { return (outcome == -3 && onboard(x, y) && !get(x, y)); }
-	bool valid_move(const Move & m)      const { return (outcome == -3 && onboard(m) && !get(m)); }
-	bool valid_move(const MoveValid & m) const { return (outcome == -3 && m.onboard() && !get(m)); }
+	bool valid_move(int x, int y)        const { return (outcome < Outcome::DRAW && onboard(x, y) && valid_move_fast(x, y)); }
+	bool valid_move(const Move & m)      const { return (outcome < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
+	bool valid_move(const MoveValid & m) const { return (outcome < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
 
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
@@ -284,7 +289,8 @@ public:
 
 	int lineend(int y)   const { return size; }
 
-	string to_s(bool color) const {
+	std::string to_s(bool color) const {
+		using std::string;
 		string white = "O",
 		       black = "@",
 		       empty = ".",
@@ -308,14 +314,14 @@ public:
 			s += string(y, ' ');
 			s += coord + char('A' + y);
 			int end = lineend(y);
-			for(int x = 0; x < size; x++){
+			for(int x = 0; x < end; x++){
 				s += (last == Move(x, y)   ? coord + "[" :
 				      last == Move(x-1, y) ? coord + "]" : " ");
-				int p = get(x, y);
-				if(p == 0) s += empty;
-				if(p == 1) s += white;
-				if(p == 2) s += black;
-				if(p >= 3) s += "?";
+				Side p = get(x, y);
+				if(     p == Side::NONE) s += empty;
+				else if(p == Side::P1)   s += white;
+				else if(p == Side::P2)   s += black;
+				else                     s += "?";
 			}
 			s += (last == Move(end-1, y) ? coord + "]" : " ");
 			s += white + reset;
@@ -334,41 +340,12 @@ public:
 		printf("%s", to_s(color).c_str());
 	}
 
-	string boardstr() const {
-		string white, black;
-		for(int y = 0; y < size; y++){
-			for(int x = 0; x < lineend(y); x++){
-				int p = get(x, y);
-				if(p == 1) white += Move(x, y).to_s();
-				if(p == 2) black += Move(x, y).to_s();
-			}
-		}
-		return white + ";" + black;
-	}
-
-	string won_str() const {
-		switch(outcome){
-			case -3: return "none";
-			case -2: return "black_or_draw";
-			case -1: return "white_or_draw";
-			case 0:  return "draw";
-			case 1:  return "white";
-			case 2:  return "black";
-		}
-		return "unknown";
-	}
-
-	char won() const {
+	Outcome won() const {
 		return outcome;
 	}
 
-	int win() const{ // 0 for draw or unknown, 1 for win, -1 for loss
-		if(outcome <= 0)
-			return 0;
-		return (outcome == toplay() ? 1 : -1);
-	}
 
-	char toplay() const {
+	Side toplay() const {
 		return toPlay;
 	}
 
@@ -383,15 +360,15 @@ public:
 		cell->perm = perm;
 		nummoves++;
 		update_hash(m, toPlay); //depends on nummoves
-		toPlay = 3 - toPlay;
+		toPlay = ~toPlay;
 	}
 
 	void unset(const Move & m){ //break win checks, but is a poor mans undo if all you care about is the hash
-		toPlay = 3 - toPlay;
+		toPlay = ~toPlay;
 		update_hash(m, toPlay);
 		nummoves--;
 		Cell * cell = & cells[xy(m)];
-		cell->piece = 0;
+		cell->piece = Side::NONE;
 		cell->perm = 0;
 	}
 
@@ -421,7 +398,7 @@ public:
 			return true;
 
 		if(cells[i].size < cells[j].size) //force i's subtree to be bigger
-			swap(i, j);
+			std::swap(i, j);
 
 		cells[j].parent = i;
 		cells[i].size   += cells[j].size;
@@ -431,7 +408,7 @@ public:
 	}
 
 	Cell test_cell(const Move & pos) const {
-		char turn = toplay();
+		Side turn = toplay();
 		int posxy = xy(pos);
 
 		Cell testcell = cells[find_group(pos)];
@@ -463,7 +440,7 @@ public:
 		return (nummoves > unique_depth ? hash.get(0) : hash.get());
 	}
 
-	string hashstr() const {
+	std::string hashstr() const {
 		static const char hexlookup[] = "0123456789abcdef";
 		char buf[19] = "0x";
 		hash_t val = gethash();
@@ -475,7 +452,8 @@ public:
 		return (char *)buf;
 	}
 
-	void update_hash(const Move & pos, int turn){
+	void update_hash(const Move & pos, Side side){
+		int turn = side.to_i();
 		if(nummoves > unique_depth){ //simple update, no rotations/symmetry
 			hash.update(0, 3*xy(pos) + turn);
 			return;
@@ -498,7 +476,8 @@ public:
 		return test_hash(pos, toplay());
 	}
 
-	hash_t test_hash(const Move & pos, int turn) const {
+	hash_t test_hash(const Move & pos, Side side) const {
+		int turn = side.to_i();
 		if(nummoves >= unique_depth) //simple test, no rotations/symmetry
 			return hash.test(0, 3*xy(pos) + turn);
 
@@ -507,11 +486,11 @@ public:
 		    z = sizem1 - x - y;
 
 		hash_t m = hash.test(0,  3*xy(x, y) + turn);
-		m = min(m, hash.test(1,  3*xy(z, y) + turn));
-		m = min(m, hash.test(2,  3*xy(z, x) + turn));
-		m = min(m, hash.test(3,  3*xy(x, z) + turn));
-		m = min(m, hash.test(4,  3*xy(y, z) + turn));
-		m = min(m, hash.test(5,  3*xy(y, x) + turn));
+		m = std::min(m, hash.test(1,  3*xy(z, y) + turn));
+		m = std::min(m, hash.test(2,  3*xy(z, x) + turn));
+		m = std::min(m, hash.test(3,  3*xy(x, z) + turn));
+		m = std::min(m, hash.test(4,  3*xy(y, z) + turn));
+		m = std::min(m, hash.test(5,  3*xy(y, x) + turn));
 		return m;
 	}
 
@@ -563,17 +542,17 @@ public:
 	}
 	static Pattern pattern_symmetry(Pattern p){ //takes a pattern and returns the representative version
 		Pattern m = p;                 //012345
-		m = min(m, (p = pattern_rotate(p)));//501234
-		m = min(m, (p = pattern_rotate(p)));//450123
-		m = min(m, (p = pattern_rotate(p)));//345012
-		m = min(m, (p = pattern_rotate(p)));//234501
-		m = min(m, (p = pattern_rotate(p)));//123450
-		m = min(m, (p = pattern_mirror(pattern_rotate(p))));//012345 -> 054321
-		m = min(m, (p = pattern_rotate(p)));//105432
-		m = min(m, (p = pattern_rotate(p)));//210543
-		m = min(m, (p = pattern_rotate(p)));//321054
-		m = min(m, (p = pattern_rotate(p)));//432105
-		m = min(m, (p = pattern_rotate(p)));//543210
+		m = std::min(m, (p = pattern_rotate(p)));//501234
+		m = std::min(m, (p = pattern_rotate(p)));//450123
+		m = std::min(m, (p = pattern_rotate(p)));//345012
+		m = std::min(m, (p = pattern_rotate(p)));//234501
+		m = std::min(m, (p = pattern_rotate(p)));//123450
+		m = std::min(m, (p = pattern_mirror(pattern_rotate(p))));//012345 -> 054321
+		m = std::min(m, (p = pattern_rotate(p)));//105432
+		m = std::min(m, (p = pattern_rotate(p)));//210543
+		m = std::min(m, (p = pattern_rotate(p)));//321054
+		m = std::min(m, (p = pattern_rotate(p)));//432105
+		m = std::min(m, (p = pattern_rotate(p)));//543210
 		return m;
 	}
 
@@ -581,16 +560,16 @@ public:
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
 	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true){
-		assert(outcome < 0);
+		assert(outcome < Outcome::DRAW);
 
 		if(!valid_move(pos))
 			return false;
 
-		char turn = toplay();
+		Side turn = toplay();
 		set(pos, permanent);
 
 		// update the nearby patterns
-		Pattern p = turn;
+		Pattern p = turn.to_i();
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
 			if(i->onboard()){
 				cells[i->xy].pattern |= p;
@@ -609,22 +588,20 @@ public:
 
 		// did I win?
 		Cell * g = & cells[find_group(pos.xy)];
-		uint8_t winmask = (turn == 1 ? 3 : 0xC);
+		uint8_t winmask = (turn == Side::P1 ? 3 : 0xC);
 		if((g->edge & winmask) == winmask){
-			outcome = 3 - turn;
+			outcome = ~turn;
 		}
 		return true;
 	}
 
-	bool test_local(const Move & pos, char turn) const {
+	bool test_local(const Move & pos, Side turn) const {
 		return (local(pos, turn) == 3);
 	}
 
 	//test if making this move would win, but don't actually make the move
-	int test_win(const Move & pos, char turn = 0) const {
-		if(turn == 0)
-			turn = toplay();
-
+	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, toplay()); }
+	Outcome test_outcome(const Move & pos, Side turn) const {
 		if(test_local(pos, turn)){
 			int posxy = xy(pos);
 			Cell testcell = cells[find_group(posxy)];
@@ -639,11 +616,14 @@ public:
 				}
 			}
 
-			int winmask = (turn == 1 ? 3 : 0xC);
+			int winmask = (turn == Side::P1 ? 3 : 0xC);
 			if((testcell.edge & winmask) == winmask)
-				return 3 - turn;
+				return ~turn;
 		}
 
-		return -3;
+		return Outcome::UNKNOWN;
 	}
 };
+
+}; // namespace Rex
+}; // namespace Morat

@@ -5,8 +5,11 @@
 
 #include "gtp.h"
 
-using namespace std;
 
+namespace Morat {
+namespace Rex {
+
+using namespace std;
 
 GTPResponse GTP::gtp_move_stats(vecstr args){
 	vector<Move> moves;
@@ -249,7 +252,7 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 			"Update the pns solver settings, eg: pns_params -m 100 -s 0 -d 1 -e 0.25 -a 2 -l 0\n"
 			"  -m --memory   Memory limit in Mb                                       [" + to_str(pns->memlimit/(1024*1024)) + "]\n"
 			"  -t --threads  How many threads to run                                  [" + to_str(pns->numthreads) + "]\n"
-			"  -s --ties     Which side to assign ties to, 0 = handle, 1 = p1, 2 = p2 [" + to_str(pns->ties) + "]\n"
+			"  -s --ties     Which side to assign ties to, 0 = handle, 1 = p1, 2 = p2 [" + to_str(pns->ties.to_i()) + "]\n"
 			"  -d --df       Use depth-first thresholds                               [" + to_str(pns->df) + "]\n"
 			"  -e --epsilon  How big should the threshold be                          [" + to_str(pns->epsilon) + "]\n"
 			"  -a --abdepth  Run an alpha-beta search of this size at each leaf       [" + to_str(pns->ab) + "]\n"
@@ -267,7 +270,7 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 			if(mem < 1) return GTPResponse(false, "Memory can't be less than 1mb");
 			pns->set_memlimit(mem*1024*1024);
 		}else if((arg == "-s" || arg == "--ties") && i+1 < args.size()){
-			pns->ties = from_str<int>(args[++i]);
+			pns->ties = Side(from_str<int8_t>(args[++i]));
 			pns->clear_mem();
 		}else if((arg == "-d" || arg == "--df") && i+1 < args.size()){
 			pns->df = from_str<bool>(args[++i]);
@@ -282,3 +285,6 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 
 	return GTPResponse(true, errs);
 }
+
+}; // namespace Rex
+}; // namespace Morat

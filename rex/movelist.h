@@ -6,6 +6,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Rex {
+
 struct MoveList {
 	ExpPair    exp[2];       //aggregated outcomes overall
 	ExpPair    rave[2][Board::max_vecsize]; //aggregated outcomes per move
@@ -16,10 +20,10 @@ struct MoveList {
 
 	MoveList() : tree(0), rollout(0), board(NULL) { }
 
-	void addtree(const Move & move, char player){
+	void addtree(const Move & move, Side player){
 		moves[tree++] = MovePlayer(move, player);
 	}
-	void addrollout(const Move & move, char player){
+	void addrollout(const Move & move, Side player){
 		moves[tree + rollout++] = MovePlayer(move, player);
 	}
 	void reset(Board * b){
@@ -33,19 +37,19 @@ struct MoveList {
 			rave[1][i].clear();
 		}
 	}
-	void finishrollout(int won){
+	void finishrollout(Outcome won){
 		exp[0].addloss();
 		exp[1].addloss();
-		if(won == 0){
+		if(won == Outcome::DRAW){
 			exp[0].addtie();
 			exp[1].addtie();
 		}else{
-			exp[won-1].addwin();
+			exp[won.to_i() - 1].addwin();
 
 			for(MovePlayer * i = begin(), * e = end(); i != e; i++){
-				ExpPair & r = rave[i->player-1][board->xy(*i)];
+				ExpPair & r = rave[i->player.to_i() - 1][board->xy(*i)];
 				r.addloss();
-				if(i->player == won)
+				if(+i->player == won)
 					r.addwin();
 			}
 		}
@@ -67,10 +71,13 @@ struct MoveList {
 		exp[0].addlosses(-n);
 		exp[1].addlosses(-n);
 	}
-	const ExpPair & getrave(int player, const Move & move) const {
-		return rave[player-1][board->xy(move)];
+	const ExpPair & getrave(Side player, const Move & move) const {
+		return rave[player.to_i() - 1][board->xy(move)];
 	}
-	const ExpPair & getexp(int player) const {
-		return exp[player-1];
+	const ExpPair & getexp(Side player) const {
+		return exp[player.to_i() - 1];
 	}
 };
+
+}; // namespace Rex
+}; // namespace Morat

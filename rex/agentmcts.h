@@ -27,6 +27,9 @@
 #include "policy_random.h"
 
 
+namespace Morat {
+namespace Rex {
+
 class AgentMCTS : public Agent{
 public:
 
@@ -35,7 +38,7 @@ public:
 		ExpPair rave;
 		ExpPair exp;
 		int16_t know;
-		int8_t  outcome;
+		Outcome outcome;
 		uint8_t proofdepth;
 		Move    move;
 		Move    bestmove; //if outcome is set, then bestmove is the way to get there
@@ -44,8 +47,8 @@ public:
 		//seems to need padding to multiples of 8 bytes or it segfaults?
 		//don't forget to update the copy constructor/operator
 
-		Node()                            : know(0), outcome(-3), proofdepth(0)          { }
-		Node(const Move & m, char o = -3) : know(0), outcome( o), proofdepth(0), move(m) { }
+		Node() : know(0), outcome(Outcome::UNKNOWN), proofdepth(0), move(M_NONE) { }
+		Node(const Move & m, Outcome o = Outcome::UNKNOWN) : know(0), outcome(o), proofdepth(0), move(m) { }
 		Node(const Node & n) { *this = n; }
 		Node & operator = (const Node & n){
 			if(this != & n){ //don't copy to self
@@ -71,12 +74,12 @@ public:
 		void print() const {
 			printf("%s\n", to_s().c_str());
 		}
-		string to_s() const {
+		std::string to_s() const {
 			return "Node: move " + move.to_s() +
 					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
 					", rave " + to_str(rave.avg(), 2) + "/" + to_str(rave.num()) +
 					", know " + to_str(know) +
-					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
+					", outcome " + to_str(outcome.to_i()) + "/" + to_str((int)proofdepth) +
 					", best " + bestmove.to_s() +
 					", children " + to_str(children.num());
 		}
@@ -179,11 +182,11 @@ public:
 		void walk_tree(Board & board, Node * node, int depth);
 		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
-		Node * choose_move(const Node * node, int toplay, int remain) const;
-		void update_rave(const Node * node, int toplay);
+		Node * choose_move(const Node * node, Side toplay, int remain) const;
+		void update_rave(const Node * node, Side toplay);
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
 
-		int rollout(Board & board, Move move, int depth);
+		Outcome rollout(Board & board, Move move, int depth);
 		Move rollout_choose_move(Board & board, const Move & prev);
 		Move rollout_pattern(const Board & board, const Move & move);
 	};
@@ -261,12 +264,12 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
 	bool done() {
 		//solved or finished runs
-		return (rootboard.won() >= 0 || root.outcome >= 0 || (maxruns > 0 && runs >= maxruns));
+		return (rootboard.won() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
 	}
 
 	bool need_gc() {
@@ -296,8 +299,8 @@ public:
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, Node * backup, int toplay);
-	Move return_move(const Node * node, int toplay, int verbose = 0) const;
+	bool do_backup(Node * node, Node * backup, Side toplay);
+	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 
 	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);
@@ -305,3 +308,6 @@ protected:
 	void load_hgf(Board board, Node * node, FILE * fd);
 
 };
+
+}; // namespace Rex
+}; // namespace Morat

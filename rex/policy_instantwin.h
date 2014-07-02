@@ -8,6 +8,9 @@
 #include "policy.h"
 
 
+namespace Morat {
+namespace Rex {
+
 class InstantWin : public Policy {
 	int max_rollout_moves;
 	int cur_rollout_moves;
@@ -40,7 +43,7 @@ public:
 			return M_UNKNOWN;
 
 		Move start, cur, loss = M_UNKNOWN;
-		int turn = 3 - board.toplay();
+		Side turn = ~board.toplay();
 
 		//find the first empty cell
 		int dir = -1;
@@ -65,7 +68,7 @@ public:
 		do{
 //			logerr(" " + cur.to_s());
 			//check the current cell
-			if(board.onboard(cur) && board.get(cur) == 0 && board.test_win(cur, turn) > 0){
+			if(board.onboard(cur) && board.get(cur) == Side::NONE && board.test_outcome(cur, turn) == +turn){
 //				logerr(" loss");
 				if(loss == M_UNKNOWN){
 					loss = cur;
@@ -93,3 +96,6 @@ public:
 		return loss; // usually M_UNKNOWN
 	}
 };
+
+}; // namespace Rex
+}; // namespace Morat

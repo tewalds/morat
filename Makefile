@@ -109,6 +109,7 @@ trex: \
 		rex/gtpgeneral.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
+		lib/outcome.o \
 		lib/string.o \
 		lib/zobrist.o \
 		$(ALARM)

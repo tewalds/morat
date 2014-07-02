@@ -5,6 +5,10 @@
 
 #include "agentpns.h"
 
+
+namespace Morat {
+namespace Rex {
+
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
@@ -32,27 +36,20 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 			logerr("Tree depth:  " + treelen.to_s() + "\n");
 		}
 
-		int toplay = rootboard.toplay();
+		Side toplay = rootboard.toplay();
 
 		logerr("Root:        " + root.to_s() + "\n");
-		int outcome = root.to_outcome(3-toplay);
-		if(outcome != -3){
-			logerr("Solved as a ");
-			if(     outcome == 0)        logerr("draw\n");
-			else if(outcome == 3)        logerr("draw by simultaneous win\n");
-			else if(outcome == toplay)   logerr("win\n");
-			else if(outcome == 3-toplay) logerr("loss\n");
-			else if(outcome == -toplay)  logerr("win or draw\n");
-			else if(outcome == toplay-3) logerr("loss or draw\n");
-		}
+		Outcome outcome = root.to_outcome(~toplay);
+		if(outcome != Outcome::UNKNOWN)
+			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 }
 
@@ -83,8 +80,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 
 		unsigned int i = 0;
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
-			unsigned int pd = 1;
-			int outcome;
+			unsigned int pd;
+			Outcome outcome;
 
 			if(agent->ab){
 				Board next = board;
@@ -94,10 +91,10 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				outcome = (agent->ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
 			}else{
 				pd = 1;
-				outcome = board.test_win(*move);
+				outcome = board.test_outcome(*move);
 			}
 
-			if(agent->lbdist && outcome < 0)
+			if(agent->lbdist && outcome != Outcome::UNKNOWN)
 				pd = dists.get(*move);
 
 			temp[i] = Node(*move).outcome(outcome, board.toplay(), agent->ties, pd);
@@ -132,8 +129,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				}
 			}
 
-			tpc = min(INF32/2, (td + child->phi - node->delta));
-			tdc = min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
+			tpc = std::min(INF32/2, (td + child->phi - node->delta));
+			tdc = std::min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
 		}else{
 			tpc = tdc = 0;
 			for(auto & i : node->children)
@@ -198,16 +195,16 @@ double AgentPNS::gamelen() const {
 	return rootboard.movesremain();
 }
 
-vector<Move> AgentPNS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentPNS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
-	char turn = rootboard.toplay();
+	Side turn = rootboard.toplay();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
 		n = find_child(n, m);
-		turn = 3 - turn;
+		turn = ~turn;
 	}
 
 	if(pv.size() == 0)
@@ -216,8 +213,8 @@ vector<Move> AgentPNS::get_pv() const {
 	return pv;
 }
 
-string AgentPNS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentPNS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){
@@ -238,7 +235,7 @@ string AgentPNS::move_stats(vector<Move> moves) const {
 	return s;
 }
 
-Move AgentPNS::return_move(const Node * node, int toplay, int verbose) const {
+Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
 	double val, maxval = -1000000000000.0; //1 trillion
 
 	Node * ret = NULL,
@@ -246,11 +243,11 @@ Move AgentPNS::return_move(const Node * node, int toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		int outcome = child->to_outcome(toplay);
-		if(outcome >= 0){
-			if(outcome == toplay) val =  800000000000.0 - (double)child->work; //shortest win
-			else if(outcome == 0) val = -400000000000.0 + (double)child->work; //longest tie
-			else                  val = -800000000000.0 + (double)child->work; //longest loss
+		Outcome outcome = child->to_outcome(toplay);
+		if(outcome >= Outcome::DRAW){
+			if(     outcome == +toplay)       val =  800000000000.0 - (double)child->work; //shortest win
+			else if(outcome == Outcome::DRAW) val = -400000000000.0 + (double)child->work; //longest tie
+			else                              val = -800000000000.0 + (double)child->work; //longest loss
 		}else{ //not proven
 			val = child->work;
 		}
@@ -290,3 +287,6 @@ void AgentPNS::garbage_collect(Node * node){
 		}
 	}
 }
+
+}; // namespace Rex
+}; // namespace Morat

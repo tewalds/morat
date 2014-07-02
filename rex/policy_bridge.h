@@ -9,9 +9,12 @@
 #include "policy.h"
 
 
+namespace Morat {
+namespace Rex {
+
 class ProtectBridge : public Policy {
 	int offset;
-	uint8_t lookup[2][1<<12];
+	uint8_t lookup[2][1<<12];  // 2 players, all possible local 6-patterns
 
 public:
 
@@ -21,10 +24,14 @@ public:
 			lookup[0][i] = lookup[1][i] = 0;
 			unsigned int p = i;
 			for(unsigned int d = 0; d < 6; d++){
+				// player 1
 				if((p & 0x1D) == 0x11) // 01 11 01 -> 01 00 01
 					lookup[0][i] |= (1 << ((d+1)%6)); // +1 because we want to play in the empty spot
+
+				// player 2
 				if((p & 0x2E) == 0x22) // 10 11 10 -> 10 00 10
 					lookup[1][i] |= (1 << ((d+1)%6));
+
 				p = ((p & 0xFFC)>>2) | ((p & 0x3) << 10);
 			}
 		}
@@ -32,7 +39,7 @@ public:
 
 	Move choose_move(const Board & board, const Move & prev) {
 		uint32_t p = board.pattern_small(prev);
-		uint16_t r = lookup[board.toplay()-1][p];
+		uint16_t r = lookup[board.toplay().to_i()-1][p];
 
 		if(!r) // nothing to save
 			return M_UNKNOWN;
@@ -49,3 +56,6 @@ public:
 		return board.nb_begin(prev)[i];
 	}
 };
+
+}; // namespace Rex
+}; // namespace Morat

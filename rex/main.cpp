@@ -1,11 +1,15 @@
 
-
 #include <string>
 #include <unistd.h>
 
+#include "../lib/outcome.h"
 #include "../lib/time.h"
 
 #include "gtp.h"
+
+
+using namespace Morat;
+using namespace Rex;
 
 using namespace std;
 
@@ -51,7 +55,7 @@ int main(int argc, char **argv){
 			die(255, "Unknown argument: " + arg + ", try --help");
 		}
 	}
-		
+
 	gtp.setinfile(stdin);
 	gtp.setoutfile(stdout);
 	gtp.run();

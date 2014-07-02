@@ -10,12 +10,16 @@
 #include "agentmcts.h"
 #include "board.h"
 
+
+namespace Morat {
+namespace Rex {
+
 const float AgentMCTS::min_rave = 0.1;
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
-	int toplay = rootboard.toplay();
+	Side toplay = rootboard.toplay();
 
-	if(rootboard.won() >= 0 || (time <= 0 && max_runs == 0))
+	if(rootboard.won() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
 		return;
 
 	Time starttime;
@@ -56,30 +60,23 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 				logerr("Times:       " + to_str(times[0], 3) + ", " + to_str(times[1], 3) + ", " + to_str(times[2], 3) + ", " + to_str(times[3], 3) + "\n");
 		}
 
-		if(root.outcome != -3){
-			logerr("Solved as a ");
-			if(     root.outcome == 0)        logerr("draw\n");
-			else if(root.outcome == 3)        logerr("draw by simultaneous win\n");
-			else if(root.outcome == toplay)   logerr("win\n");
-			else if(root.outcome == 3-toplay) logerr("loss\n");
-			else if(root.outcome == -toplay)  logerr("win or draw\n");
-			else if(root.outcome == toplay-3) logerr("loss or draw\n");
-		}
+		if(root.outcome != Outcome::UNKNOWN)
+			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 
 	pool.reset();
 	runs = 0;
 
 
-	if(ponder && root.outcome < 0)
+	if(ponder && root.outcome < Outcome::DRAW)
 		pool.resume();
 }
 
@@ -194,8 +191,8 @@ void AgentMCTS::move(const Move & m){
 	rootboard.move(m);
 
 	root.exp.addwins(visitexpand+1); //+1 to compensate for the virtual loss
-	if(rootboard.won() < 0)
-		root.outcome = -3;
+	if(rootboard.won() < Outcome::DRAW)
+		root.outcome = Outcome::UNKNOWN;
 
 	if(ponder)
 		pool.resume();
@@ -208,16 +205,16 @@ double AgentMCTS::gamelen() const {
 	return len.avg();
 }
 
-vector<Move> AgentMCTS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentMCTS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
-	char turn = rootboard.toplay();
+	Side turn = rootboard.toplay();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
 		n = find_child(n, m);
-		turn = 3 - turn;
+		turn = ~turn;
 	}
 
 	if(pv.size() == 0)
@@ -226,8 +223,8 @@ vector<Move> AgentMCTS::get_pv() const {
 	return pv;
 }
 
-string AgentMCTS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentMCTS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){
@@ -248,8 +245,8 @@ string AgentMCTS::move_stats(vector<Move> moves) const {
 	return s;
 }
 
-Move AgentMCTS::return_move(const Node * node, int toplay, int verbose) const {
-	if(node->outcome >= 0)
+Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
+	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
 	double val, maxval = -1000000000000.0; //1 trillion
@@ -259,10 +256,10 @@ Move AgentMCTS::return_move(const Node * node, int toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		if(child->outcome >= 0){
-			if(child->outcome == toplay) val =  800000000000.0 - child->exp.num(); //shortest win
-			else if(child->outcome == 0) val = -400000000000.0 + child->exp.num(); //longest tie
-			else                         val = -800000000000.0 + child->exp.num(); //longest loss
+		if(child->outcome >= Outcome::DRAW){
+			if(child->outcome == toplay)             val =  800000000000.0 - child->exp.num(); //shortest win
+			else if(child->outcome == Outcome::DRAW) val = -400000000000.0 + child->exp.num(); //longest tie
+			else                                     val = -800000000000.0 + child->exp.num(); //longest loss
 		}else{ //not proven
 			if(msrave == -1) //num simulations
 				val = child->exp.num();
@@ -290,13 +287,13 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
-	int toplay = board.toplay();
+	Side toplay = board.toplay();
 	for( ; child != end; child++){
 		if(child->children.num() == 0)
 			continue;
 
-		if(	(node->outcome >= 0 && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == 0)) || //parent is solved, only keep the proof tree, plus heavy draws
-			(node->outcome <  0 && child->exp.num() > (child->outcome >= 0 ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
+		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
+			(node->outcome <  Outcome::DRAW && child->exp.num() > (child->outcome >= Outcome::DRAW ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
 			board.set(child->move);
 			garbage_collect(board, child);
 			board.unset(child->move);
@@ -315,14 +312,14 @@ AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) co
 }
 
 void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned int depth, FILE * fd){
-	string s = string("\n") + string(depth, ' ') + "(;" + (board.toplay() == 2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
-	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)(node->outcome)) + ", best:" + node->bestmove.to_s() + "]";
+	std::string s = std::string("\n") + std::string(depth, ' ') + "(;" + (board.toplay() == Side::P2 ? "W" : "B") + "[" + node->move.to_s() + "]" +
+	       "C[mcts, sims:" + to_str(node->exp.num()) + ", avg:" + to_str(node->exp.avg(), 4) + ", outcome:" + to_str((int)node->outcome.to_i()) + ", best:" + node->bestmove.to_s() + "]";
 	fprintf(fd, "%s", s.c_str());
 
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
-	int toplay = board.toplay();
+	Side toplay = board.toplay();
 
 	bool children = false;
 	for( ; child != end; child++){
@@ -335,7 +332,7 @@ void AgentMCTS::gen_hgf(Board & board, Node * node, unsigned int limit, unsigned
 	}
 
 	if(children)
-		fprintf(fd, "\n%s", string(depth, ' ').c_str());
+		fprintf(fd, "\n%s", std::string(depth, ' ').c_str());
 	fprintf(fd, ")");
 }
 
@@ -369,13 +366,13 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	assert(fscanf(fd, "(;%c[%100[^]]]", &c, buf) > 0);
 
-	assert(board.toplay() == (c == 'W' ? 1 : 2));
+	assert(board.toplay() == (c == 'W' ? Side::P1 : Side::P2));
 	node->move = Move(buf);
 	board.move(node->move);
 
 	assert(fscanf(fd, "C[%100[^]]]", buf) > 0);
 
-	vecstr entry, parts = explode(string(buf), ", ");
+	vecstr entry, parts = explode(std::string(buf), ", ");
 	assert(parts[0] == "mcts");
 
 	entry = explode(parts[1], ":");
@@ -392,7 +389,7 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	entry = explode(parts[3], ":");
 	assert(entry[0] == "outcome");
-	node->outcome = from_str<int>(entry[1]);
+	node->outcome = Outcome(from_str<int>(entry[1]));
 
 	entry = explode(parts[4], ":");
 	assert(entry[0] == "best");
@@ -422,3 +419,6 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	return;
 }
+
+}; // namespace Rex
+}; // namespace Morat
