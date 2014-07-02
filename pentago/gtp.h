@@ -12,6 +12,10 @@
 #include "history.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class GTP : public GTPCommon {
 	History hist;
 
@@ -108,3 +112,6 @@ public:
 	GTPResponse gtp_mcts_params(vecstr args);
 	GTPResponse gtp_pns_params(vecstr args);
 };
+
+}; // namespace Pentago
+}; // namespace Morat

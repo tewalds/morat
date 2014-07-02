@@ -6,6 +6,10 @@
 
 #include "../lib/string.h"
 
+
+namespace Morat {
+namespace Y {
+
 enum MoveSpecial {
 	M_SWAP    = -1, //-1 so that adding 1 makes it into a valid move
 	M_RESIGN  = -2,
@@ -82,3 +86,6 @@ struct MovePlayer : public Move {
 	MovePlayer() : Move(M_UNKNOWN), player(Side::NONE) { }
 	MovePlayer(const Move & m, Side p = Side::NONE) : Move(m), player(p) { }
 };
+
+}; // namespace Y
+}; // namespace Morat

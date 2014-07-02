@@ -9,6 +9,10 @@
 #include "board.h"
 #include "moveiterator.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class Agent {
 protected:
 	typedef std::vector<Move> vecmove;
@@ -51,3 +55,6 @@ protected:
 		return outcome;
 	}
 };
+
+}; // namespace Pentago
+}; // namespace Morat

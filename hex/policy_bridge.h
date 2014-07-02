@@ -9,6 +9,9 @@
 #include "policy.h"
 
 
+namespace Morat {
+namespace Hex {
+
 class ProtectBridge : public Policy {
 	int offset;
 	uint8_t lookup[2][1<<12];  // 2 players, all possible local 6-patterns
@@ -53,3 +56,6 @@ public:
 		return board.nb_begin(prev)[i];
 	}
 };
+
+}; // namespace Hex
+}; // namespace Morat

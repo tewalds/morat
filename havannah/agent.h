@@ -9,6 +9,9 @@
 
 #include "board.h"
 
+namespace Morat {
+namespace Havannah {
+
 class Agent {
 protected:
 	typedef std::vector<Move> vecmove;
@@ -74,3 +77,6 @@ protected:
 		return outcome;
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

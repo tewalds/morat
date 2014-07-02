@@ -2,6 +2,10 @@
 #include "gtp.h"
 #include "lbdist.h"
 
+
+namespace Morat {
+namespace Y {
+
 GTPResponse GTP::gtp_mcts(vecstr args){
 	delete agent;
 	agent = new AgentMCTS();
@@ -262,3 +266,6 @@ GTPResponse GTP::gtp_dists(vecstr args){
 GTPResponse GTP::gtp_zobrist(vecstr args){
 	return GTPResponse(true, hist->hashstr());
 }
+
+}; // namespace Y
+}; // namespace Morat

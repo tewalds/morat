@@ -6,6 +6,10 @@
 
 #include "agentab.h"
 
+
+namespace Morat {
+namespace Y {
+
 void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	reset();
 	if(rootboard.won() >= 0)
@@ -197,3 +201,6 @@ AgentAB::Node * AgentAB::tt_get(uint64_t h) const {
 void AgentAB::tt_set(const Node & n) {
 	*(tt(n.hash)) = n;
 }
+
+}; // namespace Y
+}; // namespace Morat

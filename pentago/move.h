@@ -8,6 +8,10 @@
 #include "../lib/log.h"
 #include "../lib/string.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 enum MoveSpecial {
 	M_SWAP    = -1, //-1 so that adding 1 makes it into a valid move
 	M_RESIGN  = -2,
@@ -89,3 +93,6 @@ direction = rotation & 1
 	bool operator!=(const Move & b) const { return (l != b.l || r != b.r); }
 	bool operator!=(const MoveSpecial & b) const { return (l != b); }
 };
+
+}; // namespace Pentago
+}; // namespace Morat

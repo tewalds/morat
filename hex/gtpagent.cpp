@@ -5,8 +5,11 @@
 
 #include "gtp.h"
 
-using namespace std;
 
+namespace Morat {
+namespace Hex {
+
+using namespace std;
 
 GTPResponse GTP::gtp_move_stats(vecstr args){
 	vector<Move> moves;
@@ -282,3 +285,6 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 
 	return GTPResponse(true, errs);
 }
+
+}; // namespace Hex
+}; // namespace Morat

@@ -10,6 +10,8 @@
 #include "gtp.h"
 
 using namespace std;
+using namespace Morat;
+using namespace Havannah;
 
 void die(int code, const string & str){
 	printf("%s\n", str.c_str());

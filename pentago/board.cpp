@@ -3,6 +3,10 @@
 
 #include "board.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 const int Board::xytobit[36] = {
 	 0,  1,  2, 15, 16,  9,
 	 7,  8,  3, 14, 17, 10,
@@ -224,3 +228,6 @@ const uint16_t * Board::lookup3to2 = gen_lookup3to2(9, 15);
 
 
 void Board::test() { }
+
+}; // namespace Pentago
+}; // namespace Morat

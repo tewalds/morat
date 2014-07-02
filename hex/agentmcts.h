@@ -27,6 +27,9 @@
 #include "policy_random.h"
 
 
+namespace Morat {
+namespace Hex {
+
 class AgentMCTS : public Agent{
 public:
 
@@ -305,3 +308,6 @@ protected:
 	void load_hgf(Board board, Node * node, FILE * fd);
 
 };
+
+}; // namespace Hex
+}; // namespace Morat

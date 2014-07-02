@@ -3,6 +3,8 @@
 
 #include "string.h"
 
+namespace Morat {
+
 using namespace std;
 
 TEST_CASE("to_str", "[string]"){
@@ -73,3 +75,5 @@ TEST_CASE("parse_dict", "[string]"){
 	REQUIRE(d["key"] == "value");
 	REQUIRE(d["key2"] == "val2");
 }
+
+}; // namespace Morat

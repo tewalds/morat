@@ -14,6 +14,9 @@ Decrease distance when crossing your own virtual connection?
 #include "board.h"
 #include "move.h"
 
+namespace Morat {
+namespace Havannah {
+
 class LBDists {
 	struct MoveDist {
 		Move pos;
@@ -205,3 +208,6 @@ public:
 		}
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

@@ -14,6 +14,8 @@
 #include "agent.h"
 #include "lbdist.h"
 
+namespace Morat {
+namespace Havannah {
 
 class AgentPNS : public Agent {
 	static const uint32_t LOSS  = (1<<30)-1;
@@ -306,3 +308,6 @@ private:
 	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const;
 	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };
+
+}; // namespace Havannah
+}; // namespace Morat

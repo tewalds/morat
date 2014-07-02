@@ -8,6 +8,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class History {
 	std::vector<Move> hist;
 	Board board;
@@ -68,3 +72,6 @@ public:
 		return false;
 	}
 };
+
+}; // namespace Pentago
+}; // namespace Morat

@@ -8,6 +8,9 @@
 #include "board.h"
 #include "move.h"
 
+namespace Morat {
+namespace Havannah {
+
 class History {
 	std::vector<Move> hist;
 	Board board;
@@ -68,3 +71,6 @@ public:
 		return false;
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

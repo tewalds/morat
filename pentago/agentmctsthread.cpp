@@ -7,6 +7,10 @@
 #include "agentmcts.h"
 #include "moveiterator.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 void AgentMCTS::AgentThread::iterate(){
 	INCR(agent->runs);
 	if(agent->profile){
@@ -289,3 +293,6 @@ Outcome AgentMCTS::AgentThread::rollout(Board & board, Move move, int depth){
 	movelist.finishrollout(won);
 	return won;
 }
+
+}; // namespace Pentago
+}; // namespace Morat

@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 
+namespace Morat {
 
 typedef std::vector<std::string> vecstr;
 typedef std::unordered_map<std::string, std::string> dictstr;
@@ -35,3 +36,5 @@ void rtrim(std::string & str);
 vecstr explode(const std::string & str, const std::string & sep, int count=0);
 std::string implode(const vecstr & vec, const std::string & sep);
 dictstr parse_dict(const std::string & str, const std::string & sep1, const std::string & sep2);
+
+}; // namespace Morat

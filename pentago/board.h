@@ -11,6 +11,10 @@
 
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 //#include <bitset>
 //#define bitcount(x) std::bitset<typeof(x)>(x).count()
 #define bitcount(x) __builtin_popcountll(x)
@@ -343,3 +347,6 @@ private:
 		return (b & ~m) | (((b & m) >> 6) & m) | (((b & m) << 2) & m);
 	}
 };
+
+}; // namespace Pentago
+}; // namespace Morat

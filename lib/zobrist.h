@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+namespace Morat {
+
 extern const uint64_t zobrist_strings[4096];
 
 template<int num>
@@ -40,3 +42,5 @@ public:
 		return m;
 	}
 };
+
+}; // namespace Morat

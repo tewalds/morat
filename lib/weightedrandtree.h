@@ -11,6 +11,8 @@ Most operations are O(log n).
 #include "bits.h"
 #include "xorshift.h"
 
+namespace Morat {
+
 //rounds to power of 2 sizes, completely arbitrary weights
 // O(log n) updates, O(log n) choose
 class WeightedRandTree {
@@ -108,3 +110,5 @@ public:
 		return i - size;
 	}
 };
+
+}; // namespace Morat

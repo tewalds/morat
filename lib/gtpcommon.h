@@ -4,6 +4,8 @@
 #include "gtpbase.h"
 #include "timecontrol.h"
 
+namespace Morat {
+
 class GTPCommon : public GTPBase {
 
 protected:
@@ -20,3 +22,5 @@ public:
 	GTPResponse gtp_time(vecstr args);
 	std::string won_str(int outcome) const;
 };
+
+}; // namespace Morat

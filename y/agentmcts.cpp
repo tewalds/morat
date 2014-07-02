@@ -10,6 +10,10 @@
 #include "agentmcts.h"
 #include "board.h"
 
+
+namespace Morat {
+namespace Y {
+
 const float AgentMCTS::min_rave = 0.1;
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
@@ -415,3 +419,6 @@ void AgentMCTS::load_hgf(Board board, Node * node, FILE * fd){
 
 	return;
 }
+
+}; // namespace Y
+}; // namespace Morat

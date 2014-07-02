@@ -5,6 +5,9 @@
 
 #include "agentpns.h"
 
+namespace Morat {
+namespace Havannah {
+
 std::string AgentPNS::Node::to_s() const {
 	return "AgentPNS::Node"
 	       ", move " + move.to_s() +
@@ -358,3 +361,6 @@ void AgentPNS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node)
 		}
 	}
 }
+
+}; // namespace Havannah
+}; // namespace Morat

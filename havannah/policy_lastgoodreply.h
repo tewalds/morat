@@ -5,6 +5,9 @@
 #include "move.h"
 #include "policy.h"
 
+namespace Morat {
+namespace Havannah {
+
 class LastGoodReply : public Policy {
 	Move goodreply[2][Board::max_vecsize];
 	int enabled;
@@ -40,3 +43,6 @@ public:
 		}
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

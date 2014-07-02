@@ -8,6 +8,10 @@
 
 #include "board.h"
 
+
+namespace Morat {
+namespace Y {
+
 class Agent {
 protected:
 	typedef std::vector<Move> vecmove;
@@ -70,3 +74,6 @@ protected:
 		return outcome;
 	}
 };
+
+}; // namespace Y
+}; // namespace Morat

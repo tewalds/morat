@@ -2,6 +2,10 @@
 #include "gtp.h"
 #include "moveiterator.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 GTPResponse GTP::gtp_mcts(vecstr args){
 	delete agent;
 	agent = new AgentMCTS();
@@ -153,3 +157,6 @@ GTPResponse GTP::gtp_colorboard(vecstr args){
 GTPResponse GTP::gtp_hash(vecstr args){
 	return GTPResponse(true, to_str(hist->simple_hash()));
 }
+
+}; // namespace Pentago
+}; // namespace Morat

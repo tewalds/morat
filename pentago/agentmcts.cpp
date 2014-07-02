@@ -9,6 +9,10 @@
 #include "agentmcts.h"
 #include "board.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 const float AgentMCTS::min_rave = 0.1;
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
@@ -282,3 +286,6 @@ AgentMCTS::Node * AgentMCTS::find_child(const Node * node, const Move & move) co
 
 	return NULL;
 }
+
+}; // namespace Pentago
+}; // namespace Morat

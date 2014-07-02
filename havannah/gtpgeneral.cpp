@@ -6,6 +6,9 @@
 #include "gtp.h"
 #include "lbdist.h"
 
+namespace Morat {
+namespace Havannah {
+
 GTPResponse GTP::gtp_mcts(vecstr args){
 	delete agent;
 	agent = new AgentMCTS();
@@ -354,3 +357,6 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	infile.close();
 	return true;
 }
+
+}; // namespace Havannah
+}; // namespace Morat

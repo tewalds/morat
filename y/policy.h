@@ -5,6 +5,10 @@
 #include "move.h"
 #include "movelist.h"
 
+
+namespace Morat {
+namespace Y {
+
 class Policy {
 public:
 	Policy() { }
@@ -26,3 +30,6 @@ public:
 	// Game over, here's who won
 	void rollout_end(const MoveList & movelist, int won) { }
 };
+
+}; // namespace Y
+}; // namespace Morat

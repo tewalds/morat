@@ -3,6 +3,8 @@
 
 #include "outcome.h"
 
+namespace Morat {
+
 TEST_CASE("Side and Outcome", "[side][outcome]"){
 	REQUIRE(~Side::P1    == Side::P2);
 	REQUIRE(~Side::P2    == Side::P1);
@@ -37,3 +39,5 @@ TEST_CASE("Side and Outcome", "[side][outcome]"){
 	REQUIRE((Side::P1    | Side::P2)    == Side::BOTH);
 	REQUIRE((Outcome::P1 | Outcome::P2) == Outcome::DRAW2);
 }
+
+}; // namespace Morat

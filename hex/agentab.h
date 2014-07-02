@@ -7,6 +7,10 @@
 
 #include "agent.h"
 
+
+namespace Morat {
+namespace Hex {
+
 class AgentAB : public Agent {
 	static const int16_t SCORE_WIN  = 32767;
 	static const int16_t SCORE_LOSS = -32767;
@@ -105,3 +109,6 @@ private:
 	Node * tt_get(const Board & b) const ;
 	void tt_set(const Node & n) ;
 };
+
+}; // namespace Hex
+}; // namespace Morat

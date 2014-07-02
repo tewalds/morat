@@ -11,6 +11,9 @@
 #include "agent.h"
 
 
+namespace Morat {
+namespace Pentago {
+
 class AgentPNS : public Agent {
 	static const uint32_t LOSS  = (1<<30)-1;
 	static const uint32_t DRAW  = (1<<30)-2;
@@ -285,3 +288,6 @@ private:
 	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
 };
+
+}; // namespace Pentago
+}; // namespace Morat

@@ -15,6 +15,10 @@
 
 #include "move.h"
 
+
+namespace Morat {
+namespace Hex {
+
 /*
  * the board is represented as a flattened 2d array of the form:
  *   1 2 3
@@ -620,3 +624,6 @@ public:
 		return Outcome::UNKNOWN;
 	}
 };
+
+}; // namespace Hex
+}; // namespace Morat

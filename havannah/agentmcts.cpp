@@ -10,6 +10,9 @@
 #include "agentmcts.h"
 #include "board.h"
 
+namespace Morat {
+namespace Havannah {
+
 const float AgentMCTS::min_rave = 0.1;
 
 std::string AgentMCTS::Node::to_s() const {
@@ -421,3 +424,6 @@ void AgentMCTS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node
 		}
 	}
 }
+
+}; // namespace Havannah
+}; // namespace Morat

@@ -12,6 +12,10 @@
 #include "history.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Y {
+
 class GTP : public GTPCommon {
 	History hist;
 
@@ -129,3 +133,6 @@ public:
 
 	std::string solve_str(int outcome) const;
 };
+
+}; // namespace Y
+}; // namespace Morat

@@ -4,6 +4,8 @@
 #include "string.h"
 #include "types.h"
 
+namespace Morat {
+
 using namespace std;
 
 string to_str(double a, int prec){
@@ -63,3 +65,5 @@ dictstr parse_dict(const std::string & str, const std::string & sep1, const std:
 	}
 	return ret;
 }
+
+}; // namespace Morat

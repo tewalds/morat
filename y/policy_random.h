@@ -9,6 +9,10 @@
 #include "move.h"
 #include "policy.h"
 
+
+namespace Morat {
+namespace Y {
+
 class RandomPolicy : public Policy {
 	XORShift_uint32 rand;
 	Move moves[Board::max_vecsize];
@@ -43,3 +47,6 @@ public:
 		}
 	}
 };
+
+}; // namespace Y
+}; // namespace Morat

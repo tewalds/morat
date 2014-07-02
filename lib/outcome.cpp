@@ -4,6 +4,8 @@
 #include "outcome.h"
 #include "thread.h"
 
+namespace Morat {
+
 const Side Side::UNDEF = -4;
 const Side Side::NONE  = 0;
 const Side Side::P1    = 1;
@@ -55,3 +57,5 @@ std::string Outcome::to_s_rel(Side to_play) const {
 bool Outcome::cas(Outcome old, Outcome new_) {
 	return CAS(outcome, old.outcome, new_.outcome);
 }
+
+}; // namespace Morat

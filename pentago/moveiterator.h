@@ -6,6 +6,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class MoveIterator { //only returns valid moves...
 	const Board & base_board; //base board
 	Board after; // board after making the move
@@ -107,3 +111,6 @@ public:
 };
 
 void RandomMoveIteratorTest();
+
+}; // namespace Pentago
+}; // namespace Morat

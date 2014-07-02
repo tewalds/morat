@@ -5,6 +5,10 @@
 
 #include "agentpns.h"
 
+
+namespace Morat {
+namespace Y {
+
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
@@ -283,3 +287,6 @@ void AgentPNS::garbage_collect(Node * node){
 		}
 	}
 }
+
+}; // namespace Y
+}; // namespace Morat

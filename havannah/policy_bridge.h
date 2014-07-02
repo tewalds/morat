@@ -8,6 +8,8 @@
 #include "move.h"
 #include "policy.h"
 
+namespace Morat {
+namespace Havannah {
 
 class ProtectBridge : public Policy {
 	int offset;
@@ -53,3 +55,6 @@ public:
 		return board.nb_begin(prev)[i];
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

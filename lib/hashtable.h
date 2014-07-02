@@ -5,6 +5,8 @@
 //#include "log.h"
 //#include "string.h"
 
+namespace Morat {
+
 class HashTable {
 	// A simple hash table. It support resizing, but you need to call resize once in a while
 	// to make it happen. This is so it doesn't need to check regularly whether it needs to resize.
@@ -119,3 +121,5 @@ public:
 		}
 	}
 };
+
+}; // namespace Morat

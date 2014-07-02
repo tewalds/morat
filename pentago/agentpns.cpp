@@ -6,6 +6,10 @@
 #include "agentpns.h"
 #include "moveiterator.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
@@ -278,3 +282,6 @@ void AgentPNS::garbage_collect(Node * node){
 		}
 	}
 }
+
+}; // namespace Pentago
+}; // namespace Morat

@@ -1,6 +1,8 @@
 
 #include "zobrist.h"
 
+namespace Morat {
+
 const uint64_t zobrist_strings[4096] = {
     0xa0c99a1c59023682ull,    // 0
     0x491b86e3b32b998dull,
@@ -4099,3 +4101,5 @@ const uint64_t zobrist_strings[4096] = {
     0x6f1f252f0dac492eull,
     0xb58a3a80a24625b4ull
 };
+
+}; // namespace Morat

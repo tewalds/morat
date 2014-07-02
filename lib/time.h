@@ -4,6 +4,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+namespace Morat {
+
 class Time {
 	double t;
 public:
@@ -36,3 +38,4 @@ public:
 	bool operator != (const Time & a) const { return t != a.t; }
 };
 
+}; // namespace Morat

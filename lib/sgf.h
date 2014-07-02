@@ -12,6 +12,8 @@
 #include "outcome.h"
 #include "string.h"
 
+namespace Morat {
+
 template<typename Move>
 class SGFPrinter {
 	std::ostream & _os;
@@ -150,3 +152,5 @@ public:
 		return _properties["C"];
 	}
 };
+
+}; // namespace Morat

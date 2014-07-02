@@ -20,6 +20,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class AgentMCTS : public Agent{
 public:
 
@@ -281,3 +285,6 @@ protected:
 
 	Node * find_child(const Node * node, const Move & move) const ;
 };
+
+}; // namespace Pentago
+}; // namespace Morat

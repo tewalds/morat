@@ -8,6 +8,9 @@
 #include "policy.h"
 
 
+namespace Morat {
+namespace Hex {
+
 class InstantWin : public Policy {
 	int max_rollout_moves;
 	int cur_rollout_moves;
@@ -93,3 +96,6 @@ public:
 		return loss; // usually M_UNKNOWN
 	}
 };
+
+}; // namespace Hex
+}; // namespace Morat

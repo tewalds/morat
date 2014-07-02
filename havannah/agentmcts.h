@@ -26,6 +26,8 @@
 #include "policy_lastgoodreply.h"
 #include "policy_random.h"
 
+namespace Morat {
+namespace Havannah {
 
 class AgentMCTS : public Agent{
 public:
@@ -314,3 +316,6 @@ protected:
 	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const ;
 	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };
+
+}; // namespace Havannah
+}; // namespace Morat

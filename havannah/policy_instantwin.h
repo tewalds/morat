@@ -7,6 +7,8 @@
 #include "move.h"
 #include "policy.h"
 
+namespace Morat {
+namespace Havannah {
 
 class InstantWin : public Policy {
 	int max_rollout_moves;
@@ -93,3 +95,6 @@ public:
 		return loss; // usually M_UNKNOWN
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

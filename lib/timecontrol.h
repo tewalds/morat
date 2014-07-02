@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <string>
 
+namespace Morat {
+
 struct TimeControl {
 	enum Method { PERCENT, EVEN, STATS };
 	Method method;   // method to use to distribute the remaining time
@@ -72,3 +74,5 @@ struct TimeControl {
 			remain = 0;
 	}
 };
+
+}; // namespace Morat

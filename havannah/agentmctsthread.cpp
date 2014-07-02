@@ -6,6 +6,9 @@
 
 #include "agentmcts.h"
 
+namespace Morat {
+namespace Havannah {
+
 void AgentMCTS::AgentThread::iterate(){
 	INCR(agent->runs);
 	if(agent->profile){
@@ -475,3 +478,6 @@ Move AgentMCTS::AgentThread::rollout_choose_move(Board & board, const Move & pre
 
 	return random_policy.choose_move(board, prev);
 }
+
+}; // namespace Havannah
+}; // namespace Morat

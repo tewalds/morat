@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+namespace Morat {
+
 class Side {
 	typedef int8_t Type;
 	Type side;
@@ -103,3 +105,5 @@ inline Side    operator|(const Side    & a, const Side    & b) { return Side(a.t
 inline Outcome operator|(const Outcome & a, const Outcome & b) { return Outcome(a.to_i() | b.to_i()); }
 inline Side    & operator|=(Side    & o, const Side    & s) { return o = o | s; }
 inline Outcome & operator|=(Outcome & o, const Outcome & s) { return o = o | s; }
+
+}; // namespace Morat

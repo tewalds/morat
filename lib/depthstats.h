@@ -7,6 +7,8 @@
 
 #include "string.h"
 
+namespace Morat {
+
 struct DepthStats {
 	uint32_t mindepth, maxdepth, num;
 	uint64_t sumdepth, sumdepthsq;
@@ -57,3 +59,5 @@ struct DepthStats {
 		return to_str(avg(), 4) +", dev=" + to_str(std_dev(), 4) + ", min=" + to_str(mindepth) + ", max=" + to_str(maxdepth) + ", num=" + to_str(num);
 	}
 };
+
+}; // namespace Morat

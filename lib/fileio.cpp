@@ -3,6 +3,7 @@
 
 #include "fileio.h"
 
+namespace Morat {
 using namespace std;
 
 int fpeek(FILE * fd){
@@ -49,3 +50,5 @@ string read_until(FILE * fd, char until, bool include){
 		ungetc(c, fd);
 	return ret;
 }
+
+};

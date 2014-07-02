@@ -6,6 +6,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Hex {
+
 struct MoveList {
 	ExpPair    exp[2];       //aggregated outcomes overall
 	ExpPair    rave[2][Board::max_vecsize]; //aggregated outcomes per move
@@ -74,3 +78,6 @@ struct MoveList {
 		return exp[player.to_i() - 1];
 	}
 };
+
+}; // namespace Hex
+}; // namespace Morat

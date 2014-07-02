@@ -32,6 +32,8 @@ The main thread and the worker threads are coordinated with a simple state machi
 two barriers.
 */
 
+namespace Morat {
+
 enum ThreadState {
 	Thread_Cancelled,  //threads should exit
 	Thread_Wait_Start, //threads are waiting to start
@@ -229,3 +231,5 @@ private:
 
 	virtual void iterate() = 0; //handles each iteration
 };
+
+}; // namespace Morat

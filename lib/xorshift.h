@@ -7,6 +7,8 @@
 
 #include "time.h"
 
+namespace Morat {
+
 //generates 32 bit values, has a 32bit period
 class XORShift_uint32 {
 	uint32_t r;
@@ -52,3 +54,5 @@ public:
 	XORShift_double(uint64_t seed = 0) : XORShift_uint64(seed) {}
 	double operator()() { return static_cast<double>(rand()) * (1. / 18446744073709551616.); } // divide by 2^64
 };
+
+}; // namespace Morat

@@ -5,6 +5,8 @@
 #include "thread.h"
 #include "types.h"
 
+namespace Morat {
+
 class ExpPair {
 	uword s, n;
 	ExpPair(uword S, uword N) : s(S), n(N) { }
@@ -62,3 +64,5 @@ public:
 		return ExpPair(n*2 - s, n);
 	}
 };
+
+}; // namespace Morat

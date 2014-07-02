@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+namespace Morat {
+
 #define trailing_zeros(n) __builtin_ctz(n)
 
 inline uint32_t mix_bits(uint32_t h){
@@ -31,3 +33,5 @@ NumType roundup(NumType v) {
 	v++;
 	return v;
 }
+
+}; // namespace Morat

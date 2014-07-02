@@ -8,6 +8,9 @@
 #include "moveiterator.h"
 
 
+namespace Morat {
+namespace Pentago {
+
 void MoveIterator::test() {
 //	printf("MoveIterator tests\n");
 
@@ -90,3 +93,6 @@ void RandomMoveIteratorTest() {
 
 	assert(boards.size() == 0);
 }
+
+}; // namespace Pentago
+}; // namespace Morat

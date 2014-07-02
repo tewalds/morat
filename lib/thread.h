@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
+namespace Morat {
 
 // http://gcc.gnu.org/onlinedocs/gcc/Atomic-Builtins.html
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2427.html
@@ -266,3 +267,5 @@ public:
 	}
 };
 //*/
+
+}; // namespace Morat

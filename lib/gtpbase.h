@@ -10,6 +10,8 @@
 
 #include "string.h"
 
+namespace Morat {
+
 using namespace std::placeholders; //for bind
 
 struct GTPResponse {
@@ -163,3 +165,5 @@ public:
 		return GTPResponse(true, ret);
 	}
 };
+
+}; // namespace Morat

@@ -1,6 +1,9 @@
 
 #include "gtp.h"
 
+namespace Morat {
+namespace Havannah {
+
 using namespace std;
 
 
@@ -287,3 +290,6 @@ GTPResponse GTP::gtp_pns_params(vecstr args){
 
 	return GTPResponse(true, errs);
 }
+
+}; // namespace Havannah
+}; // namespace Morat

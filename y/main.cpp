@@ -7,6 +7,10 @@
 
 #include "gtp.h"
 
+
+using namespace Morat;
+using namespace Y;
+
 using namespace std;
 
 void die(int code, const string & str){

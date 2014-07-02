@@ -6,6 +6,8 @@
 
 #include "thread.h"
 
+namespace Morat {
+
 class Timer {
 	Thread thread;
 	bool destruct;
@@ -59,3 +61,5 @@ public:
 		cancel();
 	}
 };
+
+}; // namespace Morat
