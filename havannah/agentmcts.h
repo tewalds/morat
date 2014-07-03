@@ -250,8 +250,6 @@ public:
 	AgentMCTS();
 	~AgentMCTS();
 
-	static void test();
-
 	void set_memlimit(uint64_t lim) { }; // in bytes
 	void clear_mem() { };
 

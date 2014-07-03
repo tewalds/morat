@@ -4,8 +4,6 @@
 
 #include "../lib/time.h"
 
-#include "agentmcts.h"
-#include "agentpns.h"
 #include "gtp.h"
 
 
@@ -23,8 +21,6 @@ int main(int argc, char **argv){
 	Board::test();
 	MoveIterator::test();
 	RandomMoveIteratorTest();
-	AgentMCTS::test();
-	AgentPNS::test();
 
 	srand(Time().in_usec());
 	GTP gtp;

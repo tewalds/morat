@@ -34,7 +34,35 @@ test: \
 		lib/outcome_test.o \
 		lib/sgf_test.o \
 		lib/string.o \
-		lib/string_test.o
+		lib/string_test.o \
+		lib/zobrist.o \
+		havannah/agentmcts.o \
+		havannah/agentmctsthread.o \
+		havannah/agentmcts_test.o \
+		havannah/agentpns.o \
+		havannah/agentpns_test.o \
+		hex/agentmcts.o \
+		hex/agentmctsthread.o \
+		hex/agentmcts_test.o \
+		hex/agentpns.o \
+		hex/agentpns_test.o \
+		pentago/agentmcts.o \
+		pentago/agentmctsthread.o \
+		pentago/agentmcts_test.o \
+		pentago/agentpns.o \
+		pentago/agentpns_test.o \
+		pentago/board.o \
+		rex/agentmcts.o \
+		rex/agentmctsthread.o \
+		rex/agentmcts_test.o \
+		rex/agentpns.o \
+		rex/agentpns_test.o \
+		y/agentmcts.o \
+		y/agentmctsthread.o \
+		y/agentmcts_test.o \
+		y/agentpns.o \
+		y/agentpns_test.o \
+		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 	./test
 

@@ -45,13 +45,6 @@ bool AgentMCTS::Node::from_s(std::string s) {
 	return false;
 }
 
-void AgentMCTS::test() {
-	Node n(Move("a1"));
-	auto s = n.to_s();
-	Node k;
-	assert(k.from_s(s));
-}
-
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	Side toplay = rootboard.toplay();
 

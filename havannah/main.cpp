@@ -2,11 +2,8 @@
 #include <string>
 #include <unistd.h>
 
-#include "../lib/outcome.h"
 #include "../lib/time.h"
 
-#include "agentmcts.h"
-#include "agentpns.h"
 #include "gtp.h"
 
 
@@ -21,8 +18,6 @@ void die(int code, const string & str){
 }
 
 int main(int argc, char **argv){
-	AgentMCTS::test();
-	AgentPNS::test();
 
 	srand(Time().in_usec());
 	GTP gtp;
