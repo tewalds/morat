@@ -41,6 +41,7 @@ test: \
 		havannah/agentmcts_test.o \
 		havannah/agentpns.o \
 		havannah/agentpns_test.o \
+		havannah/board_test.o \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
 		hex/agentmcts_test.o \
