@@ -84,6 +84,8 @@ direction = rotation & 1
 		return std::string() + char(y() + 'a') + to_str(x() + 1) + char(r + 's');
 	}
 
+	friend std::ostream& operator<< (std::ostream &out, const Move & m) { return out << m.to_s(); }
+
 	bool operator< (const Move & b) const { return (l == b.l ? r <  b.r : l <  b.l); }
 	bool operator<=(const Move & b) const { return (l == b.l ? r <= b.r : l <= b.l); }
 	bool operator> (const Move & b) const { return (l == b.l ? r >  b.r : l >  b.l); }

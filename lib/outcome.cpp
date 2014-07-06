@@ -22,6 +22,13 @@ const Outcome Outcome::P2      = 2;  // second player win
 const Outcome Outcome::DRAW2   = 3;  // draw by simultaneous win
 
 
+std::ostream& operator<< (std::ostream &out, const Side & s) {
+	return out << s.to_s();
+}
+
+std::ostream& operator<< (std::ostream &out, const Outcome & o) {
+	return out << o.to_s();
+}
 
 std::string Side::to_s() const {
 	if(*this == UNDEF) return "never";

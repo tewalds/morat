@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <ostream>
 #include <string>
 
 #include "../lib/outcome.h"
@@ -92,6 +93,7 @@ public:
 
 	std::string to_s(bool color = true) const ;
 	std::string state() const ;
+	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
 
 	void print(bool color = true) const {
 		printf("%s", to_s(color).c_str());

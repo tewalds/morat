@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <string>
+#include <ostream>
 #include <vector>
 
 #include "../lib/hashset.h"
@@ -335,6 +336,7 @@ public:
 		s += reset;
 		return s;
 	}
+	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
 
 	void print(bool color = true) const {
 		printf("%s", to_s(color).c_str());

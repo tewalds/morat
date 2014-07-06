@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 
 namespace Morat {
@@ -25,6 +26,7 @@ public:
 		return *this;
 	}
 
+	friend std::ostream& operator<< (std::ostream &out, const Side & s);
 	std::string to_s() const;
 	Type to_i() const { return side; }
 };
@@ -58,6 +60,7 @@ public:
 		return *this;
 	}
 
+	friend std::ostream& operator<< (std::ostream &out, const Outcome & o);
 	std::string to_s() const;
 	std::string to_s_rel(Side to_play) const;
 	Type to_i() const { return outcome; }

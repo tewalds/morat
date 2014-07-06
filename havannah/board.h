@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -371,6 +372,7 @@ public:
 		return s;
 	}
 
+	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
 	void print(bool color = true) const {
 		printf("%s", to_s(color).c_str());
 	}

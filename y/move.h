@@ -43,6 +43,8 @@ struct Move {
 		return std::string() + char(y + 'a') + to_str(x + 1);
 	}
 
+	friend std::ostream& operator<< (std::ostream &out, const Move & m) { return out << m.to_s(); }
+
 	bool operator< (const Move & b) const { return (y == b.y ? x <  b.x : y <  b.y); }
 	bool operator<=(const Move & b) const { return (y == b.y ? x <= b.x : y <= b.y); }
 	bool operator> (const Move & b) const { return (y == b.y ? x >  b.x : y >  b.y); }
