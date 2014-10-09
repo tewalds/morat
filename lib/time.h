@@ -2,6 +2,7 @@
 #pragma once
 
 #include <time.h>
+#include <stdint.h>
 #include <sys/time.h>
 
 namespace Morat {
@@ -19,10 +20,10 @@ public:
 		t = time.tv_sec + (double)time.tv_usec/1000000;
 	}
 
-	double    to_f()    const { return t; }
-	long long to_i()    const { return (long long)t; }
-	long long in_msec() const { return (long long)(t*1000); }
-	long long in_usec() const { return (long long)(t*1000000); }
+	double   to_f()    const { return t; }
+	uint64_t to_i()    const { return (uint64_t)t; }
+	uint64_t in_msec() const { return (uint64_t)(t*1000); }
+	uint64_t in_usec() const { return (uint64_t)(t*1000000); }
 
 	Time   operator +  (double a)       const { return Time(t+a); }
 	Time & operator += (double a)             { t += a; return *this; }
