@@ -2,8 +2,12 @@
 
 Morat is a game playing framework, along with implementations of several games. It includes some general purpose libraries (alarm, time, thread, random), and some game specific libraries (compacting tree, gtp, time controls).
 
+It specializes in 2-player, perfect information, zero sum, deterministic games, especially placement games (where RAVE works).
+
 So far it supports 3 games:
 * [Havannah](https://en.wikipedia.org/wiki/Havannah)
+* [Hex](https://en.wikipedia.org/wiki/Hex_%28board_game%29)
+* Rex - Reverse Hex (ie try to force the opponent to connect their edges).
 * [Y](https://en.wikipedia.org/wiki/Y_%28game%29)
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 

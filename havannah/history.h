@@ -8,6 +8,7 @@
 #include "board.h"
 #include "move.h"
 
+
 namespace Morat {
 namespace Havannah {
 

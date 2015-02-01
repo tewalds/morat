@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <ostream>
 #include <stdint.h>
 
 #include "../lib/string.h"

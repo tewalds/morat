@@ -85,8 +85,8 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if(TT && (node = tt_get(board)) && node->depth >= depth){
 		switch(node->flag){
 		case VALID:  return node->score;
-		case LBOUND: alpha = max(alpha, node->score); break;
-		case UBOUND: beta  = min(beta,  node->score); break;
+		case LBOUND: alpha = std::max(alpha, node->score); break;
+		case UBOUND: beta  = std::min(beta,  node->score); break;
 		default:     assert(false && "Unknown flag!");
 		}
 		if(alpha >= beta)

@@ -1,11 +1,10 @@
 
 #pragma once
 
-#include <cassert>
 #include <cstdlib>
+#include <ostream>
 #include <stdint.h>
 
-#include "../lib/log.h"
 #include "../lib/string.h"
 
 

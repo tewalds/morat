@@ -7,6 +7,7 @@
 
 #include "../lib/string.h"
 
+
 namespace Morat {
 namespace Havannah {
 

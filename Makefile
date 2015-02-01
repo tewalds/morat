@@ -41,12 +41,14 @@ test: \
 		havannah/agentmcts_test.o \
 		havannah/agentpns.o \
 		havannah/agentpns_test.o \
+		havannah/board.o \
 		havannah/board_test.o \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
 		hex/agentmcts_test.o \
 		hex/agentpns.o \
 		hex/agentpns_test.o \
+		hex/board_test.o \
 		pentago/agentmcts.o \
 		pentago/agentmctsthread.o \
 		pentago/agentmcts_test.o \
@@ -72,6 +74,7 @@ castro: \
 		havannah/agentmcts.o \
 		havannah/agentmctsthread.o \
 		havannah/agentpns.o \
+		havannah/board.o \
 		havannah/gtpgeneral.o \
 		havannah/gtpagent.o \
 		lib/fileio.o \
