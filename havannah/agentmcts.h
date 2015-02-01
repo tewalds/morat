@@ -12,6 +12,7 @@
 #include "../lib/exppair.h"
 #include "../lib/log.h"
 #include "../lib/move.h"
+#include "../lib/movelist.h"
 #include "../lib/thread.h"
 #include "../lib/time.h"
 #include "../lib/types.h"
@@ -20,7 +21,6 @@
 #include "agent.h"
 #include "board.h"
 #include "lbdist.h"
-#include "movelist.h"
 #include "policy_bridge.h"
 #include "policy_instantwin.h"
 #include "policy_lastgoodreply.h"
@@ -144,7 +144,7 @@ public:
 		bool use_explore; //whether to use exploration for this simulation
 		LBDists dists;    //holds the distances to the various non-ring wins as a heuristic for the minimum moves needed to win
 
-		MoveList movelist;
+		MoveList<Board> movelist;
 		int stage; //which of the four MCTS stages is it on
 
 	public:

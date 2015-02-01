@@ -1,15 +1,13 @@
 
 #pragma once
 
-#include "../lib/exppair.h"
-#include "../lib/move.h"
-
-#include "board.h"
+#include "exppair.h"
+#include "move.h"
 
 
 namespace Morat {
-namespace Rex {
 
+template<class Board>
 struct MoveList {
 	ExpPair    exp[2];       //aggregated outcomes overall
 	ExpPair    rave[2][Board::max_vecsize]; //aggregated outcomes per move
@@ -79,5 +77,4 @@ struct MoveList {
 	}
 };
 
-}; // namespace Rex
 }; // namespace Morat

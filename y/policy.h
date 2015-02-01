@@ -2,9 +2,9 @@
 #pragma once
 
 #include "../lib/move.h"
+#include "../lib/movelist.h"
 
 #include "board.h"
-#include "movelist.h"
 
 
 namespace Morat {
@@ -29,7 +29,7 @@ public:
 	void move_end(const Board & board, const Move & prev) { }
 
 	// Game over, here's who won
-	void rollout_end(const MoveList & movelist, int won) { }
+	void rollout_end(const MoveList<Board> & movelist, int won) { }
 };
 
 }; // namespace Y

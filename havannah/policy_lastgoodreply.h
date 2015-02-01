@@ -30,7 +30,7 @@ public:
 		return M_UNKNOWN;
 	}
 
-	void rollout_end(const Board & board, const MoveList & movelist, Outcome outcome) {
+	void rollout_end(const Board & board, const MoveList<Board> & movelist, Outcome outcome) {
 		if(!enabled || outcome != Outcome::DRAW)
 			return;
 		int m = -1;
