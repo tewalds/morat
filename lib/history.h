@@ -3,15 +3,13 @@
 
 #include <vector>
 
-#include "../lib/move.h"
-#include "../lib/string.h"
-
-#include "board.h"
+#include "move.h"
+#include "string.h"
 
 
 namespace Morat {
-namespace Havannah {
 
+template<class Board>
 class History {
 	std::vector<Move> hist;
 	Board board;
@@ -73,5 +71,4 @@ public:
 	}
 };
 
-}; // namespace Havannah
 }; // namespace Morat

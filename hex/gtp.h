@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../lib/gtpcommon.h"
+#include "../lib/history.h"
 #include "../lib/move.h"
 #include "../lib/string.h"
 
@@ -10,14 +11,13 @@
 #include "agentmcts.h"
 #include "agentpns.h"
 #include "board.h"
-#include "history.h"
 
 
 namespace Morat {
 namespace Hex {
 
 class GTP : public GTPCommon {
-	History hist;
+	History<Board> hist;
 
 public:
 	int verbose;
