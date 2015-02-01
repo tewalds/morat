@@ -12,8 +12,9 @@ Decrease distance when crossing your own virtual connection?
 
 //TODO: Needs to be fixed for only one direction per player
 
+#include "../lib/move.h"
+
 #include "board.h"
-#include "move.h"
 
 
 namespace Morat {

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../lib/gtpcommon.h"
+#include "../lib/move.h"
 #include "../lib/string.h"
 
 #include "agent.h"
@@ -10,7 +11,6 @@
 #include "agentpns.h"
 #include "board.h"
 #include "history.h"
-#include "move.h"
 
 
 namespace Morat {

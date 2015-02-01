@@ -3,6 +3,7 @@
 
 #include "board.h"
 
+
 using namespace Morat;
 using namespace Hex;
 

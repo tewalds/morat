@@ -2,10 +2,11 @@
 #pragma once
 
 #include "../lib/assert2.h"
+#include "../lib/move.h"
 
 #include "board.h"
-#include "move.h"
 #include "policy.h"
+
 
 namespace Morat {
 namespace Havannah {

@@ -10,9 +10,9 @@ Increase distance when crossing an opponent virtual connection?
 Decrease distance when crossing your own virtual connection?
 */
 
+#include "../lib/move.h"
 
 #include "board.h"
-#include "move.h"
 
 
 namespace Morat {

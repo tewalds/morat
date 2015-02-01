@@ -4,18 +4,17 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
-#include <string>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include "../lib/bitcount.h"
 #include "../lib/hashset.h"
+#include "../lib/move.h"
 #include "../lib/outcome.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
 #include "../lib/zobrist.h"
-
-#include "move.h"
 
 
 namespace Morat {

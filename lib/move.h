@@ -5,11 +5,11 @@
 #include <ostream>
 #include <stdint.h>
 
-#include "../lib/string.h"
+#include "outcome.h"
+#include "string.h"
 
 
 namespace Morat {
-namespace Rex {
 
 enum MoveSpecial {
 	M_SWAP    = -1, //-1 so that adding 1 makes it into a valid move
@@ -90,5 +90,4 @@ struct MovePlayer : public Move {
 	MovePlayer(const Move & m, Side p = Side::NONE) : Move(m), player(p) { }
 };
 
-}; // namespace Rex
 }; // namespace Morat

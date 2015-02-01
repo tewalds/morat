@@ -3,10 +3,10 @@
 
 #include <vector>
 
+#include "../lib/move.h"
 #include "../lib/string.h"
 
 #include "board.h"
-#include "move.h"
 
 
 namespace Morat {

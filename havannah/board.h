@@ -10,12 +10,12 @@
 
 #include "../lib/bitcount.h"
 #include "../lib/hashset.h"
+#include "../lib/move.h"
 #include "../lib/outcome.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
 #include "../lib/zobrist.h"
 
-#include "move.h"
 
 namespace Morat {
 namespace Havannah {

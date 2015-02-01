@@ -2,9 +2,9 @@
 #pragma once
 
 #include "../lib/exppair.h"
+#include "../lib/move.h"
 
 #include "board.h"
-#include "move.h"
 
 
 namespace Morat {

@@ -3,10 +3,10 @@
 
 #include <vector>
 
+#include "../lib/move.h"
 #include "../lib/xorshift.h"
 
 #include "board.h"
-#include "move.h"
 #include "policy.h"
 
 

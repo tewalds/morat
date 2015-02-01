@@ -1,8 +1,9 @@
 
 #pragma once
 
+#include "../lib/move.h"
+
 #include "board.h"
-#include "move.h"
 #include "movelist.h"
 
 
