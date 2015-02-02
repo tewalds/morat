@@ -165,7 +165,7 @@ GTPResponse GTP::gtp_winner(vecstr args){
 }
 
 GTPResponse GTP::gtp_name(vecstr args){
-	return GTPResponse(true, "Castro");
+	return GTPResponse(true, std::string("morat-") + Board::name);
 }
 
 GTPResponse GTP::gtp_version(vecstr args){
@@ -295,7 +295,7 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 		limit = from_str<unsigned int>(args[1]);
 
 	SGFPrinter<Move> sgf(outfile);
-	sgf.game("havannah");
+	sgf.game(Board::name);
 	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
 	sgf.size(hist->get_size());
 
@@ -326,7 +326,7 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	}
 
 	SGFParser<Move> sgf(infile);
-	if(sgf.game() != "havannah"){
+	if(sgf.game() != Board::name){
 		infile.close();
 		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
 	}

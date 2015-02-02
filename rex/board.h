@@ -51,6 +51,7 @@ static MoveValid * staticneighbourlist[17] = {
 class Board{
 public:
 
+	static constexpr const char * const name = "rex";
 	static const int default_size = 8;
 	static const int min_size = 3;
 	static const int max_size = 16;

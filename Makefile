@@ -25,7 +25,7 @@ else
 endif
 
 
-all: castro chex moy trex pentagod
+all: morat-havannah morat-hex morat-pentago morat-rex morat-y
 
 test: \
 		lib/test.o \
@@ -69,7 +69,7 @@ test: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 	./test
 
-castro: \
+morat-havannah: \
 		havannah/main.o \
 		havannah/agentmcts.o \
 		havannah/agentmctsthread.o \
@@ -85,7 +85,7 @@ castro: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
-pentagod: \
+morat-pentago: \
 		pentago/main.o \
 		pentago/agentab.o \
 		pentago/agentmcts.o \
@@ -102,7 +102,7 @@ pentagod: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
-moy: \
+morat-y: \
 		y/main.o \
 		y/agentmcts.o \
 		y/agentmctsthread.o \
@@ -117,7 +117,7 @@ moy: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
-chex: \
+morat-hex: \
 		hex/main.o \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
@@ -132,7 +132,7 @@ chex: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
-trex: \
+morat-rex: \
 		rex/main.o \
 		rex/agentmcts.o \
 		rex/agentmctsthread.o \
@@ -148,7 +148,7 @@ trex: \
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 clean:
-	rm -f */*.o test castro moy pentagod chex trex .Makefile
+	rm -f */*.o test morat-havannah morat-hex morat-pentago morat-rex morat-y .Makefile
 
 fresh: clean all
 

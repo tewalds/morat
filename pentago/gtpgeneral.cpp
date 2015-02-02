@@ -135,11 +135,11 @@ GTPResponse GTP::gtp_winner(vecstr args){
 }
 
 GTPResponse GTP::gtp_name(vecstr args){
-	return GTPResponse(true, "Pentagod");
+	return GTPResponse(true, std::string("morat-") + Board::name);
 }
 
 GTPResponse GTP::gtp_version(vecstr args){
-	return GTPResponse(true, "1.5");
+	return GTPResponse(true, "0.1");
 }
 
 GTPResponse GTP::gtp_verbose(vecstr args){
@@ -183,7 +183,7 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 		limit = from_str<unsigned int>(args[1]);
 
 	SGFPrinter<Move> sgf(outfile);
-	sgf.game("pentago");
+	sgf.game(Board::name);
 	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
 	sgf.size(hist->get_size());
 
@@ -214,7 +214,7 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	}
 
 	SGFParser<Move> sgf(infile);
-	if(sgf.game() != "pentago"){
+	if(sgf.game() != Board::name){
 		infile.close();
 		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
 	}
