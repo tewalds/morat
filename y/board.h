@@ -57,6 +57,7 @@ public:
 	static const int min_size = 5;
 	static const int max_size = 16;
 	static const int max_vecsize = max_size * max_size;
+	static const int num_win_types = 1;
 
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
@@ -120,9 +121,8 @@ mutable uint16_t parent;  //parent for this group of cells
 							move.xy = -1;
 							return *this;
 						}
-
-						move.x = 0;
-						move.xy = move.y * board.size;
+						move.x = board.linestart(move.y);
+						move.xy = board.xy(move.x, move.y);
 						lineend = board.lineend(move.y);
 					}
 				}while(!board.valid_move_fast(move));
@@ -148,6 +148,7 @@ private:
 	Move last;
 	Side toPlay;
 	Outcome outcome;
+	char wintype; //0 no win, 1 = edge
 
 	std::vector<Cell> cells;
 	Zobrist<6> hash;
@@ -289,8 +290,9 @@ public:
 		return staticneighbourlist[(int)size];
 	}
 
-
+	int linestart(int y) const { return 0; }
 	int lineend(int y)   const { return (size - y); }
+	int linelen(int y)   const { return lineend(y) - linestart(y); }
 
 	std::string to_s(bool color) const {
 		using std::string;
@@ -343,6 +345,7 @@ public:
 		return outcome;
 	}
 
+	char getwintype() const { return outcome > Outcome::DRAW; }
 
 	Side toplay() const {
 		return toPlay;

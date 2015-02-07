@@ -60,11 +60,11 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int depth) {
 	nodes_seen++;
 
-	int won = board.won();
-	if(won >= 0){
-		if(won == 0)
+	Outcome won = board.won();
+	if(won >= Outcome::DRAW){
+		if(won == Outcome::DRAW)
 			return SCORE_DRAW;
-		if(won == board.toplay())
+		if(won == +board.toplay())
 			return SCORE_WIN;
 		return SCORE_LOSS;
 	}
@@ -129,7 +129,7 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	return score;
 }
 
-std::string AgentAB::move_stats(vector<Move> moves) const {
+std::string AgentAB::move_stats(vecmove moves) const {
 	std::string s = "";
 
 	Board b = rootboard;

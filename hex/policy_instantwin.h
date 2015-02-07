@@ -39,7 +39,7 @@ public:
 
 		//must have an edge connection, or it has nothing to offer a group towards a win
 		const Board::Cell * c = board.cell(prev);
-		if(c->edge == 0)
+		if(c->numedges() == 0)
 			return M_UNKNOWN;
 
 		Move start, cur, loss = M_UNKNOWN;

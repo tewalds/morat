@@ -53,6 +53,7 @@ public:
 	static const int min_size = 3;
 	static const int max_size = 10;
 	static const int max_vecsize = 19*19;
+	static const int num_win_types = 3;
 
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
@@ -323,7 +324,6 @@ public:
 		return staticneighbourlist[(int)size];
 	}
 
-
 	int linestart(int y) const { return (y < size ? 0 : y - sizem1); }
 	int lineend(int y)   const { return (y < size ? size + y : size_d); }
 	int linelen(int y)   const { return size_d - abs(sizem1 - y); }
@@ -331,6 +331,7 @@ public:
 	std::string to_s(bool color) const;
 
 	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
+
 	void print(bool color = true) const {
 		printf("%s", to_s(color).c_str());
 	}
