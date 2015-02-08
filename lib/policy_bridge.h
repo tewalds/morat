@@ -5,14 +5,13 @@
 #include "../lib/bits.h"
 #include "../lib/move.h"
 
-#include "board.h"
 #include "policy.h"
 
 
 namespace Morat {
-namespace Hex {
 
-class ProtectBridge : public Policy {
+template<class Board>
+class ProtectBridge : public Policy<Board> {
 	int offset;
 	uint8_t lookup[2][1<<12];  // 2 players, all possible local 6-patterns
 
@@ -57,5 +56,4 @@ public:
 	}
 };
 
-}; // namespace Hex
 }; // namespace Morat

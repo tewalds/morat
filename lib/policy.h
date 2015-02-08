@@ -4,12 +4,10 @@
 #include "../lib/move.h"
 #include "../lib/movelist.h"
 
-#include "board.h"
-
 
 namespace Morat {
-namespace Y {
 
+template<class Board>
 class Policy {
 public:
 	Policy() { }
@@ -32,5 +30,4 @@ public:
 	void rollout_end(const MoveList<Board> & movelist, int won) { }
 };
 
-}; // namespace Y
 }; // namespace Morat

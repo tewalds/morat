@@ -3,14 +3,13 @@
 
 #include "../lib/move.h"
 
-#include "board.h"
 #include "policy.h"
 
 
 namespace Morat {
-namespace Rex {
 
-class LastGoodReply : public Policy {
+template<class Board>
+class LastGoodReply : public Policy<Board> {
 	Move goodreply[2][Board::max_vecsize];
 	int enabled;
 public:
@@ -46,5 +45,4 @@ public:
 	}
 };
 
-}; // namespace Rex
 }; // namespace Morat

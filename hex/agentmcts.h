@@ -13,6 +13,10 @@
 #include "../lib/log.h"
 #include "../lib/move.h"
 #include "../lib/movelist.h"
+#include "../lib/policy_bridge.h"
+#include "../lib/policy_instantwin.h"
+#include "../lib/policy_lastgoodreply.h"
+#include "../lib/policy_random.h"
 #include "../lib/thread.h"
 #include "../lib/time.h"
 #include "../lib/types.h"
@@ -21,10 +25,6 @@
 #include "agent.h"
 #include "board.h"
 #include "lbdist.h"
-#include "policy_bridge.h"
-#include "policy_instantwin.h"
-#include "policy_lastgoodreply.h"
-#include "policy_random.h"
 
 
 namespace Morat {
@@ -135,10 +135,10 @@ public:
 
 	class AgentThread : public AgentThreadBase<AgentMCTS> {
 		mutable XORShift_float unitrand;
-		LastGoodReply last_good_reply;
-		RandomPolicy random_policy;
-		ProtectBridge protect_bridge;
-		InstantWin instant_wins;
+		LastGoodReply<Board> last_good_reply;
+		RandomPolicy<Board> random_policy;
+		ProtectBridge<Board> protect_bridge;
+		InstantWin<Board> instant_wins;
 
 		bool use_rave;    //whether to use rave for this simulation
 		bool use_explore; //whether to use exploration for this simulation

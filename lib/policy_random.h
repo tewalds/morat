@@ -6,14 +6,13 @@
 #include "../lib/move.h"
 #include "../lib/xorshift.h"
 
-#include "board.h"
 #include "policy.h"
 
 
 namespace Morat {
-namespace Rex {
 
-class RandomPolicy : public Policy {
+template<class Board>
+class RandomPolicy : public Policy<Board> {
 	XORShift_uint32 rand;
 	Move moves[Board::max_vecsize];
 	int num;
@@ -26,7 +25,7 @@ public:
 	// only need to save the valid moves once since all the rollouts start from the same position
 	void prepare(const Board & board) {
 		num = 0;
-		for(Board::MoveIterator m = board.moveit(false); !m.done(); ++m)
+		for(auto m = board.moveit(false); !m.done(); ++m)
 			moves[num++] = *m;
 	}
 
@@ -48,5 +47,4 @@ public:
 	}
 };
 
-}; // namespace Rex
 }; // namespace Morat

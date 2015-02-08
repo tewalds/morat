@@ -68,8 +68,7 @@ struct Move {
 struct MoveScore : public Move {
 	int16_t score;
 
-	MoveScore() : score(0) { }
-	MoveScore(MoveSpecial a) : Move(a), score(0) { }
+	MoveScore(MoveSpecial a = M_UNKNOWN) : Move(a), score(0) { }
 	MoveScore(int X, int Y, int s) : Move(X, Y), score(s) { }
 	MoveScore operator+ (const Move & b) const { return MoveScore(x + b.x, y + b.y, score); }
 };
@@ -77,7 +76,7 @@ struct MoveScore : public Move {
 struct MoveValid : public Move {
 	int16_t xy;
 
-	MoveValid() : Move(), xy(-1) { }
+	MoveValid(MoveSpecial a = M_UNKNOWN) : Move(a), xy(-1) { }
 	MoveValid(int x, int y, int XY) : Move(x,y), xy(XY) { }
 	MoveValid(const Move & m, int XY) : Move(m), xy(XY) { }
 	bool onboard() const { return xy != -1; }
@@ -86,7 +85,7 @@ struct MoveValid : public Move {
 struct MovePlayer : public Move {
 	Side player;
 
-	MovePlayer() : Move(M_UNKNOWN), player(Side::NONE) { }
+	MovePlayer(MoveSpecial a = M_UNKNOWN) : Move(a), player(Side::NONE) { }
 	MovePlayer(const Move & m, Side p = Side::NONE) : Move(m), player(p) { }
 };
 
