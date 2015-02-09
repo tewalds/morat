@@ -74,14 +74,14 @@ mutable uint16_t parent;  //parent for this group of cells
 		Cell(Side p, unsigned int a, unsigned int s, unsigned int e, Pattern t) :
 			piece(p), size(s), parent(a), edge(e), perm(0), pattern(t) { }
 
-		int numedges()   const { return BitsSetTable256[edge];   }
+		int numedges()   const { return BitsSetTable256[edge]; }
 
 		std::string to_s(int i) const {
 			return "Cell " + to_str(i) +": "
 				"piece: " + to_str(piece.to_i())+
 				", size: " + to_str((int)size) +
 				", parent: " + to_str((int)parent) +
-				", edge: " + to_str((int)edge) +
+				", edge: " + to_str((int)edge) + "/" + to_str(numedges()) +
 				", perm: " + to_str((int)perm) +
 				", pattern: " + to_str((int)pattern);
 		}
@@ -173,7 +173,7 @@ public:
 		cells.resize(vecsize());
 
 		for(int y = 0; y < size; y++){
-			for(int x = 0; x < lineend(y); x++){
+			for(int x = 0; x < size; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
 				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
@@ -232,12 +232,12 @@ public:
 	}
 
 
-	//assumes x, y are in array bounds
-	bool onboard_fast(int x, int y)   const { return (  y < size &&   x < size); }
-	bool onboard_fast(const Move & m) const { return (m.y < size && m.x < size); }
+	//assumes x, y are in array bounds, and all moves within array bounds are valid
+	bool onboard_fast(int x, int y)   const { return true; }
+	bool onboard_fast(const Move & m) const { return true; }
 	//checks array bounds too
-	bool onboard(int x, int y)  const { return (  x >= 0 &&   y >= 0 && onboard_fast(x, y) ); }
-	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && onboard_fast(m) ); }
+	bool onboard(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size &&   y < size && onboard_fast(x, y) ); }
+	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size && m.y < size && onboard_fast(m) ); }
 	bool onboard(const MoveValid & m) const { return m.onboard(); }
 
 	//assumes x, y are in bounds and the game isn't already finished

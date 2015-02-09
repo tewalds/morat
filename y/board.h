@@ -173,7 +173,7 @@ public:
 		cells.resize(vecsize());
 
 		for(int y = 0; y < size; y++){
-			for(int x = 0; x < lineend(y); x++){
+			for(int x = 0; x < size; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
 				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
