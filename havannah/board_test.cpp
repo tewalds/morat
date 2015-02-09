@@ -65,6 +65,29 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 		REQUIRE_FALSE(b.move(m));
 	}
 
+	SECTION("move distance") {
+		SECTION("x") {
+			REQUIRE(b.dist(Move("b2"), Move("b1")) == 1);
+			REQUIRE(b.dist(Move("b2"), Move("b3")) == 1);
+		}
+		SECTION("y") {
+			REQUIRE(b.dist(Move("b2"), Move("a2")) == 1);
+			REQUIRE(b.dist(Move("b2"), Move("c2")) == 1);
+		}
+		SECTION("z") {
+			REQUIRE(b.dist(Move("b2"), Move("a1")) == 1);
+			REQUIRE(b.dist(Move("b2"), Move("c3")) == 1);
+		}
+		SECTION("farther") {
+			REQUIRE(b.dist(Move("b2"), Move("a3")) == 2);
+			REQUIRE(b.dist(Move("b2"), Move("c1")) == 2);
+			REQUIRE(b.dist(Move("b2"), Move("d4")) == 2);
+			REQUIRE(b.dist(Move("b2"), Move("d3")) == 2);
+			REQUIRE(b.dist(Move("b2"), Move("e3")) == 3);
+			REQUIRE(b.dist(Move("b2"), Move("d1")) == 3);
+		}
+	}
+
 	SECTION("bridge") {
 		test_game(b, {      "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P1);
 		test_game(b, {"d4", "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P2);

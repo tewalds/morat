@@ -6,7 +6,7 @@
 
 
 using namespace Morat;
-using namespace Hex;
+using namespace Y;
 
 void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	REQUIRE(b.num_moves() == 0);
@@ -28,23 +28,23 @@ void test_game(Board b, std::string moves, Outcome outcome) {
 	test_game(b, explode(moves, " "), outcome);
 }
 
-TEST_CASE("Hex::Board", "[hex][board]") {
+TEST_CASE("Y::Board [y][board]") {
 	Board b(7);
 
 	SECTION("Basics") {
 		REQUIRE(b.get_size() == 7);
-		REQUIRE(b.movesremain() == 49);
+		REQUIRE(b.movesremain() == 28);
 	}
 
 	SECTION("valid moves") {
 		std::string valid[] = {"A1", "D4",
 		"a1", "a2", "a3", "a4", "a5", "a6", "a7",
-		   "b1", "b2", "b3", "b4", "b5", "b6", "b7",
-		      "c1", "c2", "c3", "c4", "c5", "c6", "c7",
-		         "d1", "d2", "d3", "d4", "d5", "d6", "d7",
-		            "e1", "e2", "e3", "e4", "e5", "e6", "e7",
-		               "f1", "f2", "f3", "f4", "f5", "f6", "f7",
-		                  "g1", "g2", "g3", "g4", "g5", "g6", "g7",
+		   "b1", "b2", "b3", "b4", "b5", "b6",
+		      "c1", "c2", "c3", "c4", "c5",
+		         "d1", "d2", "d3", "d4",
+		            "e1", "e2", "e3",
+		               "f1", "f2",
+		                  "g1",
 		};
 		for(auto m : valid){
 			REQUIRE(b.onboard(m));
@@ -53,7 +53,7 @@ TEST_CASE("Hex::Board", "[hex][board]") {
 	}
 
 	SECTION("invalid moves") {
-		std::string invalid[] = {"a0", "a8", "a10", "b8", "c8", "e0", "e8", "f8", "f0", "h1", "f0"};
+		std::string invalid[] = {"a0", "a8", "a10", "b7", "c6", "g2", "e8", "f8", "f0", "h1", "f0"};
 		for(auto m : invalid){
 			REQUIRE_FALSE(b.onboard(m));
 			REQUIRE_FALSE(b.valid_move(m));
@@ -100,24 +100,16 @@ TEST_CASE("Hex::Board", "[hex][board]") {
 		test_game(b, {      "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::UNKNOWN);
 		test_game(b, {"d4", "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::UNKNOWN);
 	}
-
-	SECTION("Unknown_3") {
-		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::UNKNOWN);
-		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::UNKNOWN);
-
-		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::UNKNOWN);
-		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::UNKNOWN);
-	}
 	
 	SECTION("White Connects") {
-		test_game(b, 
-			"c2 c5 e4 d6 c6 d5 f5 e3 d4 d3 b4 d1 a6 c1 d2 b3 c3 e1 f2 a7 b6 b7 c7 a5 f3 e7 g6 g7 f7 g4 f1 g2 b5 e2 c4",
-			 Outcome::P1);
+		test_game(b,
+			"c3 e2 c4 c5 e3 d3 d4 b1 c2 g1 b5 d2 d1 a6 a5",
+			Outcome::P1);
 	}
 	
 	SECTION("Black Connects") {
-		test_game(b, 
-			"d1 d4 e4 e3 g2 f3 g3 f5 g5 g4 a6 b5 f4 d6 e5 g1 a5 b3 c5 c3 a3 b6 g7 a7 f7 f2 c4 d3 a4 b4",
+		test_game(b,
+			"a1 b2 c3 e2 c1 b5 c5 a4 e3 c2 b6 c4 g1 d4 f2 d3 a3 a5 e1 f1",
 			Outcome::P2);
 	}
 }

@@ -207,6 +207,10 @@ public:
 
 	MoveValid yx(int i) const { return MoveValid(i % size, i / size, i); }
 
+	int dist(const Move & a, const Move & b) const {
+		return (abs(a.x - b.x) + abs(a.y - b.y) + abs((a.x + a.y) - (b.x + b.y)) )/2;
+	}
+
 	const Cell * cell(int i)          const { return & cells[i]; }
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }

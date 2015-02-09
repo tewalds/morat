@@ -21,8 +21,6 @@ TEST_CASE("Move", "[move]"){
 	REQUIRE(Move("c5") >  Move("a1"));
 	REQUIRE(Move("c5") >= Move("a1"));
 	REQUIRE(Move("a1") != M_UNKNOWN);
-	// REQUIRE(Move("c5") + Move(1,1) == Move("d6"));
-	// REQUIRE(Move("c5") - Move(1,1) == Move("b4"));
 }
 
 }; // namespace Morat

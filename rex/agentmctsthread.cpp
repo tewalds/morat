@@ -327,7 +327,7 @@ void AgentMCTS::AgentThread::update_rave(const Node * node, Side toplay){
 
 void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Node * child){
 	if(agent->localreply){ //boost for moves near the previous move
-		int dist = node->move.dist(child->move);
+		int dist = board.dist(node->move, child->move);
 		if(dist < 4)
 			child->know += agent->localreply * (4 - dist);
 	}
@@ -355,7 +355,7 @@ void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Nod
 //test whether this move is a forced reply to the opponent probing your virtual connections
 bool AgentMCTS::AgentThread::test_bridge_probe(const Board & board, const Move & move, const Move & test) const {
 	//TODO: switch to the same method as policy_bridge.h, maybe even share code
-	if(move.dist(test) != 1)
+	if(board.dist(move, test) != 1)
 		return false;
 
 	bool equals = false;

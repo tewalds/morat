@@ -61,11 +61,13 @@ test: \
 		rex/agentmcts_test.o \
 		rex/agentpns.o \
 		rex/agentpns_test.o \
+		rex/board_test.o \
 		y/agentmcts.o \
 		y/agentmctsthread.o \
 		y/agentmcts_test.o \
 		y/agentpns.o \
 		y/agentpns_test.o \
+		y/board_test.o \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 	./test
