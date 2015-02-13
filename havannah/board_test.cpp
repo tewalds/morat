@@ -10,18 +10,25 @@ using namespace Havannah;
 void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	REQUIRE(b.num_moves() == 0);
 	Side side = Side::P1;
+	int made = 0, remain = 37;
 	for(auto s : moves) {
 		Outcome expected = (s == moves.back() ? outcome : Outcome::UNKNOWN);
 		Move move(s);
 		CAPTURE(move);
 		CAPTURE(b);
+		REQUIRE(b.num_moves() == made);
+		REQUIRE(b.movesremain() == remain);
 		REQUIRE(b.valid_move(move));
 		REQUIRE(b.toplay() == side);
 		REQUIRE(b.test_outcome(move) == expected);
 		REQUIRE(b.move(move));
 		REQUIRE(b.won() == expected);
 		side = ~side;
+		made++;
+		remain--;
 	}
+	REQUIRE(b.num_moves() == made);
+	REQUIRE(b.movesremain() == (outcome == Outcome::UNKNOWN ? remain : 0));
 }
 
 TEST_CASE("Havannah::Board", "[havannah][board]") {
@@ -57,12 +64,64 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 		}
 	}
 
+	SECTION("edges") {
+		std::string edges[] = {"a2", "a3", "b5", "c6", "e7", "f7", "g6", "g5", "f3", "e2", "c1", "b1"};
+		std::string corners[] = {"a1", "a4", "d7", "g7", "g4", "d1"};
+		std::string middle[] = {
+		      "b2", "b3", "b4",
+		   "c2", "c3", "c4", "c5",
+		"d2", "d3", "d4", "d5", "d6",
+		   "e3", "e4", "e5", "e6",
+		      "f4", "f5", "f6",
+		};
+
+		for(auto m : edges){
+			auto * c = b.cell(Move(m));
+			REQUIRE(c->numedges() == 1);
+			REQUIRE(c->numcorners() == 0);
+		}
+
+		for(auto m : corners){
+			auto * c = b.cell(Move(m));
+			REQUIRE(c->numedges() == 0);
+			REQUIRE(c->numcorners() == 1);
+		}
+
+		for(auto m : middle){
+			auto * c = b.cell(Move(m));
+			REQUIRE(c->numedges() == 0);
+			REQUIRE(c->numcorners() == 0);
+		}
+	}
+
 	SECTION("duplicate moves") {
 		Move m("a1");
 		REQUIRE(b.valid_move(m));
 		REQUIRE(b.move(m));
 		REQUIRE_FALSE(b.valid_move(m));
 		REQUIRE_FALSE(b.move(m));
+	}
+
+	SECTION("num moves, moves remain") {
+		std::string moves[] = {
+		         "a1", "a2", "a3", "a4",
+		      "b1", "b2", "b3", "b4", "b5",
+		   "c1", "c2", "c3", "c4", "c5", "c6",
+		"d1", "d2", "d3", "d4", "d5", "d6", "d7",
+		   "e2", "e3", "e4", "e5", "e6", "e7",
+		      "f3", "f4", "f5", "f6", "f7",
+		         "g4", "g5", "g6", "g7",
+		};
+		int made = 0, remain = 37;
+		for(auto m : moves) {
+			REQUIRE(b.num_moves() == made);
+			REQUIRE(b.movesremain() == remain);
+			b.move(Move(m));
+			made++;
+			remain--;
+		}
+		REQUIRE(b.num_moves() == made);
+		REQUIRE(b.movesremain() == remain);
 	}
 
 	SECTION("move distance") {
