@@ -109,4 +109,10 @@ inline Outcome operator|(const Outcome & a, const Outcome & b) { return Outcome(
 inline Side    & operator|=(Side    & o, const Side    & s) { return o = o | s; }
 inline Outcome & operator|=(Outcome & o, const Outcome & s) { return o = o | s; }
 
+// for saying that side & P1 can win, meaning P1 can't win
+inline Side    operator&(const Side    & a, const Side    & b) { return Side(a.to_i() & b.to_i()); }
+inline Outcome operator&(const Outcome & a, const Outcome & b) { return Outcome(a.to_i() & b.to_i()); }
+inline Side    & operator&=(Side    & o, const Side    & s) { return o = o & s; }
+inline Outcome & operator&=(Outcome & o, const Outcome & s) { return o = o & s; }
+
 }; // namespace Morat
