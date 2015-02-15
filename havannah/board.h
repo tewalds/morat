@@ -185,6 +185,10 @@ public:
 		}
 	}
 
+/*	~Board(){
+		printf("~Board");
+	}
+*/
 	int memsize() const { return sizeof(Board) + sizeof(Cell)*vecsize(); }
 
 	int get_size_d() const { return size_d; }

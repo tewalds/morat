@@ -15,7 +15,6 @@ std::string Board::Cell::to_s(int i) const {
 		", pattern: " + to_str((int)pattern);
 }
 
-
 std::string Board::to_s(bool color) const {
 	using std::string;
 	string white = "O",

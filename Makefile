@@ -49,6 +49,7 @@ test: \
 		hex/agentmcts_test.o \
 		hex/agentpns.o \
 		hex/agentpns_test.o \
+		hex/board.o \
 		hex/board_test.o \
 		pentago/agentmcts.o \
 		pentago/agentmctsthread.o \
@@ -61,12 +62,14 @@ test: \
 		rex/agentmcts_test.o \
 		rex/agentpns.o \
 		rex/agentpns_test.o \
+		rex/board.o \
 		rex/board_test.o \
 		y/agentmcts.o \
 		y/agentmctsthread.o \
 		y/agentmcts_test.o \
 		y/agentpns.o \
 		y/agentpns_test.o \
+		y/board.o \
 		y/board_test.o \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
@@ -110,6 +113,7 @@ morat-y: \
 		y/agentmcts.o \
 		y/agentmctsthread.o \
 		y/agentpns.o \
+		y/board.o \
 		y/gtpagent.o \
 		y/gtpgeneral.o \
 		lib/fileio.o \
@@ -125,6 +129,7 @@ morat-hex: \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
 		hex/agentpns.o \
+		hex/board.o \
 		hex/gtpagent.o \
 		hex/gtpgeneral.o \
 		lib/fileio.o \
@@ -140,6 +145,7 @@ morat-rex: \
 		rex/agentmcts.o \
 		rex/agentmctsthread.o \
 		rex/agentpns.o \
+		rex/board.o \
 		rex/gtpagent.o \
 		rex/gtpgeneral.o \
 		lib/fileio.o \
