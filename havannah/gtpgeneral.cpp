@@ -221,53 +221,11 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		}
 	}
 
-	string white = "O",
-	       black = "@",
-	       empty = ".",
-	       coord = "",
-	       reset = "";
-	if(colorboard){
-		string esc = "\033";
-		reset = esc + "[0m";
-		coord = esc + "[1;37m";
-		empty = reset + ".";
-		white = esc + "[1;33m" + "@"; //yellow
-		black = esc + "[1;34m" + "@"; //blue
+	if(args.size() >= 2) {
+		return GTPResponse(true, to_str(dists.get(Move(args[1]), side)));
 	}
 
-
-	int size = board.get_size();
-	int size_d = board.get_size_d();
-
-	string s = "\n";
-	s += string(size + 3, ' ');
-	for(int i = 0; i < size; i++)
-		s += " " + coord + to_str(i+1);
-	s += "\n";
-
-	for(int y = 0; y < size_d; y++){
-		s += string(abs(size-1 - y) + 2, ' ');
-		s += coord + char('A' + y);
-		for(int x = board.linestart(y); x < board.lineend(y); x++){
-			Side p = board.get(x, y);
-			s += ' ';
-			if(p == Side::NONE){
-				int d = (side == Side::NONE ? dists.get(Move(x, y)) : dists.get(Move(x, y), side));
-				if(d < 10)
-					s += reset + to_str(d);
-				else
-					s += empty;
-			}else if(p == Side::P1){
-				s += white;
-			}else if(p == Side::P2){
-				s += black;
-			}
-		}
-		if(y < size-1)
-			s += " " + coord + to_str(1 + size + y);
-		s += '\n';
-	}
-	return GTPResponse(true, s);
+	return GTPResponse(true, "\n" + board.to_s(colorboard, bind(&LBDists::get_s, &dists, _1, side)));
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){

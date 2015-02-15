@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <functional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -295,6 +296,7 @@ public:
 	int linelen(int y)   const { return size_d - abs(sizem1 - y); }
 
 	std::string to_s(bool color) const;
+	std::string to_s(bool color, std::function<std::string(Move)> func) const;
 
 	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
 

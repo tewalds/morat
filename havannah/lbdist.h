@@ -20,13 +20,12 @@ namespace Havannah {
 
 class LBDists {
 	struct MoveDist {
-		Move pos;
+		MoveValid pos;
 		int dist;
 		int dir;
 
 		MoveDist() { }
-		MoveDist(Move p, int d, int r)       : pos(p),         dist(d), dir(r) { }
-		MoveDist(int x, int y, int d, int r) : pos(Move(x,y)), dist(d), dir(r) { }
+		MoveDist(MoveValid p, int d, int r) : pos(p), dist(d), dir(r) { }
 	};
 
 	//a specialized priority queue
@@ -74,16 +73,18 @@ class LBDists {
 	IntPQueue Q;
 	const Board * board;
 
-	int & dist(int edge, Side player, int i)          { return dists[edge][player.to_i() - 1][i]; }
-	int & dist(int edge, Side player, const Move & m) { return dist(edge, player, board->xy(m)); }
-	int & dist(int edge, Side player, int x, int y)   { return dist(edge, player, board->xy(x, y)); }
+	int & dist(int edge, Side player, int i)               { return dists[edge][player.to_i() - 1][i]; }
+	int & dist(int edge, Side player, const MoveValid & m) { return dist(edge, player, m.xy); }
+	int & dist(int edge, Side player, const Move & m)      { return dist(edge, player, board->xy(m)); }
+	int & dist(int edge, Side player, int x, int y)        { return dist(edge, player, board->xy(x, y)); }
 
 	void init(int x, int y, int edge, Side player, int dir){
 		Side val = board->get(x, y);
 		if(val != ~player){
 			bool empty = (val == Side::NONE);
-			Q.push(MoveDist(x, y, empty, dir));
-			dist(edge, player, x, y) = empty;
+			MoveValid move(x, y, board->xy(x, y));
+			Q.push(MoveDist(move, empty, dir));
+			dist(edge, player, move) = empty;
 		}
 	}
 
@@ -100,8 +101,8 @@ public:
 				for(int k = 0; k < board->vecsize(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
-		if(side == Side::P1 || side == Side::BOTH) init_player(crossvcs, Side::P1);
-		if(side == Side::P2 || side == Side::BOTH) init_player(crossvcs, Side::P2);
+		if((side & Side::P1) == Side::P1) init_player(crossvcs, Side::P1);
+		if((side & Side::P2) == Side::P2) init_player(crossvcs, Side::P2);
 	}
 
 	void init_player(bool crossvcs, Side player){
@@ -129,26 +130,25 @@ public:
 		while(Q.pop(cur)){
 			for(int i = 5; i <= 7; i++){
 				int nd = (cur.dir + i) % 6;
-				MoveDist next(cur.pos + neighbours[nd], cur.dist, nd);
+				MoveDist next(board->nb_begin(cur.pos)[nd], cur.dist, nd);
 
 				if(board->onboard(next.pos)){
-					int pos = board->xy(next.pos);
-					Side colour = board->get(pos);
+					Side colour = board->get(next.pos);
 
 					if(colour == otherplayer)
 						continue;
 
 					if(colour == Side::NONE){
 						if(!crossvcs && //forms a vc
-						   board->get(cur.pos + neighbours[(nd - 1) % 6]) == otherplayer &&
-						   board->get(cur.pos + neighbours[(nd + 1) % 6]) == otherplayer)
+						   board->get(board->nb_begin(cur.pos)[(nd - 1) % 6]) == otherplayer &&
+						   board->get(board->nb_begin(cur.pos)[(nd + 1) % 6]) == otherplayer)
 							continue;
 
 						next.dist++;
 					}
 
-					if( dist(edge, player, pos) > next.dist){
-						dist(edge, player, pos) = next.dist;
+					if( dist(edge, player, next.pos) > next.dist){
+						dist(edge, player, next.pos) = next.dist;
 						if(next.dist < board->get_size())
 							Q.push(next);
 					}
@@ -161,7 +161,7 @@ public:
 		Outcome outcome = Outcome::DRAW;  // assume neither side can win
 		for(int y = 0; y < board->get_size_d(); y++){
 			for(int x = board->linestart(y); x < board->lineend(y); x++){
-				Move pos(x,y);
+				MoveValid pos(x, y, board->xy(x, y));
 
 				if(board->encirclable(pos, Side::P1) || get(pos, Side::P1) < maxdist-5)
 					outcome |= Outcome::P1; // P1 can win
@@ -175,8 +175,15 @@ public:
 		return -outcome; // this isn't certainty, so negate
 	}
 
-	int get(Move pos){ return std::min(get(pos, Side::P1),  get(pos, Side::P2)); }
-	int get(Move pos, Side player){ return get(board->xy(pos), player); }
+	std::string get_s(Move pos, Side side) {  // for use by Board::to_s
+		int dist = (side == Side::NONE ? get(pos) : get(pos, side));
+		return (dist < 10 ? to_str(dist) : ".");
+	}
+
+	int get(Move      pos){ return get(MoveValid(pos, board->xy(pos))); }
+	int get(MoveValid pos){ return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
+	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
+	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
 	int get(int pos, Side player){
 		int list[6];
 		for(int i = 0; i < 6; i++)

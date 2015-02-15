@@ -15,18 +15,21 @@ std::string Board::Cell::to_s(int i) const {
 		", pattern: " + to_str((int)pattern);
 }
 
+std::string empty(Move m) { return "."; }
+
 std::string Board::to_s(bool color) const {
+	return to_s(color, empty);
+}
+std::string Board::to_s(bool color, std::function<std::string(Move)> func) const {
 	using std::string;
 	string white = "O",
 	       black = "@",
-	       empty = ".",
 	       coord = "",
 	       reset = "";
 	if(color){
 		string esc = "\033";
 		reset = esc + "[0m";
 		coord = esc + "[1;37m";
-		empty = reset + ".";
 		white = esc + "[1;33m" + "@"; //yellow
 		black = esc + "[1;34m" + "@"; //blue
 	}
@@ -45,7 +48,7 @@ std::string Board::to_s(bool color) const {
 			s += (last == Move(x, y)   ? coord + "[" :
 			      last == Move(x-1, y) ? coord + "]" : " ");
 			Side p = get(x, y);
-			if(     p == Side::NONE) s += empty;
+			if(     p == Side::NONE) s += reset + func(Move(x, y));
 			else if(p == Side::P1)   s += white;
 			else if(p == Side::P2)   s += black;
 			else                     s += "?";
