@@ -10,45 +10,46 @@
 
 #include "string.h"
 
-using namespace std;
-using namespace placeholders; //for bind
+namespace Morat {
+
+using namespace std::placeholders; //for bind
 
 struct GTPResponse {
 	bool success;
-	string id;
-	string response;
+	std::string id;
+	std::string response;
 
 	GTPResponse() { }
 
-	GTPResponse(bool s, string r = ""){
+	GTPResponse(bool s, std::string r = ""){
 		success = s;
 		response = r;
 		rtrim(response);
 	}
 
-	GTPResponse(string r){
+	GTPResponse(std::string r){
 		GTPResponse(true, r);
 	}
 
-	string to_s(){
+	std::string to_s(){
 		return (success ? '=' : '?') + id + ' ' + response + "\n\n";
 	}
 };
 
-typedef function<GTPResponse(vecstr)> gtp_callback_fn;
+typedef std::function<GTPResponse(vecstr)> gtp_callback_fn;
 
 struct GTPCallback {
-	string name;
-	string desc;
+	std::string name;
+	std::string desc;
 	gtp_callback_fn func;
 
 	GTPCallback() { }
-	GTPCallback(string n, string d, gtp_callback_fn fn) : name(n), desc(d), func(fn) { }
+	GTPCallback(std::string n, std::string d, gtp_callback_fn fn) : name(n), desc(d), func(fn) { }
 };
 
 class GTPBase {
 	FILE * in, * out;
-	vector<GTPCallback> callbacks;
+	std::vector<GTPCallback> callbacks;
 	unsigned int longest_cmd;
 	bool running;
 
@@ -60,11 +61,11 @@ public:
 		longest_cmd = 0;
 		running = false;
 
-		newcallback("list_commands",    bind(&GTPBase::gtp_list_commands,    this, _1, false), "List the commands");
-		newcallback("help",             bind(&GTPBase::gtp_list_commands,    this, _1, true),  "List the commands, with descriptions");
-		newcallback("quit",             bind(&GTPBase::gtp_quit,             this, _1), "Quit the program");
-		newcallback("exit",             bind(&GTPBase::gtp_quit,             this, _1), "Alias for quit");
-		newcallback("protocol_version", bind(&GTPBase::gtp_protocol_version, this, _1), "Show the gtp protocol version");
+		newcallback("list_commands",    std::bind(&GTPBase::gtp_list_commands,    this, _1, false), "List the commands");
+		newcallback("help",             std::bind(&GTPBase::gtp_list_commands,    this, _1, true),  "List the commands, with descriptions");
+		newcallback("quit",             std::bind(&GTPBase::gtp_quit,             this, _1), "Quit the program");
+		newcallback("exit",             std::bind(&GTPBase::gtp_quit,             this, _1), "Alias for quit");
+		newcallback("protocol_version", std::bind(&GTPBase::gtp_protocol_version, this, _1), "Show the gtp protocol version");
 	}
 
 	void setinfile(FILE * i){
@@ -75,7 +76,7 @@ public:
 		out = o;
 	}
 
-	void newcallback(const string name, const gtp_callback_fn & fn, const string desc = ""){
+	void newcallback(const std::string name, const gtp_callback_fn & fn, const std::string desc = ""){
 		newcallback(GTPCallback(name, desc, fn));
 		if(longest_cmd < name.length())
 			longest_cmd = name.length();
@@ -85,23 +86,23 @@ public:
 		callbacks.push_back(a);
 	}
 
-	int find_callback(const string & name){
+	int find_callback(const std::string & name){
 		for(unsigned int i = 0; i < callbacks.size(); i++)
 			if(callbacks[i].name == name)
 				return i;
 		return -1;
 	}
 
-	GTPResponse cmd(string line){
+	GTPResponse cmd(std::string line){
 		vecstr parts = explode(line, " ");
-		string id;
+		std::string id;
 
 		if(parts.size() > 1 && atoi(parts[0].c_str())){
 			id = parts[0];
 			parts.erase(parts.begin());
 		}
 
-		string name = parts[0];
+		std::string name = parts[0];
 		parts.erase(parts.begin());
 
 		int cb = find_callback(name);
@@ -123,7 +124,7 @@ public:
 		char buf[1001];
 
 		while(running && fgets(buf, 1000, in)){
-			string line(buf);
+			std::string line(buf);
 
 			trim(line);
 
@@ -133,7 +134,7 @@ public:
 			GTPResponse response = cmd(line);
 
 			if(out){
-				string output = response.to_s();
+				std::string output = response.to_s();
 
 				fwrite(output.c_str(), 1, output.length(), out);
 				fflush(out);
@@ -152,11 +153,11 @@ public:
 	}
 
 	GTPResponse gtp_list_commands(vecstr args, bool showdesc){
-		string ret = "\n";
+		std::string ret = "\n";
 		for(unsigned int i = 0; i < callbacks.size(); i++){
 			ret += callbacks[i].name;
 			if(showdesc && callbacks[i].desc.length() > 0){
-				ret += string(longest_cmd + 2 - callbacks[i].name.length(), ' ');
+				ret += std::string(longest_cmd + 2 - callbacks[i].name.length(), ' ');
 				ret += callbacks[i].desc;
 			}
 			ret += "\n";
@@ -164,3 +165,5 @@ public:
 		return GTPResponse(true, ret);
 	}
 };
+
+}; // namespace Morat

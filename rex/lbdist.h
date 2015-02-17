@@ -12,8 +12,13 @@ Decrease distance when crossing your own virtual connection?
 
 //TODO: Needs to be fixed for only one direction per player
 
+#include "../lib/move.h"
+
 #include "board.h"
-#include "move.h"
+
+
+namespace Morat {
+namespace Rex {
 
 class LBDists {
 	struct MoveDist {
@@ -71,15 +76,16 @@ class LBDists {
 	IntPQueue Q;
 	const Board * board;
 
-	int & dist(int edge, int player, int i)          { return dists[edge][player-1][i]; }
-	int & dist(int edge, int player, const Move & m) { return dist(edge, player, board->xy(m)); }
-	int & dist(int edge, int player, int x, int y)   { return dist(edge, player, board->xy(x, y)); }
+	int & dist(int edge, Side player, int i)          { return dists[edge][player.to_i() - 1][i]; }
+	int & dist(int edge, Side player, const Move & m) { return dist(edge, player, board->xy(m)); }
+	int & dist(int edge, Side player, int x, int y)   { return dist(edge, player, board->xy(x, y)); }
 
-	void init(int x, int y, int edge, int player, int dir){
-		int val = board->get(x, y);
-		if(val != 3 - player){
-			Q.push(MoveDist(x, y, (val == 0), dir));
-			dist(edge, player, x, y) = (val == 0);
+	void init(int x, int y, int edge, Side player, int dir){
+		Side val = board->get(x, y);
+		if(val != ~player){
+			bool empty = (val == Side::NONE);
+			Q.push(MoveDist(x, y, empty, dir));
+			dist(edge, player, x, y) = empty;
 		}
 	}
 
@@ -88,7 +94,7 @@ public:
 	LBDists() : board(NULL) {}
 	LBDists(const Board * b) { run(b); }
 
-	void run(const Board * b, bool crossvcs = true, int side = 0) {
+	void run(const Board * b, bool crossvcs = true, Side side = Side::BOTH) {
 		board = b;
 
 		for(int i = 0; i < 3; i++)
@@ -96,22 +102,21 @@ public:
 				for(int k = 0; k < board->vecsize(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
+		if(side == Side::P1 || side == Side::BOTH) init_player(crossvcs, Side::P1);
+		if(side == Side::P2 || side == Side::BOTH) init_player(crossvcs, Side::P2);
+	}
+
+	void init_player(bool crossvcs, Side player){
 		int m = board->get_size();
 		int m1 = m-1;
 
-		int start, end;
-		if(side){ start = end = side; }
-		else    { start = 1; end = 2; }
-
-		for(int player = start; player <= end; player++){
-			for(int x = 0; x < m; x++) { init(x,    0, 0,  player, 3); } flood(0,  player, crossvcs); //edge 0
-			for(int y = 0; y < m; y++) { init(0,    y, 1,  player, 1); } flood(1,  player, crossvcs); //edge 1
-			for(int y = 0; y < m; y++) { init(m1-y, y, 2,  player, 5); } flood(2,  player, crossvcs); //edge 2
-		}
+		for(int x = 0; x < m; x++) { init(x,    0, 0,  player, 3); } flood(0,  player, crossvcs); //edge 0
+		for(int y = 0; y < m; y++) { init(0,    y, 1,  player, 1); } flood(1,  player, crossvcs); //edge 1
+		for(int y = 0; y < m; y++) { init(m1-y, y, 2,  player, 5); } flood(2,  player, crossvcs); //edge 2
 	}
 
-	void flood(int edge, int player, bool crossvcs){
-		int otherplayer = 3 - player;
+	void flood(int edge, Side player, bool crossvcs){
+		Side otherplayer = ~player;
 
 		MoveDist cur;
 		while(Q.pop(cur)){
@@ -121,12 +126,12 @@ public:
 
 				if(board->onboard(next.pos)){
 					int pos = board->xy(next.pos);
-					int colour = board->get(pos);
+					Side colour = board->get(pos);
 
 					if(colour == otherplayer)
 						continue;
 
-					if(colour == 0){
+					if(colour == Side::NONE){
 						if(!crossvcs && //forms a vc
 						   board->get(cur.pos + neighbours[(nd - 1) % 6]) == otherplayer &&
 						   board->get(cur.pos + neighbours[(nd + 1) % 6]) == otherplayer)
@@ -145,12 +150,15 @@ public:
 		}
 	}
 
-	int get(Move pos){ return min(get(pos, 1),  get(pos, 2)); }
-	int get(Move pos, int player){ return get(board->xy(pos), player); }
-	int get(int pos, int player){
+	int get(Move pos){ return std::min(get(pos, Side::P1),  get(pos, Side::P2)); }
+	int get(Move pos, Side player){ return get(board->xy(pos), player); }
+	int get(int pos, Side player){
 		int sum = 0;
 		for(int i = 0; i < 3; i++)
 			sum += dist(i, player, pos);
 		return sum;
 	}
 };
+
+}; // namespace Rex
+}; // namespace Morat

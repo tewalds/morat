@@ -5,6 +5,8 @@
 
 #include "bits.h"
 
+namespace Morat {
+
 class HashSet {
 	unsigned int size;  // how many slots there are, must be a power of 2
 	unsigned int mask;  // a mask for the size, ie size-1
@@ -64,3 +66,5 @@ public:
 		return false;
 	}
 };
+
+}; // namespace Morat

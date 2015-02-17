@@ -1,4 +1,8 @@
 
+#pragma once
+
+namespace Morat {
+
 #define TWO(c) (0x1ull << (c))
 #define MASK(c) ((~0ull) / (TWO(TWO(c)) + 1ull))
 #define COUNT(x,c) ((x) & MASK(c)) + (((x) >> (TWO(c))) & MASK(c))
@@ -59,7 +63,7 @@ static const unsigned char BitsSetTable256[] = {
 // Both of these are limited to count the bits in the first 5 bytes, which is all that is needed here
 // That limitation is easy to fix should it be needed
 inline int precomputed_bitcount(uint64_t n){
-	return 
+	return
 		BitsSetTable256[(n >> 0)  & 0xff] +
 		BitsSetTable256[(n >> 8)  & 0xff] +
 		BitsSetTable256[(n >> 16) & 0xff] +
@@ -68,7 +72,7 @@ inline int precomputed_bitcount(uint64_t n){
 }
 inline int precomputed_bitcount2(uint64_t n){
 	unsigned char * p = (unsigned char *) & n;
-	return 
+	return
 		BitsSetTable256[p[0]] +
 		BitsSetTable256[p[1]] +
 		BitsSetTable256[p[2]] +
@@ -76,6 +80,4 @@ inline int precomputed_bitcount2(uint64_t n){
 		BitsSetTable256[p[4]];
 }
 
-
-
-
+}; // namespace Morat

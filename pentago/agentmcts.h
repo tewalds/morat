@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cassert>
 
+#include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
 #include "../lib/depthstats.h"
 #include "../lib/exppair.h"
@@ -19,6 +20,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class AgentMCTS : public Agent{
 public:
 
@@ -26,7 +31,7 @@ public:
 	public:
 		ExpPair exp;
 		int16_t know;
-		int8_t  outcome;
+		Outcome outcome;
 		uint8_t proofdepth;
 		Move    move;
 		Move    bestmove; //if outcome is set, then bestmove is the way to get there
@@ -35,8 +40,8 @@ public:
 		//seems to need padding to multiples of 8 bytes or it segfaults?
 		//don't forget to update the copy constructor/operator
 
-		Node()                            : know(0), outcome(-3), proofdepth(0)          { }
-		Node(const Move & m, char o = -3) : know(0), outcome( o), proofdepth(0), move(m) { }
+		Node() : know(0), outcome(Outcome::UNKNOWN), proofdepth(0), move(M_NONE) { }
+		Node(const Move & m, Outcome o = Outcome::UNKNOWN) : know(0), outcome(o), proofdepth(0), move(m) { }
 		Node(const Node & n) { *this = n; }
 		Node & operator = (const Node & n){
 			if(this != & n){ //don't copy to self
@@ -58,17 +63,8 @@ public:
 			children.swap(n.children);
 		}
 
-		void print() const {
-			printf("%s\n", to_s().c_str());
-		}
-		string to_s() const {
-			return "Node: move " + move.to_s() +
-					", exp " + to_str(exp.avg(), 2) + "/" + to_str(exp.num()) +
-					", know " + to_str(know) +
-					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
-					", best " + bestmove.to_s() +
-					", children " + to_str(children.num());
-		}
+		std::string to_s() const ;
+		bool from_s(std::string s);
 
 		unsigned int size() const {
 			unsigned int num = children.num();
@@ -122,38 +118,36 @@ public:
 
 		MoveList() { }
 
-		void addtree(const Move & move, char turn){
+		void addtree(const Move & move, Side turn){
 		}
-		void addrollout(const Move & move, char turn){
+		void addrollout(const Move & move, Side turn){
 		}
 		void reset(Board * b){
 			exp[0].clear();
 			exp[1].clear();
 		}
-		void finishrollout(int won){
+		void finishrollout(Outcome won){
 			exp[0].addloss();
 			exp[1].addloss();
-			if(won == 0){
+			if(won == Outcome::DRAW){
 				exp[0].addtie();
 				exp[1].addtie();
 			}else{
-				exp[won-1].addwin();
+				exp[won.to_i() - 1].addwin();
 			}
 		}
 		void subvlosses(int n){
 			exp[0].addlosses(-n);
 			exp[1].addlosses(-n);
 		}
-		const ExpPair & getexp(int turn) const {
-			return exp[turn-1];
+		const ExpPair & getexp(Side turn) const {
+			return exp[turn.to_i() - 1];
 		}
 	};
 
-	class MCTSThread {
+	class AgentThread : public AgentThreadBase<AgentMCTS> {
 		mutable XORShift_uint64 rand64;
 		mutable XORShift_float unitrand;
-		Thread thread;
-		AgentMCTS * player;
 		bool use_explore; //whether to use exploration for this simulation
 		MoveList movelist;
 		int stage; //which of the four MCTS stages is it on
@@ -163,11 +157,8 @@ public:
 		double times[4]; //time spent in each of the stages
 		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
-		MCTSThread(AgentMCTS * p) : rand64(std::rand()), unitrand(std::rand()), player(p) {
-			reset();
-			thread(bind(&MCTSThread::run, this));
-		}
-		~MCTSThread() { }
+		AgentThread(AgentThreadPool<AgentMCTS> * p, AgentMCTS * a) : AgentThreadBase<AgentMCTS>(p, a) { }
+
 
 		void reset(){
 			treelen.reset();
@@ -177,18 +168,15 @@ public:
 				times[a] = 0;
 		}
 
-		int join(){ return thread.join(); }
 
 	private:
-		void run(); //thread runner, calls iterate on each iteration
 		void iterate(); //handles each iteration
 		void walk_tree(Board & board, Node * node, int depth);
-		bool create_children(const Board & board, Node * node, int toplay);
+		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
-		Node * choose_move(const Node * node, int toplay) const;
+		Node * choose_move(const Node * node, Side toplay) const;
 
-		int rollout(Board & board, Move move, int depth);
-//		PairMove rollout_choose_move(Board & board, const Move & prev, int & doinstwin, bool checkrings);
+		Outcome rollout(Board & board, Move move, int depth);
 	};
 
 
@@ -231,29 +219,10 @@ public:
 
 	CompactTree<Node> ctmem;
 
-	enum ThreadState {
-		Thread_Cancelled,  //threads should exit
-		Thread_Wait_Start, //threads are waiting to start
-		Thread_Wait_Start_Cancelled, //once done waiting, go to cancelled instead of running
-		Thread_Running,    //threads are running
-		Thread_GC,         //one thread is running garbage collection, the rest are waiting
-		Thread_GC_End,     //once done garbage collecting, go to wait_end instead of back to running
-		Thread_Wait_End,   //threads are waiting to end
-	};
-	volatile ThreadState threadstate;
-	vector<MCTSThread *> threads;
-	Barrier runbarrier, gcbarrier;
-
-	double time_used;
+	AgentThreadPool<AgentMCTS> pool;
 
 	AgentMCTS();
 	~AgentMCTS();
-
-	string statestring();
-
-	void stop_threads();
-	void start_threads();
-	void reset_threads();
 
 	void set_memlimit(uint64_t lim) { }; // in bytes
 	void clear_mem() { };
@@ -267,14 +236,59 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
 
-	void timedout();
+	bool done() {
+		//solved or finished runs
+		return (rootboard.won() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
+	}
+
+	bool need_gc() {
+		//out of memory, start garbage collection
+		return (ctmem.memalloced() >= maxmem);
+	}
+
+	void start_gc() {
+		Time starttime;
+		logerr("Starting player GC with limit " + to_str(gclimit) + " ... ");
+		uint64_t nodesbefore = nodes;
+		Board copy = rootboard;
+		garbage_collect(copy, & root);
+		Time gctime;
+		ctmem.compact(1.0, 0.75);
+		Time compacttime;
+		logerr(to_str(100.0*nodes/nodesbefore, 1) + " % of tree remains - " +
+			to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
+
+		if(ctmem.meminuse() >= maxmem/2)
+			gclimit = (int)(gclimit*1.3);
+		else if(gclimit > rollouts*5)
+			gclimit = (int)(gclimit*0.9); //slowly decay to a minimum of 5
+	}
+
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		if(limit < 0)
+			limit = root.exp.num()/1000;
+		gen_sgf(sgf, limit, root, rootboard.toplay());
+	}
+
+	void load_sgf(SGFParser<Move> & sgf) {
+		load_sgf(sgf, rootboard, root);
+	}
+
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, Node * backup, int toplay);
-	Move return_move(const Node * node, int toplay, int verbose = 0) const;
+	bool do_backup(Node * node, Node * backup, Side toplay);
+	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
+
 	Node * find_child(const Node * node, const Move & move) const ;
+	void create_children_simple(const Board & board, Node * node);
+
+	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const ;
+	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };
+
+}; // namespace Pentago
+}; // namespace Morat

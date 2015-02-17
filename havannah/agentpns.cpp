@@ -5,6 +5,40 @@
 
 #include "agentpns.h"
 
+
+namespace Morat {
+namespace Havannah {
+
+std::string AgentPNS::Node::to_s() const {
+	return "AgentPNS::Node"
+	       ", move " + move.to_s() +
+	       ", phi " + to_str(phi) +
+	       ", delta " + to_str(delta) +
+	       ", work " + to_str(work) +
+	       ", children " + to_str(children.num());
+}
+
+bool AgentPNS::Node::from_s(std::string s) {
+	auto dict = parse_dict(s, ", ", " ");
+
+	if(dict.size() == 6){
+		move = Move(dict["move"]);
+		phi = from_str<uint32_t>(dict["phi"]);
+		delta = from_str<uint32_t>(dict["delta"]);
+		work = from_str<uint64_t>(dict["work"]);
+		// ignore children
+		return true;
+	}
+	return false;
+}
+
+void AgentPNS::test() {
+	Node n(Move("a1"));
+	auto s = n.to_s();
+	Node k;
+	assert(k.from_s(s));
+}
+
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
@@ -32,27 +66,20 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 			logerr("Tree depth:  " + treelen.to_s() + "\n");
 		}
 
-		int toplay = rootboard.toplay();
+		Side toplay = rootboard.toplay();
 
 		logerr("Root:        " + root.to_s() + "\n");
-		int outcome = root.to_outcome(3-toplay);
-		if(outcome != -3){
-			logerr("Solved as a ");
-			if(     outcome == 0)        logerr("draw\n");
-			else if(outcome == 3)        logerr("draw by simultaneous win\n");
-			else if(outcome == toplay)   logerr("win\n");
-			else if(outcome == 3-toplay) logerr("loss\n");
-			else if(outcome == -toplay)  logerr("win or draw\n");
-			else if(outcome == toplay-3) logerr("loss or draw\n");
-		}
+		Outcome outcome = root.to_outcome(~toplay);
+		if(outcome != Outcome::UNKNOWN)
+			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
 
-		string pvstr;
+		std::string pvstr;
 		for(auto m : get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3 && !root.children.empty())
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 }
 
@@ -83,8 +110,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 
 		unsigned int i = 0;
 		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
-			unsigned int pd = 1;
-			int outcome;
+			unsigned int pd;
+			Outcome outcome;
 
 			if(agent->ab){
 				Board next = board;
@@ -94,10 +121,10 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				outcome = (agent->ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
 			}else{
 				pd = 1;
-				outcome = board.test_win(*move);
+				outcome = board.test_outcome(*move);
 			}
 
-			if(agent->lbdist && outcome < 0)
+			if(agent->lbdist && outcome != Outcome::UNKNOWN)
 				pd = dists.get(*move);
 
 			temp[i] = Node(*move).outcome(outcome, board.toplay(), agent->ties, pd);
@@ -132,8 +159,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				}
 			}
 
-			tpc = min(INF32/2, (td + child->phi - node->delta));
-			tdc = min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
+			tpc = std::min(INF32/2, (td + child->phi - node->delta));
+			tdc = std::min(tp, (uint32_t)(child2->delta*(1.0 + agent->epsilon) + 1));
 		}else{
 			tpc = tdc = 0;
 			for(auto & i : node->children)
@@ -198,16 +225,16 @@ double AgentPNS::gamelen() const {
 	return rootboard.movesremain();
 }
 
-vector<Move> AgentPNS::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentPNS::get_pv() const {
+	vecmove pv;
 
 	const Node * n = & root;
-	char turn = rootboard.toplay();
+	Side turn = rootboard.toplay();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
 		n = find_child(n, m);
-		turn = 3 - turn;
+		turn = ~turn;
 	}
 
 	if(pv.size() == 0)
@@ -216,8 +243,8 @@ vector<Move> AgentPNS::get_pv() const {
 	return pv;
 }
 
-string AgentPNS::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentPNS::move_stats(vecmove moves) const {
+	std::string s = "";
 	const Node * node = & root;
 
 	if(moves.size()){
@@ -238,7 +265,7 @@ string AgentPNS::move_stats(vector<Move> moves) const {
 	return s;
 }
 
-Move AgentPNS::return_move(const Node * node, int toplay, int verbose) const {
+Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
 	double val, maxval = -1000000000000.0; //1 trillion
 
 	Node * ret = NULL,
@@ -246,11 +273,11 @@ Move AgentPNS::return_move(const Node * node, int toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		int outcome = child->to_outcome(toplay);
-		if(outcome >= 0){
-			if(outcome == toplay) val =  800000000000.0 - (double)child->work; //shortest win
-			else if(outcome == 0) val = -400000000000.0 + (double)child->work; //longest tie
-			else                  val = -800000000000.0 + (double)child->work; //longest loss
+		Outcome outcome = child->to_outcome(toplay);
+		if(outcome >= Outcome::DRAW){
+			if(     outcome == +toplay)       val =  800000000000.0 - (double)child->work; //shortest win
+			else if(outcome == Outcome::DRAW) val = -400000000000.0 + (double)child->work; //longest tie
+			else                              val = -800000000000.0 + (double)child->work; //longest loss
 		}else{ //not proven
 			val = child->work;
 		}
@@ -290,3 +317,51 @@ void AgentPNS::garbage_collect(Node * node){
 		}
 	}
 }
+
+void AgentPNS::create_children_simple(const Board & board, Node * node){
+	assert(node->children.empty());
+	node->children.alloc(board.movesremain(), ctmem);
+	unsigned int i = 0;
+	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		Outcome outcome = board.test_outcome(*move);
+		node->children[i] = Node(*move).outcome(outcome, board.toplay(), ties, 1);
+		i++;
+	}
+	PLUS(nodes, i);
+	node->children.shrink(i); //if symmetry, there may be extra moves to ignore
+}
+
+void AgentPNS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const {
+	for(auto & child : node.children){
+		if(child.work >= limit && (side != node.to_outcome(~side) || child.to_outcome(side) == node.to_outcome(~side))){
+			sgf.child_start();
+			sgf.move(side, child.move);
+			sgf.comment(child.to_s());
+			gen_sgf(sgf, limit, child, ~side);
+			sgf.child_end();
+		}
+	}
+}
+
+void AgentPNS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node) {
+	assert(sgf.has_children());
+	create_children_simple(board, &node);
+
+	while(sgf.next_child()){
+		Move m = sgf.move();
+		Node & child = *find_child(&node, m);
+		child.from_s(sgf.comment());
+		if(sgf.done_child()){
+			continue;
+		}else{
+			// has children!
+			Board b = board;
+			b.move(m);
+			load_sgf(sgf, b, child);
+			assert(sgf.done_child());
+		}
+	}
+}
+
+}; // namespace Havannah
+}; // namespace Morat

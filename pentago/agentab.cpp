@@ -6,6 +6,10 @@
 
 #include "agentab.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	reset();
 	if(rootboard.won() >= 0)
@@ -41,14 +45,14 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	if(verbose){
 		logerr("Finished:    " + to_str(nodes_seen) + " nodes in " + to_str(time_used*1000, 0) + " msec: " + to_str((uint64_t)((double)nodes_seen/time_used)) + " Nodes/s\n");
 
-		vector<Move> pv = get_pv();
-		string pvstr;
-		for(vector<Move>::iterator m = pv.begin(); m != pv.end(); ++m)
+		vecmove pv = get_pv();
+		std::string pvstr;
+		for(vecmove::iterator m = pv.begin(); m != pv.end(); ++m)
 			pvstr += " " + m->to_s();
 		logerr("PV:         " + pvstr + "\n");
 
 		if(verbose >= 3)
-			logerr("Move stats:\n" + move_stats(vector<Move>()));
+			logerr("Move stats:\n" + move_stats(vecmove()));
 	}
 }
 
@@ -56,11 +60,11 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int depth) {
 	nodes_seen++;
 
-	int won = board.won();
-	if(won >= 0){
-		if(won == 0)
+	Outcome won = board.won();
+	if(won >= Outcome::DRAW){
+		if(won == Outcome::DRAW)
 			return SCORE_DRAW;
-		if(won == board.toplay())
+		if(won == +board.toplay())
 			return SCORE_WIN;
 		return SCORE_LOSS;
 	}
@@ -81,8 +85,8 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if(TT && (node = tt_get(board)) && node->depth >= depth){
 		switch(node->flag){
 		case VALID:  return node->score;
-		case LBOUND: alpha = max(alpha, node->score); break;
-		case UBOUND: beta  = min(beta,  node->score); break;
+		case LBOUND: alpha = std::max(alpha, node->score); break;
+		case UBOUND: beta  = std::min(beta,  node->score); break;
 		default:     assert(false && "Unknown flag!");
 		}
 		if(alpha >= beta)
@@ -94,11 +98,11 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 			Board n = board;
 			bool move_success = n.move(bestmove);
 
-//			if(!move_success){
-//				logerr("FAIL!!!\nhash: " + to_str(board.hash()) + ", orientation: " + to_str(board.orient()) + ", state: " + board.state() + "\n");
-//				logerr(node->to_s(board.orient()) + "\n");
-//				logerr(board.to_s());
-//			}
+			if(!move_success){
+				logerr("FAIL!!!\nhash: " + to_str(board.simple_hash()) + ", state: " + board.state() + "\n");
+				logerr(node->to_s() + "\n");
+				logerr(board.to_s());
+			}
 
 			assert(move_success);
 			score = -negamax(n, -beta, -alpha, depth-1);
@@ -111,7 +115,7 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 		//generate moves
 		for (RandomMoveIterator<XORShift_uint32> move(board, rand); !move.done(); ++move) {
 //		for (MoveIterator move(board); !move.done(); ++move) {
-			int16_t value = -negamax(move.board(), -beta, -max(alpha, score), depth-1);
+			int16_t value = -negamax(move.board(), -beta, -std::max(alpha, score), depth-1);
 			if (score < value) {
 				score = value;
 				bestmove = *move;
@@ -125,16 +129,16 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if (TT) {
 		uint8_t flag = (score <= alpha ? UBOUND :
 		                score >= beta  ? LBOUND : VALID);
-		tt_set(Node(board.hash(), score, bestmove, depth, flag));
+		tt_set(Node(board.simple_hash(), score, bestmove, depth, flag));
 	}
 	return score;
 }
 
-string AgentAB::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentAB::move_stats(vecmove moves) const {
+	std::string s = "";
 
 	Board b = rootboard;
-	for(vector<Move>::iterator m = moves.begin(); m != moves.end(); ++m)
+	for(vecmove::iterator m = moves.begin(); m != moves.end(); ++m)
 		b.move(*m);
 
 	for(MoveIterator move(b); !move.done(); ++move){
@@ -167,8 +171,8 @@ Move AgentAB::return_move(const Board & board, int verbose) const {
 	return best;
 }
 
-vector<Move> AgentAB::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentAB::get_pv() const {
+	vecmove pv;
 
 	Board b = rootboard;
 	int i = 20;
@@ -193,7 +197,7 @@ AgentAB::Node * AgentAB::tt(uint64_t hash) const {
 }
 
 AgentAB::Node * AgentAB::tt_get(const Board & b) const {
-	return tt_get(b.hash());
+	return tt_get(b.simple_hash());
 }
 AgentAB::Node * AgentAB::tt_get(uint64_t h) const {
 	Node * n = tt(h);
@@ -202,3 +206,6 @@ AgentAB::Node * AgentAB::tt_get(uint64_t h) const {
 void AgentAB::tt_set(const Node & n) {
 	*(tt(n.hash)) = n;
 }
+
+}; // namespace Pentago
+}; // namespace Morat

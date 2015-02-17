@@ -5,16 +5,9 @@
 *.o
 
 # executables
-castro
-castro-*
-chex
-chex-*
-moy
-moy-*
-pentagod
-pentagod-*
-trex
-trex-*
+morat-*
+test
+test-*
 
 # valgrind output
 callgrind.out.*

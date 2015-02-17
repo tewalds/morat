@@ -6,6 +6,10 @@
 #include "board.h"
 #include "move.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class MoveIterator { //only returns valid moves...
 	const Board & base_board; //base board
 	Board after; // board after making the move
@@ -13,10 +17,10 @@ class MoveIterator { //only returns valid moves...
 	bool unique;
 	HashSet hashes;
 public:
-	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP, b.orient()) {
+	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP) {
 		unique = (Unique == -1 ? base_board.num_moves() <= Board::unique_depth : Unique);
 
-		if(base_board.won() >= 0){
+		if(base_board.won() >= Outcome::DRAW){
 			move = Move(36, 8); //already done
 		} else {
 			if(unique)
@@ -44,7 +48,7 @@ public:
 			bool move_success = after.move(move);
 			assert(move_success);
 			if(unique){
-				uint64_t h = after.hash();
+				uint64_t h = after.full_hash();
 				if(!hashes.add(h))
 					continue;
 			}
@@ -107,3 +111,6 @@ public:
 };
 
 void RandomMoveIteratorTest();
+
+}; // namespace Pentago
+}; // namespace Morat

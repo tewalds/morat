@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+namespace Morat {
+
 typedef unsigned char  uchar;
 typedef unsigned short ushort;
 typedef unsigned int   uint;
@@ -33,3 +35,5 @@ typedef uint64_t hash_t;
 #else
 #error Unknown word size
 #endif
+
+}; // namespace Morat

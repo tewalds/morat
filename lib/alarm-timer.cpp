@@ -2,6 +2,8 @@
 #include "alarm.h"
 #include "timer.h"
 
+namespace Morat {
+
 void alarm_triggered(int signum){
 	Alarm::Handler::inst().reset(signum);
 }
@@ -72,3 +74,5 @@ void Alarm::Handler::reset(int signum){
 	if(next > 0)
 		timer().set(next, timer_triggered);
 }
+
+}; // namespace Morat

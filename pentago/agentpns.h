@@ -3,11 +3,19 @@
 
 //A multi-threaded, tree based, proof number search solver.
 
+#include <string>
+
+#include "../lib/agentpool.h"
 #include "../lib/compacttree.h"
+#include "../lib/depthstats.h"
 #include "../lib/log.h"
+#include "../lib/string.h"
 
 #include "agent.h"
 
+
+namespace Morat {
+namespace Pentago {
 
 class AgentPNS : public Agent {
 	static const uint32_t LOSS  = (1<<30)-1;
@@ -48,33 +56,33 @@ public:
 			assert(children.empty());
 		}
 
-		Node & abval(int outcome, int toplay, int assign, int value = 1){
-			if(assign && (outcome == 1 || outcome == -1))
-				outcome = (toplay == assign ? 2 : -2);
+		Node & abval(int ab_outcome, Side toplay, Side assign, int value = 1){
+			if(assign != Side::NONE && (ab_outcome == 1 || ab_outcome == -1))
+				ab_outcome = (toplay == assign ? 2 : -2);
 
-			if(     outcome ==  0)   { phi = value; delta = value; }
-			else if(outcome ==  2)   { phi = LOSS;  delta = 0;     }
-			else if(outcome == -2)   { phi = 0;     delta = LOSS; }
-			else /*(outcome 1||-1)*/ { phi = 0;     delta = DRAW; }
+			if(     ab_outcome ==  0)   { phi = value; delta = value; }
+			else if(ab_outcome ==  2)   { phi = LOSS;  delta = 0;     }
+			else if(ab_outcome == -2)   { phi = 0;     delta = LOSS; }
+			else /*(ab_outcome 1||-1)*/ { phi = 0;     delta = DRAW; }
 			return *this;
 		}
 
-		Node & outcome(int outcome, int toplay, int assign, int value = 1){
-			if(assign && outcome == 0)
-				outcome = assign;
+		Node & outcome(Outcome outcome, Side toplay, Side assign, int value = 1){
+			if(assign != Side::NONE && outcome == Outcome::DRAW)
+				outcome = +assign;
 
-			if(     outcome == -3)       { phi = value; delta = value; }
-			else if(outcome ==   toplay) { phi = LOSS;  delta = 0;     }
-			else if(outcome == 3-toplay) { phi = 0;     delta = LOSS; }
-			else /*(outcome == 0)*/      { phi = 0;     delta = DRAW; }
+			if(     outcome == Outcome::UNKNOWN) { phi = value; delta = value; }
+			else if(outcome == +toplay)          { phi = LOSS;  delta = 0;     }
+			else if(outcome == +~toplay)         { phi = 0;     delta = LOSS; }
+			else /*(outcome == Outcome::DRAW)*/  { phi = 0;     delta = DRAW; }
 			return *this;
 		}
 
-		int to_outcome(int toplay) const {
-			if(phi   == LOSS) return toplay;
-			if(delta == LOSS) return 3 - toplay;
-			if(delta == DRAW) return 0;
-			return -3;
+		Outcome to_outcome(Side toplay) const {
+			if(phi   == LOSS) return +toplay;
+			if(delta == LOSS) return +~toplay;
+			if(delta == DRAW) return Outcome::DRAW;
+			return Outcome::UNKNOWN;
 		}
 
 		bool terminal(){ return (phi == 0 || delta == 0); }
@@ -95,15 +103,8 @@ public:
 			return num;
 		}
 
-		string to_s() const {
-			return "Node: move " + move.to_s() +
-					", phi " + to_str(phi) +
-					", delta " + to_str(delta) +
-					", work " + to_str(work) +
-//					", outcome " + to_str((int)outcome) + "/" + to_str((int)proofdepth) +
-//					", best " + bestmove.to_s() +
-					", children " + to_str(children.num());
-		}
+		std::string to_s() const ;
+		bool from_s(std::string s);
 
 		void swap_tree(Node & n){
 			children.swap(n.children);
@@ -123,26 +124,23 @@ public:
 		}
 	};
 
-	class PNSThread {
-		Thread thread;
-		AgentPNS * agent;
+	class AgentThread : public AgentThreadBase<AgentPNS> {
 	public:
-		uint64_t iters;
+		DepthStats treelen;
+		uint64_t nodes_seen;
 
-		PNSThread(AgentPNS * a) : agent(a), iters(0) {
-			thread(bind(&PNSThread::run, this));
-		}
-		virtual ~PNSThread() { }
+		AgentThread(AgentThreadPool<AgentPNS> * p, AgentPNS * a) : AgentThreadBase<AgentPNS>(p, a) { }
+
 		void reset(){
-			iters = 0;
+			nodes_seen = 0;
 		}
-		int join(){ return thread.join(); }
-		void run(); //thread runner
 
-	//basic proof number search building a tree
+		void iterate(); //handles each iteration
+
+		//basic proof number search building a tree
 		bool pns(const Board & board, Node * node, int depth, uint32_t tp, uint32_t td);
 
-	//update the phi and delta for the node
+		//update the phi and delta for the node
 		bool updatePDnum(Node * node);
 	};
 
@@ -152,79 +150,57 @@ public:
 	unsigned int gclimit;
 	CompactTree<Node> ctmem;
 
-	int maxdepth;
-	uint64_t nodes_seen;
-
-	enum ThreadState {
-		Thread_Cancelled,  //threads should exit
-		Thread_Wait_Start, //threads are waiting to start
-		Thread_Wait_Start_Cancelled, //once done waiting, go to cancelled instead of running
-		Thread_Running,    //threads are running
-		Thread_GC,         //one thread is running garbage collection, the rest are waiting
-		Thread_GC_End,     //once done garbage collecting, go to wait_end instead of back to running
-		Thread_Wait_End,   //threads are waiting to end
-	};
-	volatile ThreadState threadstate;
-	vector<PNSThread *> threads;
-	Barrier runbarrier, gcbarrier;
+	AgentThreadPool<AgentPNS> pool;
 
 
+	uint64_t nodes_seen, max_nodes_seen;
+
+
+	int   ab; // how deep of an alpha-beta search to run at each leaf node
 	bool  df; // go depth first?
 	float epsilon; //if depth first, how wide should the threshold be?
-	int   ties;    //which player to assign ties to: 0 handle ties, 1 assign p1, 2 assign p2
+	Side  ties;    //which player to assign ties to: 0 handle ties, 1 assign p1, 2 assign p2
 	int   numthreads;
 
 	Node root;
 
-	AgentPNS() {
+	AgentPNS() : pool(this) {
+		ab = 1;
 		df = true;
 		epsilon = 0.25;
-		ties = 0;
+		ties = Side::NONE;
 		numthreads = 1;
+		pool.set_num_threads(numthreads);
 		gclimit = 5;
 
 		nodes = 0;
 		reset();
 
 		set_memlimit(1000*1024*1024);
-
-		//no threads started until a board is set
-		threadstate = Thread_Wait_Start;
 	}
 
 	~AgentPNS(){
-		stop_threads();
-
-		numthreads = 0;
-		reset_threads(); //shut down the theads properly
+		pool.pause();
+		pool.set_num_threads(0);
 
 		root.dealloc(ctmem);
 		ctmem.compact();
 	}
 
 	void reset(){
-		maxdepth = 0;
 		nodes_seen = 0;
 
 		timeout = false;
 	}
-
-	string statestring();
-	void stop_threads();
-	void start_threads();
-	void reset_threads();
-	void timedout();
 
 	void set_board(const Board & board, bool clear = true){
 		rootboard = board;
 		reset();
 		if(clear)
 			clear_mem();
-
-		reset_threads(); //needed since the threads aren't started before a board it set
 	}
 	void move(const Move & m){
-		stop_threads();
+		pool.pause();
 
 		rootboard.move(m);
 		reset();
@@ -247,7 +223,7 @@ public:
 		root.swap_tree(child);
 
 		if(nodesbefore > 0)
-			logerr(string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
+			logerr(std::string("PNS Nodes before: ") + to_str(nodesbefore) + ", after: " + to_str(nodes) + ", saved " + to_str(100.0*nodes/nodesbefore, 1) + "% of the tree\n");
 
 		assert(nodes == root.size());
 
@@ -267,15 +243,68 @@ public:
 		nodes = 0;
 	}
 
+	bool done() {
+		//solved or finished runs
+		return root.terminal();
+	}
+
+	bool need_gc() {
+		//out of memory, start garbage collection
+		return (ctmem.memalloced() >= memlimit);
+	}
+
+	void start_gc() {
+		Time starttime;
+		logerr("Starting GC with limit " + to_str(gclimit) + " ... ");
+
+		garbage_collect(& root);
+
+		Time gctime;
+		ctmem.compact(1.0, 0.75);
+
+		Time compacttime;
+		logerr(to_str(100.0*ctmem.meminuse()/memlimit, 1) + " % of tree remains - " +
+			to_str((gctime - starttime)*1000, 0)  + " msec gc, " + to_str((compacttime - gctime)*1000, 0) + " msec compact\n");
+
+		if(ctmem.meminuse() >= memlimit/2)
+			gclimit = (unsigned int)(gclimit*1.3);
+		else if(gclimit > 5)
+			gclimit = (unsigned int)(gclimit*0.9); //slowly decay to a minimum of 5
+	}
+
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 	double gamelen() const;
-	vector<Move> get_pv() const;
-	string move_stats(const vector<Move> moves) const;
+	vecmove get_pv() const;
+	std::string move_stats(const vecmove moves) const;
+
+	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
+		if(limit < 0){
+			limit = 0;
+			//TODO: Set the root.work properly
+			for(auto & child : root.children)
+				limit += child.work;
+			limit /= 1000;
+		}
+		gen_sgf(sgf, limit, root, rootboard.toplay());
+	}
+
+	void load_sgf(SGFParser<Move> & sgf) {
+		load_sgf(sgf, rootboard, root);
+	}
+
+	static void test();
 
 private:
 //remove all the nodes with little work to free up some memory
 	void garbage_collect(Node * node);
-	Move return_move(const Node * node, int toplay, int verbose = 0) const;
+	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
+	void create_children_simple(const Board & board, Node * node);
+
+	void gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node & node, Side side) const;
+	void load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node);
 };
+
+}; // namespace Pentago
+}; // namespace Morat

@@ -6,6 +6,10 @@
 
 #include "agentab.h"
 
+
+namespace Morat {
+namespace Havannah {
+
 void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	reset();
 	if(rootboard.won() >= 0)
@@ -41,8 +45,8 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	if(verbose){
 		logerr("Finished:    " + to_str(nodes_seen) + " nodes in " + to_str(time_used*1000, 0) + " msec: " + to_str((uint64_t)((double)nodes_seen/time_used)) + " Nodes/s\n");
 
-		vector<Move> pv = get_pv();
-		string pvstr;
+		vecmove pv = get_pv();
+		std::string pvstr;
 		for(auto m : pv)
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
@@ -56,11 +60,11 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int depth) {
 	nodes_seen++;
 
-	int won = board.won();
-	if(won >= 0){
-		if(won == 0)
+	Outcome won = board.won();
+	if(won >= Outcome::DRAW){
+		if(won == Outcome::DRAW)
 			return SCORE_DRAW;
-		if(won == board.toplay())
+		if(won == +board.toplay())
 			return SCORE_WIN;
 		return SCORE_LOSS;
 	}
@@ -81,8 +85,8 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if(TT && (node = tt_get(board)) && node->depth >= depth){
 		switch(node->flag){
 		case VALID:  return node->score;
-		case LBOUND: alpha = max(alpha, node->score); break;
-		case UBOUND: beta  = min(beta,  node->score); break;
+		case LBOUND: alpha = std::max(alpha, node->score); break;
+		case UBOUND: beta  = std::min(beta,  node->score); break;
 		default:     assert(false && "Unknown flag!");
 		}
 		if(alpha >= beta)
@@ -125,11 +129,11 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	return score;
 }
 
-string AgentAB::move_stats(vector<Move> moves) const {
-	string s = "";
+std::string AgentAB::move_stats(vecmove moves) const {
+	std::string s = "";
 
 	Board b = rootboard;
-	for(vector<Move>::iterator m = moves.begin(); m != moves.end(); ++m)
+	for(vecmove::iterator m = moves.begin(); m != moves.end(); ++m)
 		b.move(*m);
 
 	for(MoveIterator move(b); !move.done(); ++move){
@@ -162,8 +166,8 @@ Move AgentAB::return_move(const Board & board, int verbose) const {
 	return best;
 }
 
-vector<Move> AgentAB::get_pv() const {
-	vector<Move> pv;
+std::vector<Move> AgentAB::get_pv() const {
+	vecmove pv;
 
 	Board b = rootboard;
 	int i = 20;
@@ -197,3 +201,6 @@ AgentAB::Node * AgentAB::tt_get(uint64_t h) const {
 void AgentAB::tt_set(const Node & n) {
 	*(tt(n.hash)) = n;
 }
+
+}; // namespace Havannah
+}; // namespace Morat

@@ -3,6 +3,10 @@
 
 #include "board.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 const int Board::xytobit[36] = {
 	 0,  1,  2, 15, 16,  9,
 	 7,  8,  3, 14, 17, 10,
@@ -26,7 +30,7 @@ const uint64_t Board::xybits[36] = {
 const int16_t Board::scoremap[6] = { 0, 1, 3, 9, 27, 127 };
 
 
-Board::Board(string str) {
+Board::Board(std::string str) {
 	sides[1] = 0;
 	sides[2] = 0;
 	nummoves = 0;
@@ -51,15 +55,16 @@ Board::Board(string str) {
 	to_play = (nummoves % 2) + 1;
 }
 
-string Board::state() const {
-	string s;
+std::string Board::state() const {
+	std::string s;
 	for(int y = 0; y < 6; y++)
 		for(int x = 0; x < 6; x++)
 			s += to_str((int)get(x, y));
 	return s;
 }
 
-string Board::to_s(bool color) const {
+std::string Board::to_s(bool color) const {
+	using std::string;
 	string white = "O",
 	       black = "@",
 	       empty = ".",
@@ -99,10 +104,10 @@ string Board::to_s(bool color) const {
 	for(int y = 0; y < 6; y++){
 		s += left[y] + " " + string(1, 'a' + y) + " ";
 		for(int x = 0; x < 6; x++){
-			int p = get(x, y);
-			if(p == 0) s += empty;
-			if(p == 1) s += white;
-			if(p == 2) s += black;
+			Side p = get(x, y);
+			if(p == Side::NONE) s += empty;
+			if(p == Side::P1) s += white;
+			if(p == Side::P2) s += black;
 			s += " ";
 		}
 		s += coord + right[y] + "\n";
@@ -112,19 +117,6 @@ string Board::to_s(bool color) const {
 		s += bottom[i];
 	s += reset + "\n";
 	return s;
-}
-
-string Board::won_str() const {
-	switch(won()){
-		case -3: return "none";
-		case -2: return "black_or_draw";
-		case -1: return "white_or_draw";
-		case 0:
-		case 3:  return "draw";
-		case 1:  return "white";
-		case 2:  return "black";
-	}
-	return "unknown";
 }
 
 
@@ -235,104 +227,7 @@ uint16_t * gen_lookup3to2(unsigned int inbits, unsigned int outbits){
 const uint16_t * Board::lookup3to2 = gen_lookup3to2(9, 15);
 
 
-void check(uint64_t h, uint8_t o, Board &b){
-	if(h != b.hash())
-		printf("expected hash: %lu, got: %lu\n", h, b.hash());
-	if(o != b.orient())
-		printf("expected orient: %i, got: %i\n", o, b.orient());
-	if(h != b.hash() || o != b.orient())
-		printf("%s", b.to_s().c_str());
-	assert(h == b.hash());
-	assert(o == b.orient());
-}
-void check(uint64_t h, uint8_t o, string m){
-	Board b;
-	b.move(m);
-	check(h, o, b);
-}
-void check(uint64_t h, uint8_t o, std::initializer_list<string> moves){
-	Board b;
-	for(string m : moves){
-		b.move(m);
-	}
-	check(h, o, b);
-}
+void Board::test() { }
 
-void Board::test() {
-//	printf("board tests\n");
-
-	//a single non-rotated piece leads to known board orientations
-	check(6, 0, "a2z");
-	check(6, 1, "b6t");
-	check(6, 2, "f5v");
-	check(6, 3, "e1x");
-	check(6, 4, "b1u");
-	check(6, 5, "f2s");
-	check(6, 6, "e6y");
-	check(6, 7, "a5w");
-
-	check(2, 0, "a1z");
-	check(2, 1, "a6t");
-	check(2, 2, "f6v");
-	check(2, 3, "f1x");
-
-	//a pair of non-rotated pieces lead to known board orientations
-	check(15, 0, {"a2z", "a3z"});
-	check(15, 1, {"b6t", "c6t"});
-	check(15, 2, {"f5v", "f4v"});
-	check(15, 3, {"e1x", "d1x"});
-	check(15, 4, {"b1u", "c1u"});
-	check(15, 5, {"f2s", "f3s"});
-	check(15, 6, {"e6y", "d6y"});
-	check(15, 7, {"a5w", "a4w"});
-
-	//a single oriented piece leads to a known board orientation
-	check(6, 0, "a2z:0");
-	check(6, 3, "a2z:1");
-	check(6, 2, "a2z:2");
-	check(6, 1, "a2z:3");
-	check(6, 4, "a2z:4");
-	check(6, 5, "a2z:5");
-	check(6, 6, "a2z:6");
-	check(6, 7, "a2z:7");
-
-	//a single oriented piece leads to a known board orientation
-	check(6, 1, "b6t:0");
-	check(6, 0, "b6t:1");
-	check(6, 3, "b6t:2");
-	check(6, 2, "b6t:3");
-	check(6, 5, "b6t:4");
-	check(6, 6, "b6t:5");
-	check(6, 7, "b6t:6");
-	check(6, 4, "b6t:7");
-
-	//a single oriented piece leads to a known board orientation
-	check(6, 2, "f5v:0");
-	check(6, 1, "f5v:1");
-	check(6, 0, "f5v:2");
-	check(6, 3, "f5v:3");
-	check(6, 6, "f5v:4");
-	check(6, 7, "f5v:5");
-	check(6, 4, "f5v:6");
-	check(6, 5, "f5v:7");
-
-	//a single oriented piece leads to a known board orientation
-	check(6, 4, "b1u:0");
-	check(6, 5, "b1u:1");
-	check(6, 6, "b1u:2");
-	check(6, 7, "b1u:3");
-	check(6, 0, "b1u:4");
-	check(6, 3, "b1u:5");
-	check(6, 2, "b1u:6");
-	check(6, 1, "b1u:7");
-
-	//a single oriented piece leads to a known board orientation
-	check(6, 7, "a5w:0");
-	check(6, 4, "a5w:1");
-	check(6, 5, "a5w:2");
-	check(6, 6, "a5w:3");
-	check(6, 3, "a5w:4");
-	check(6, 2, "a5w:5");
-	check(6, 1, "a5w:6");
-	check(6, 0, "a5w:7");
-}
+}; // namespace Pentago
+}; // namespace Morat

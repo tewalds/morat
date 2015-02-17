@@ -8,6 +8,9 @@
 #include "moveiterator.h"
 
 
+namespace Morat {
+namespace Pentago {
+
 void MoveIterator::test() {
 //	printf("MoveIterator tests\n");
 
@@ -57,7 +60,7 @@ void RandomMoveIteratorTest() {
 		i++;
 	assert(i == 6);
 
-	set<string> moves;
+	std::set<std::string> moves;
 	for(MoveIterator move(board, 0); !move.done(); ++move)
 		moves.insert(move->to_s());
 
@@ -74,7 +77,7 @@ void RandomMoveIteratorTest() {
 	assert(moves.size() == 0);
 
 
-	set<string> boards;
+	std::set<std::string> boards;
 	for(MoveIterator move(board, 0); !move.done(); ++move)
 		boards.insert(move.board().to_s());
 
@@ -90,3 +93,6 @@ void RandomMoveIteratorTest() {
 
 	assert(boards.size() == 0);
 }
+
+}; // namespace Pentago
+}; // namespace Morat

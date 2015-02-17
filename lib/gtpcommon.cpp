@@ -1,6 +1,8 @@
 
 #include "gtpcommon.h"
 
+namespace Morat {
+
 using namespace std;
 
 GTPResponse GTPCommon::gtp_echo(vecstr args) const {
@@ -70,3 +72,5 @@ string GTPCommon::won_str(int outcome) const {
 		default: return "unknown";
 	}
 }
+
+}; // namespace Morat

@@ -8,6 +8,8 @@
 
 #include "thread.h"
 
+namespace Morat {
+
 /* CompactTree is a Tree of Nodes. It malloc's one chunk at a time, and has a very efficient allocation strategy.
  * It maintains a freelist of empty segments, but never assigns a segment to a smaller amount of memory,
  * completely avoiding fragmentation, but potentially having empty space in sizes that are no longer popular.
@@ -489,3 +491,5 @@ public:
 		last = dchunk;
 	}
 };
+
+}; // namespace Morat

@@ -9,6 +9,8 @@ This is useful for softmax and similar, used in the rollout policy.
 #include "bits.h"
 #include "xorshift.h"
 
+namespace Morat {
+
 // O(1) updates, O(s) choose
 class WeightedRandScan {
 	mutable XORShift_double unitrand;
@@ -102,3 +104,5 @@ public:
 		return -1;
 	}
 };
+
+}; // namespace Morat

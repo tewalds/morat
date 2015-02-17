@@ -10,19 +10,22 @@ Increase distance when crossing an opponent virtual connection?
 Decrease distance when crossing your own virtual connection?
 */
 
+#include "../lib/move.h"
 
 #include "board.h"
-#include "move.h"
+
+
+namespace Morat {
+namespace Havannah {
 
 class LBDists {
 	struct MoveDist {
-		Move pos;
+		MoveValid pos;
 		int dist;
 		int dir;
 
 		MoveDist() { }
-		MoveDist(Move p, int d, int r)       : pos(p),         dist(d), dir(r) { }
-		MoveDist(int x, int y, int d, int r) : pos(Move(x,y)), dist(d), dir(r) { }
+		MoveDist(MoveValid p, int d, int r) : pos(p), dist(d), dir(r) { }
 	};
 
 	//a specialized priority queue
@@ -70,15 +73,18 @@ class LBDists {
 	IntPQueue Q;
 	const Board * board;
 
-	int & dist(int edge, int player, int i)          { return dists[edge][player-1][i]; }
-	int & dist(int edge, int player, const Move & m) { return dist(edge, player, board->xy(m)); }
-	int & dist(int edge, int player, int x, int y)   { return dist(edge, player, board->xy(x, y)); }
+	int & dist(int edge, Side player, int i)               { return dists[edge][player.to_i() - 1][i]; }
+	int & dist(int edge, Side player, const MoveValid & m) { return dist(edge, player, m.xy); }
+	int & dist(int edge, Side player, const Move & m)      { return dist(edge, player, board->xy(m)); }
+	int & dist(int edge, Side player, int x, int y)        { return dist(edge, player, board->xy(x, y)); }
 
-	void init(int x, int y, int edge, int player, int dir){
-		int val = board->get(x, y);
-		if(val != 3 - player){
-			Q.push(MoveDist(x, y, (val == 0), dir));
-			dist(edge, player, x, y) = (val == 0);
+	void init(int x, int y, int edge, Side player, int dir){
+		Side val = board->get(x, y);
+		if(val != ~player){
+			bool empty = (val == Side::NONE);
+			MoveValid move(x, y, board->xy(x, y));
+			Q.push(MoveDist(move, empty, dir));
+			dist(edge, player, move) = empty;
 		}
 	}
 
@@ -87,7 +93,7 @@ public:
 	LBDists() : board(NULL) {}
 	LBDists(const Board * b) { run(b); }
 
-	void run(const Board * b, bool crossvcs = true, int side = 0) {
+	void run(const Board * b, bool crossvcs = true, Side side = Side::BOTH) {
 		board = b;
 
 		for(int i = 0; i < 12; i++)
@@ -95,56 +101,54 @@ public:
 				for(int k = 0; k < board->vecsize(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
-		int m = board->get_size()-1, e = board->get_size_d()-1;
-
-		int start, end;
-		if(side){ start = end = side; }
-		else    { start = 1; end = 2; }
-
-		for(int player = start; player <= end; player++){
-			init(0, 0, 0, player, 3); flood(0, player, crossvcs); //corner 0
-			init(m, 0, 1, player, 4); flood(1, player, crossvcs); //corner 1
-			init(e, m, 2, player, 5); flood(2, player, crossvcs); //corner 2
-			init(e, e, 3, player, 0); flood(3, player, crossvcs); //corner 3
-			init(m, e, 4, player, 1); flood(4, player, crossvcs); //corner 4
-			init(0, m, 5, player, 2); flood(5, player, crossvcs); //corner 5
-
-			for(int x = 1; x < m; x++)   { init(x,   0, 6,  player, 3+(x==1));   } flood(6,  player, crossvcs); //edge 0
-			for(int y = 1; y < m; y++)   { init(m+y, y, 7,  player, 4+(y==1));   } flood(7,  player, crossvcs); //edge 1
-			for(int y = m+1; y < e; y++) { init(e,   y, 8,  player, 5+(y==m+1)); } flood(8,  player, crossvcs); //edge 2
-			for(int x = m+1; x < e; x++) { init(x,   e, 9,  player, 0+(x==e-1)); } flood(9,  player, crossvcs); //edge 3
-			for(int x = 1; x < m; x++)   { init(x, m+x, 10, player, 1+(x==m-1)); } flood(10, player, crossvcs); //edge 4
-			for(int y = 1; y < m; y++)   { init(0,   y, 11, player, 2+(y==m-1)); } flood(11, player, crossvcs); //edge 5
-		}
+		if((side & Side::P1) == Side::P1) init_player(crossvcs, Side::P1);
+		if((side & Side::P2) == Side::P2) init_player(crossvcs, Side::P2);
 	}
 
-	void flood(int edge, int player, bool crossvcs){
-		int otherplayer = 3 - player;
+	void init_player(bool crossvcs, Side player){
+		int m = board->get_size()-1, e = board->get_size_d()-1;
+
+		init(0, 0, 0, player, 3); flood(0, player, crossvcs); //corner 0
+		init(m, 0, 1, player, 4); flood(1, player, crossvcs); //corner 1
+		init(e, m, 2, player, 5); flood(2, player, crossvcs); //corner 2
+		init(e, e, 3, player, 0); flood(3, player, crossvcs); //corner 3
+		init(m, e, 4, player, 1); flood(4, player, crossvcs); //corner 4
+		init(0, m, 5, player, 2); flood(5, player, crossvcs); //corner 5
+
+		for(int x = 1; x < m; x++)   { init(x,   0, 6,  player, 3+(x==1));   } flood(6,  player, crossvcs); //edge 0
+		for(int y = 1; y < m; y++)   { init(m+y, y, 7,  player, 4+(y==1));   } flood(7,  player, crossvcs); //edge 1
+		for(int y = m+1; y < e; y++) { init(e,   y, 8,  player, 5+(y==m+1)); } flood(8,  player, crossvcs); //edge 2
+		for(int x = m+1; x < e; x++) { init(x,   e, 9,  player, 0+(x==e-1)); } flood(9,  player, crossvcs); //edge 3
+		for(int x = 1; x < m; x++)   { init(x, m+x, 10, player, 1+(x==m-1)); } flood(10, player, crossvcs); //edge 4
+		for(int y = 1; y < m; y++)   { init(0,   y, 11, player, 2+(y==m-1)); } flood(11, player, crossvcs); //edge 5
+	}
+
+	void flood(int edge, Side player, bool crossvcs){
+		Side otherplayer = ~player;
 
 		MoveDist cur;
 		while(Q.pop(cur)){
 			for(int i = 5; i <= 7; i++){
 				int nd = (cur.dir + i) % 6;
-				MoveDist next(cur.pos + neighbours[nd], cur.dist, nd);
+				MoveDist next(board->nb_begin(cur.pos)[nd], cur.dist, nd);
 
 				if(board->onboard(next.pos)){
-					int pos = board->xy(next.pos);
-					int colour = board->get(pos);
+					Side colour = board->get(next.pos);
 
 					if(colour == otherplayer)
 						continue;
 
-					if(colour == 0){
+					if(colour == Side::NONE){
 						if(!crossvcs && //forms a vc
-						   board->get(cur.pos + neighbours[(nd - 1) % 6]) == otherplayer &&
-						   board->get(cur.pos + neighbours[(nd + 1) % 6]) == otherplayer)
+						   board->get(board->nb_begin(cur.pos)[(nd - 1) % 6]) == otherplayer &&
+						   board->get(board->nb_begin(cur.pos)[(nd + 1) % 6]) == otherplayer)
 							continue;
 
 						next.dist++;
 					}
 
-					if( dist(edge, player, pos) > next.dist){
-						dist(edge, player, pos) = next.dist;
+					if( dist(edge, player, next.pos) > next.dist){
+						dist(edge, player, next.pos) = next.dist;
 						if(next.dist < board->get_size())
 							Q.push(next);
 					}
@@ -153,27 +157,34 @@ public:
 		}
 	}
 
-	int isdraw(){
-		int outcome = 0;
+	Outcome isdraw(){
+		Outcome outcome = Outcome::DRAW;  // assume neither side can win
 		for(int y = 0; y < board->get_size_d(); y++){
 			for(int x = board->linestart(y); x < board->lineend(y); x++){
-				Move pos(x,y);
+				MoveValid pos(x, y, board->xy(x, y));
 
-				if(board->encirclable(pos, 1) || get(pos, 1) < maxdist-5)
-					outcome |= 1;
-				if(board->encirclable(pos, 2) || get(pos, 2) < maxdist-5)
-					outcome |= 2;
+				if(board->encirclable(pos, Side::P1) || get(pos, Side::P1) < maxdist-5)
+					outcome |= Outcome::P1; // P1 can win
+				if(board->encirclable(pos, Side::P2) || get(pos, Side::P2) < maxdist-5)
+					outcome |= Outcome::P2; // P2 can win
 
-				if(outcome == 3)
-					return -3;
+				if(outcome == Outcome::DRAW2) // both can win
+					return Outcome::UNKNOWN;  // so nothing is known
 			}
 		}
-		return -outcome;
+		return -outcome; // this isn't certainty, so negate
 	}
 
-	int get(Move pos){ return min(get(pos, 1),  get(pos, 2)); }
-	int get(Move pos, int player){ return get(board->xy(pos), player); }
-	int get(int pos, int player){
+	std::string get_s(Move pos, Side side) {  // for use by Board::to_s
+		int dist = (side == Side::NONE ? get(pos) : get(pos, side));
+		return (dist < 10 ? to_str(dist) : ".");
+	}
+
+	int get(Move      pos){ return get(MoveValid(pos, board->xy(pos))); }
+	int get(MoveValid pos){ return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
+	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
+	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
+	int get(int pos, Side player){
 		int list[6];
 		for(int i = 0; i < 6; i++)
 			list[i] = dist(i, player, pos);
@@ -185,7 +196,7 @@ public:
 		partialsort(list, 3);
 		int edges = list[0] + list[1] + list[2] - 2;
 
-		return min(corners, edges);
+		return std::min(corners, edges);
 	}
 
 	//partially sort the list with selection sort
@@ -205,3 +216,6 @@ public:
 		}
 	}
 };
+
+}; // namespace Havannah
+}; // namespace Morat

@@ -24,6 +24,8 @@
  * timer.cancel();
  */
 
+namespace Morat {
+
 class Alarm {
 public:
 	typedef std::function<void()> callback_t;
@@ -84,3 +86,5 @@ private:
 	};
 	friend void alarm_triggered(int);
 };
+
+}; // namespace Morat

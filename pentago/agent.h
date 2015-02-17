@@ -3,12 +3,20 @@
 
 //Interface for the various agents: players and solvers
 
+#include "../lib/outcome.h"
+#include "../lib/sgf.h"
 #include "../lib/types.h"
 
 #include "board.h"
 #include "moveiterator.h"
 
+
+namespace Morat {
+namespace Pentago {
+
 class Agent {
+protected:
+	typedef std::vector<Move> vecmove;
 public:
 	Agent() { }
 	virtual ~Agent() { }
@@ -20,31 +28,37 @@ public:
 	virtual void set_memlimit(uint64_t lim) = 0; // in bytes
 	virtual void clear_mem() = 0;
 
-	virtual vector<Move> get_pv() const = 0;
-	        string move_stats() const { return move_stats(vector<Move>()); }
-	virtual string move_stats(const vector<Move> moves) const = 0;
+	virtual vecmove get_pv() const = 0;
+	        std::string move_stats() const { return move_stats(vecmove()); }
+	virtual std::string move_stats(const vecmove moves) const = 0;
 	virtual double gamelen() const = 0;
 
 	virtual void timedout(){ timeout = true; }
+
+	virtual void gen_sgf(SGFPrinter<Move> & sgf, int limit) const = 0;
+	virtual void load_sgf(SGFParser<Move> & sgf) = 0;
 
 protected:
 	volatile bool timeout;
 	Board rootboard;
 
-	static int solve1ply(const Board & board, unsigned int & nodes) {
-		int outcome = -4;
-		int turn = board.toplay();
+	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
+		Outcome outcome = Outcome::UNDEF;
+		Side turn = board.toplay();
 		for(MoveIterator move(board); !move.done(); ++move){
 			++nodes;
-			int won = move.board().won();
+			Outcome won = move.board().won();
 
-			if(won == turn)
+			if(won == +turn)
 				return won;
-			else if(won == 0)
-				outcome = 0;
-			else if(outcome == 3 - turn || outcome == -4)
+			if(won == Outcome::DRAW)
+				outcome = Outcome::DRAW;
+			else if(outcome == +~turn || outcome == Outcome::UNDEF)
 				outcome = won;
 		}
 		return outcome;
 	}
 };
+
+}; // namespace Pentago
+}; // namespace Morat

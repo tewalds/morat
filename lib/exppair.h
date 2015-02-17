@@ -1,17 +1,31 @@
 
 #pragma once
 
+#include "string.h"
 #include "thread.h"
 #include "types.h"
+
+namespace Morat {
 
 class ExpPair {
 	uword s, n;
 	ExpPair(uword S, uword N) : s(S), n(N) { }
 public:
 	ExpPair() : s(0), n(0) { }
-	float avg() const { return 0.5f*s/n; }
+	float avg() const { return (n ? 0.5f*s/n : 0); }
 	uword num() const { return n; }
 	uword sum() const { return s/2; }
+
+	std::string to_s() const {
+		return to_str(avg(), 3) + "/" + to_str(num());
+	}
+
+	ExpPair(std::string str) {
+		auto parts = explode(str, "/");
+		assert(parts.size() == 2);
+		n = from_str<uword>(parts[1]);
+		s = 2.0*from_str<float>(parts[0])*n;
+	}
 
 	void clear() { s = 0; n = 0; }
 
@@ -50,3 +64,5 @@ public:
 		return ExpPair(n*2 - s, n);
 	}
 };
+
+}; // namespace Morat

@@ -32,6 +32,8 @@ The main thread and the worker threads are coordinated with a simple state machi
 two barriers.
 */
 
+namespace Morat {
+
 enum ThreadState {
 	Thread_Cancelled,  //threads should exit
 	Thread_Wait_Start, //threads are waiting to start
@@ -80,7 +82,7 @@ public:
 		return *(threads[i]);
 	}
 
-	string state_string() const {
+	std::string state_string() const {
 		switch(thread_state){
 		case Thread_Cancelled:  return "Thread_Wait_Cancelled";
 		case Thread_Wait_Start: return "Thread_Wait_Start";
@@ -173,7 +175,7 @@ public:
 
 	AgentThreadBase(AgentThreadPool<AgentType> * p, AgentType * a) : pool(p), agent(a) {
 		reset();
-		thread(bind(&AgentThreadBase::run, this));
+		thread(std::bind(&AgentThreadBase::run, this));
 	}
 	virtual ~AgentThreadBase() { }
 
@@ -229,3 +231,5 @@ private:
 
 	virtual void iterate() = 0; //handles each iteration
 };
+
+}; // namespace Morat

@@ -7,7 +7,7 @@
 
 #include "string.h"
 
-using namespace std;
+namespace Morat {
 
 struct DepthStats {
 	uint32_t mindepth, maxdepth, num;
@@ -52,10 +52,12 @@ struct DepthStats {
 	}
 	double std_dev() const {
 		if(num == 0) return 0.0;
-		return sqrt((double)sumdepthsq/num - ((double)sumdepth/num)*((double)sumdepth/num));
+		return std::sqrt((double)sumdepthsq/num - ((double)sumdepth/num)*((double)sumdepth/num));
 	}
-	string to_s() const {
+	std::string to_s() const {
 		if(num == 0) return "num=0";
 		return to_str(avg(), 4) +", dev=" + to_str(std_dev(), 4) + ", min=" + to_str(mindepth) + ", max=" + to_str(maxdepth) + ", num=" + to_str(num);
 	}
 };
+
+}; // namespace Morat

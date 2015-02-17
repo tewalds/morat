@@ -1,6 +1,8 @@
 
 #include "alarm.h"
 
+namespace Morat {
+
 void alarm_triggered(int signum){
 	Alarm::Handler::inst().reset(signum);
 }
@@ -70,3 +72,4 @@ void Alarm::Handler::reset(int signum){
 	}
 }
 
+}; // namespace Morat
