@@ -44,6 +44,7 @@ test: \
 		havannah/agentpns_test.o \
 		havannah/board.o \
 		havannah/board_test.o \
+		havannah/lbdist_test.o \
 		hex/agentmcts.o \
 		hex/agentmctsthread.o \
 		hex/agentmcts_test.o \
