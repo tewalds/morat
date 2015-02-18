@@ -24,7 +24,67 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	}
 }
 
-TEST_CASE("Rex::Board", "[rex][board]") {
+TEST_CASE("Rex::Board size 3", "[rex][board]") {
+	Board b(3);
+
+        // game-over iff P1/White connects top/bottom or P2/Black connects side-side
+	SECTION("Unknown_1") { // maximal not-game-over configurations
+		test_game(b, {"a1", "a2", "a3", "b1", "b2", "b3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "a3", "c1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"b1", "b2", "b3", "c1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "b3", "c1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "a3", "b1", "b2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b2", "b3", "c1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "a3", "b1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "b1", "b3", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "a2", "a3", "b3", "c1"}, Outcome::UNKNOWN);
+		test_game(b, {"a3", "b1", "c1", "c2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a3", "b1", "b3", "c3"}, Outcome::UNKNOWN);
+	}
+	
+	SECTION("Unknown_2") { // maximal not-game-over configurations
+		test_game(b, {"a1", "b1", "c1", "a2", "b2", "c2"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "c1", "a3", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a2", "b2", "c2", "a3", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "c2", "a3", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "c1", "a2", "b2", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b2", "c2", "a3", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "c1", "a2", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "a2", "c2", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"a1", "b1", "c1", "c2", "a3"}, Outcome::UNKNOWN);
+		test_game(b, {"c1", "a2", "a3", "b3", "c3"}, Outcome::UNKNOWN);
+		test_game(b, {"c1", "a2", "c2", "c3"}, Outcome::UNKNOWN);
+	}
+
+	SECTION("White Connects") { // minimal game-over configs   Rex: Black/P2 wins
+		test_game(b, {"a1", "b1", "a2", "b2", "a3"}, Outcome::P2); 
+		test_game(b, {"b1", "a1", "b2", "a2", "b3"}, Outcome::P2); 
+		test_game(b, {"c1", "a1", "c2", "a2", "c3"}, Outcome::P2); 
+		test_game(b, {"b1", "a1", "b2", "a2", "a3"}, Outcome::P2); 
+		test_game(b, {"c1", "a1", "c2", "a2", "b3"}, Outcome::P2); 
+		test_game(b, {"b1", "c1", "a2", "c2", "a3"}, Outcome::P2); 
+		test_game(b, {"c1", "a1", "b2", "a2", "b3"}, Outcome::P2); 
+		test_game(b, {"c1", "a1", "b2", "b1", "a3"}, Outcome::P2); 
+		test_game(b, {"a1", "c1", "a2", "c2", "b2", "c3", "b3"}, Outcome::P2); 
+		test_game(b, {"b1", "a1", "b2", "a2", "c2", "a3", "c3"}, Outcome::P2); 
+		test_game(b, {"a1", "a3", "a2", "b1", "b2", "b3", "c2", "c1", "c3"}, Outcome::P2); 
+	}
+	
+	SECTION("Black Connects") { // minimal game-over configs  Rex: White/P1 wins
+		test_game(b, {"a2", "a1", "b2", "b1", "c2", "c1"}, Outcome::P1); 
+		test_game(b, {"a1", "a2", "a3", "b2", "b1", "c2"}, Outcome::P1); 
+		test_game(b, {"a1", "a3", "a2", "b3", "b1", "c3"}, Outcome::P1); 
+		test_game(b, {"a1", "a2", "a3", "b1", "b2", "c1"}, Outcome::P1); 
+		test_game(b, {"a1", "a3", "a2", "b2", "b1", "c2"}, Outcome::P1); 
+		test_game(b, {"a1", "a2", "a3", "b2", "b1", "c1"}, Outcome::P1); 
+		test_game(b, {"a1", "a3", "a2", "b3", "b1", "c2"}, Outcome::P1); 
+		test_game(b, {"a1", "a3", "a2", "b2", "b1", "c1"}, Outcome::P1); 
+		test_game(b, {"a2", "a1", "a3", "b1", "b3", "b2", "c1", "c2"}, Outcome::P1); 
+		test_game(b, {"a1", "a2", "a3", "b2", "b1", "b3", "c1", "c3"}, Outcome::P1); 
+	}
+}
+
+TEST_CASE("Rex::Board size 7", "[rex][board]") {
 	Board b(7);
 
 	SECTION("Basics") {

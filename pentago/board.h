@@ -50,7 +50,7 @@ class Board{
 	static const int16_t default_score = 0xDEAD;
 public:
 
-	static constexpr const char * const name = "pentago";
+	static constexpr const char * name = "pentago";
 	static const int default_size = 6;
 	static const int min_size = 6;
 	static const int max_size = 6;
