@@ -10,6 +10,8 @@ Increase distance when crossing an opponent virtual connection?
 Decrease distance when crossing your own virtual connection?
 */
 
+#include <functional>
+
 #include "../lib/move.h"
 
 #include "board.h"
@@ -140,8 +142,8 @@ public:
 
 					if(colour == Side::NONE){
 						if(!crossvcs && //forms a vc
-						   board->get(board->nb_begin(cur.pos)[(nd - 1) % 6]) == otherplayer &&
-						   board->get(board->nb_begin(cur.pos)[(nd + 1) % 6]) == otherplayer)
+						   board->get(board->nb_begin(cur.pos)[(nd + 5) % 6]) == otherplayer &&
+						   board->get(board->nb_begin(cur.pos)[(nd + 7) % 6]) == otherplayer)
 							continue;
 
 						next.dist++;
@@ -173,6 +175,10 @@ public:
 			}
 		}
 		return -outcome; // this isn't certainty, so negate
+	}
+
+	std::string to_s(Side side = Side::NONE) {
+		return board->to_s(true, std::bind(&LBDists::get_s, this, std::placeholders::_1, side));
 	}
 
 	std::string get_s(Move pos, Side side) {  // for use by Board::to_s

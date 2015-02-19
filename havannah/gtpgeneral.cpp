@@ -225,7 +225,7 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		return GTPResponse(true, to_str(dists.get(Move(args[1]), side)));
 	}
 
-	return GTPResponse(true, "\n" + board.to_s(colorboard, bind(&LBDists::get_s, &dists, _1, side)));
+	return GTPResponse(true, "\n" + dists.to_s(side)));
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
