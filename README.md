@@ -1,5 +1,7 @@
 # Morat
 
+[![Build Status](https://travis-ci.org/tewalds/morat.svg?branch=master)](https://travis-ci.org/tewalds/morat)
+
 Morat is a game playing framework, along with implementations of several games. It includes some general purpose libraries (alarm, time, thread, random), and some game specific libraries (compacting tree, gtp, time controls).
 
 It specializes in 2-player, perfect information, zero sum, deterministic games, especially placement games (where RAVE works).
