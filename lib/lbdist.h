@@ -17,8 +17,17 @@ Decrease distance when crossing your own virtual connection?
 
 namespace Morat {
 
-template<class Board>
+template<class SubClass, class Board>
 class LBDistsBase {
+/*
+This uses the Curiously recurring template pattern: https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+so that this class, the super class, can call init_player and _get on the subclass. The alternative
+would be to use virtual functions, which would work, but could be significantly slower.
+
+Subclasses must implement init_player and _get which define which flood fills to run,
+and how to look up the value for a given cell.
+*/
+
 protected:
 	struct MoveDist {
 		MoveValid pos;
@@ -95,6 +104,7 @@ public:
 	LBDistsBase(const Board * b) { run(b); }
 
 	void run(const Board * b, bool crossvcs = true, Side side = Side::BOTH) {
+	// run the flood fills needed to generate the distances
 		board = b;
 
 		for(int i = 0; i < Board::LBDist_directions; i++)
@@ -102,11 +112,34 @@ public:
 				for(int k = 0; k < board->vecsize(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
-		if((side & Side::P1) == Side::P1) init_player(crossvcs, Side::P1);
-		if((side & Side::P2) == Side::P2) init_player(crossvcs, Side::P2);
+		if((side & Side::P1) == Side::P1) static_cast<SubClass*>(this)->init_player(crossvcs, Side::P1);
+		if((side & Side::P2) == Side::P2) static_cast<SubClass*>(this)->init_player(crossvcs, Side::P2);
 	}
 
+	// return the distance to for a single cell, either the minimum of both sides or for the chosen side
+	int get(Move      pos) { return get(MoveValid(pos, board->xy(pos))); }
+	int get(MoveValid pos) { return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
+	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
+	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
+	int get(int pos, Side player) { return static_cast<SubClass*>(this)->_get(pos, player); }
+
+	std::string to_s(Side side = Side::NONE) {
+	// Return a string representation of the whole board, with empty cells showing their distance numbers
+		if (board == NULL)
+			return "LBDistsBase has no board.....\n";
+		return board->to_s(true, std::bind(&LBDistsBase::get_s, this, std::placeholders::_1, side));
+	}
+
+	std::string get_s(Move pos, Side side) {
+	// Return a string version of the distance for a single cell, for use by Board::to_s
+		int dist = (side == Side::NONE ? get(pos) : get(pos, side));
+		return (dist < 10 ? to_str(dist) : ".");
+	}
+
+
+protected:
 	void init_player(bool crossvcs, Side player);
+	int _get(int pos, Side player);
 
 	void flood(int edge, Side player, bool crossvcs){
 		Side otherplayer = ~player;
@@ -142,25 +175,8 @@ public:
 		}
 	}
 
-	Outcome isdraw();
-
-	std::string to_s(Side side = Side::NONE) {
-		return board->to_s(true, std::bind(&LBDistsBase::get_s, this, std::placeholders::_1, side));
-	}
-
-	std::string get_s(Move pos, Side side) {  // for use by Board::to_s
-		int dist = (side == Side::NONE ? get(pos) : get(pos, side));
-		return (dist < 10 ? to_str(dist) : ".");
-	}
-
-	int get(Move      pos){ return get(MoveValid(pos, board->xy(pos))); }
-	int get(MoveValid pos){ return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
-	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
-	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
-	int get(int pos, Side player);
-
-	//partially sort the list with selection sort
 	void partialsort(int * list, int max){
+	//partially sort the list with selection sort
 		for(int i = 0; i < max; i++){
 			int mini = i;
 

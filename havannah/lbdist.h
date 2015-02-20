@@ -1,15 +1,6 @@
 
 #pragma once
 
-/*
-Compute a rough lower bound on the number of additional moves needed to win given this position
-
-Done using floodfills from each edge/corner for each side, only going in the 3 forward directions
-
-Increase distance when crossing an opponent virtual connection?
-Decrease distance when crossing your own virtual connection?
-*/
-
 #include "../lib/lbdist.h"
 
 #include "board.h"
@@ -18,7 +9,7 @@ Decrease distance when crossing your own virtual connection?
 namespace Morat {
 namespace Havannah {
 
-class LBDists : public LBDistsBase<Board> {
+class LBDists : public LBDistsBase<LBDists, Board> {
 
 public:
 	LBDists() : LBDistsBase() {}
@@ -42,10 +33,10 @@ public:
 		for(int y = 1; y < m; y++)   { init(0,   y, 11, player, 2+(y==m-1)); } flood(11, player, crossvcs); //edge 5
 	}
 
-	Outcome isdraw(){
+	Outcome isdraw() {
 		Outcome outcome = Outcome::DRAW;  // assume neither side can win
-		for(int y = 0; y < board->get_size_d(); y++){
-			for(int x = board->linestart(y); x < board->lineend(y); x++){
+		for(int y = 0; y < board->get_size_d(); y++) {
+			for(int x = board->linestart(y); x < board->lineend(y); x++) {
 				MoveValid pos(x, y, board->xy(x, y));
 
 				if(board->encirclable(pos, Side::P1) || get(pos.xy, Side::P1) < maxdist-5)
@@ -60,11 +51,7 @@ public:
 		return -outcome; // this isn't certainty, so negate
 	}
 
-	int get(Move      pos){ return get(MoveValid(pos, board->xy(pos))); }
-	int get(MoveValid pos){ return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
-	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
-	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
-	int get(int pos, Side player){
+	int _get(int pos, Side player) {
 		int list[6];
 		for(int i = 0; i < 6; i++)
 			list[i] = dist(i, player, pos);
