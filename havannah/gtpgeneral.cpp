@@ -225,7 +225,7 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		return GTPResponse(true, to_str(dists.get(Move(args[1]), side)));
 	}
 
-	return GTPResponse(true, "\n" + dists.to_s(side)));
+	return GTPResponse(true, "\n" + dists.to_s(side));
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
