@@ -58,6 +58,7 @@ public:
 	static const int max_size = 16;
 	static const int max_vecsize = max_size * max_size;
 	static const int num_win_types = 1;
+	static const int LBDist_directions = 3;
 
 	static const int pattern_cells = 18;
 	typedef uint64_t Pattern;
@@ -286,6 +287,8 @@ public:
 	int linelen(int y)   const { return lineend(y) - linestart(y); }
 
 	std::string to_s(bool color) const;
+	std::string to_s(bool color, std::function<std::string(Move)> func) const;
+
 	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
 
 	void print(bool color = true) const {

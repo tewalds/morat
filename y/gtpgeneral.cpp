@@ -221,50 +221,11 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		}
 	}
 
-	string white = "O",
-	       black = "@",
-	       empty = ".",
-	       coord = "",
-	       reset = "";
-	if(colorboard){
-		string esc = "\033";
-		reset = esc + "[0m";
-		coord = esc + "[1;37m";
-		empty = reset + ".";
-		white = esc + "[1;33m" + "@"; //yellow
-		black = esc + "[1;34m" + "@"; //blue
+	if(args.size() >= 2) {
+		return GTPResponse(true, to_str(dists.get(Move(args[1]), side)));
 	}
 
-
-	int size = board.get_size();
-
-	string s = "\n";
-	for(int i = 0; i < size; i++)
-		s += " " + coord + to_str(i+1);
-	s += "\n";
-
-	for(int y = 0; y < size; y++){
-		s += string(y, ' ');
-		s += coord + char('A' + y);
-		int end = board.lineend(y);
-		for(int x = 0; x < end; x++){
-			Side p = board.get(x, y);
-			s += ' ';
-			if(p == Side::NONE){
-				int d = (side == Side::NONE ? dists.get(Move(x, y)) : dists.get(Move(x, y), side));
-				if(d < 10)
-					s += reset + to_str(d);
-				else
-					s += empty;
-			}else if(p == Side::P1){
-				s += white;
-			}else if(p == Side::P2){
-				s += black;
-			}
-		}
-		s += '\n';
-	}
-	return GTPResponse(true, s);
+	return GTPResponse(true, "\n" + dists.to_s(side));
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
