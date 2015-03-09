@@ -6,7 +6,8 @@ Morat is a game playing framework, along with implementations of several games. 
 
 It specializes in 2-player, perfect information, zero sum, deterministic games, especially placement games (where RAVE works).
 
-So far it supports 5 games:
+So far it supports 6 games:
+* [Gomoku](https://en.wikipedia.org/wiki/Gomoku)
 * [Havannah](https://en.wikipedia.org/wiki/Havannah)
 * [Hex](https://en.wikipedia.org/wiki/Hex_%28board_game%29)
 * Rex - Reverse Hex (ie try to force the opponent to connect their edges).
@@ -14,7 +15,7 @@ So far it supports 5 games:
 * [Pentago](https://en.wikipedia.org/wiki/Pentago)
 
 Potential games:
-* [Gomoku](https://en.wikipedia.org/wiki/Gomoku) or more generally [M,n,k](https://en.wikipedia.org/wiki/M,n,k-game)
+* Generalize [Gomoku](https://en.wikipedia.org/wiki/Gomoku) into [M,n,k](https://en.wikipedia.org/wiki/M,n,k-game)
 * [Star](https://en.wikipedia.org/wiki/Star_%28board_game%29) or [*Star](https://en.wikipedia.org/wiki/*Star)
 * [Domineering or Cram](https://en.wikipedia.org/wiki/Domineering)
 * [Dots and Boxes](https://en.wikipedia.org/wiki/Dots_and_Boxes)
@@ -46,6 +47,7 @@ The primary interface is [GTP (Go Text Protocol)](https://en.wikipedia.org/wiki/
 * Check out the code from github
 * Run ```make``` to compile the code
 * Run:
+  * ```./morat-gomoku``` for Gomoku
   * ```./morat-havannah``` for Havannah
   * ```./morat-hex``` for Hex
   * ```./morat-rex``` for Reverse Hex

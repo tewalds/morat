@@ -25,7 +25,7 @@ else
 endif
 
 
-all: morat-havannah morat-hex morat-pentago morat-rex morat-y
+all: morat-gomoku morat-havannah morat-hex morat-pentago morat-rex morat-y
 
 test: \
 		lib/test.o \
@@ -37,6 +37,13 @@ test: \
 		lib/string.o \
 		lib/string_test.o \
 		lib/zobrist.o \
+		gomoku/agentmcts.o \
+		gomoku/agentmctsthread.o \
+		gomoku/agentmcts_test.o \
+		gomoku/agentpns.o \
+		gomoku/agentpns_test.o \
+		gomoku/board.o \
+		gomoku/board_test.o \
 		havannah/agentmcts.o \
 		havannah/agentmctsthread.o \
 		havannah/agentmcts_test.o \
@@ -75,6 +82,22 @@ test: \
 		$(ALARM)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 	./test
+
+morat-gomoku: \
+		gomoku/main.o \
+		gomoku/agentmcts.o \
+		gomoku/agentmctsthread.o \
+		gomoku/agentpns.o \
+		gomoku/board.o \
+		gomoku/gtpgeneral.o \
+		gomoku/gtpagent.o \
+		lib/fileio.o \
+		lib/gtpcommon.o \
+		lib/outcome.o \
+		lib/string.o \
+		lib/zobrist.o \
+		$(ALARM)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
 
 morat-havannah: \
 		havannah/main.o \
