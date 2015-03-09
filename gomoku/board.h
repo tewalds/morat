@@ -395,12 +395,12 @@ public:
 		// pull out an entry
 		#define e(a) (p & (3ull << (2 * a)))
 
-		// swap two entries
-		#define s(a, b) ((e(a) >> (2 * b)) | e(b) >> (2 * a))
+		// swap two entries, a > b
+		#define s(a, b) ((e(a) >> (2 * (a - b))) | e(b) << (2 * (a - b)))
 
 		return e(9) | e(1) | e(5) | e(13) |
-		       s(16, 17) | s( 0,  2) | s( 7,  3) | s( 6,  4) | s(21, 20) |
-		       s( 8, 10) | s(23, 18) | s(15, 11) | s(22, 19) | s(14, 12);
+		       s(17, 16) | s( 2,  0) | s( 7,  3) | s( 6,  4) | s(21, 20) |
+		       s(10,  8) | s(23, 18) | s(15, 11) | s(22, 19) | s(14, 12);
 
 		#undef e
 		#undef s
