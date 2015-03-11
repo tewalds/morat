@@ -20,7 +20,6 @@ public:
 
 	GTPResponse gtp_echo(vecstr args) const;
 	GTPResponse gtp_time(vecstr args);
-	std::string won_str(int outcome) const;
 };
 
 }; // namespace Morat
