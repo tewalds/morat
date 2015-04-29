@@ -291,7 +291,7 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 			}
 
 			sims = child->exp.num();
-			if(best_outcome < outcome){ //better outcome is always preferable
+			if(best_outcome < outcome || backup == NULL){ //better outcome is always preferable
 				best_outcome = outcome;
 				bestsims = sims;
 				backup = child;
