@@ -212,6 +212,7 @@ public:
 	uint  visitexpand;//number of visits before expanding a node
 	bool  prunesymmetry; //prune symmetric children from the move list, useful for proving but likely not for playing
 	uint  gcsolved;   //garbage collect solved nodes or keep them in the tree, assuming they meet the required amount of work
+	bool  longestloss;//tells us how to proceed if we have a proved lose, if true aim for the longest lose, if false try for hardest lose to solve
 
 //knowledge
 	int   localreply; //boost for a local reply, ie a move near the previous move
