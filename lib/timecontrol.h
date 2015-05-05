@@ -39,7 +39,7 @@ struct TimeControl {
 		remain = game;
 	}
 
-	double get_time(int moves_made, int max_moves_remaining, int moves_remain_estimate) {
+	double get_time(int max_moves_remaining, int moves_remain_estimate) {
 		double ret = 0;
 
 		switch(method){

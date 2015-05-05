@@ -142,6 +142,7 @@ AgentMCTS::AgentMCTS() : pool(this) {
 	visitexpand = 1;
 	prunesymmetry = false;
 	gcsolved    = 100000;
+	longestloss = false;
 
 	localreply  = 5;
 	locality    = 5;
