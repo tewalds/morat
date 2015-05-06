@@ -289,14 +289,14 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 				assert(false && "How'd I get here? All outcomes should be tested above");
 			}
 
-//longestloss tells us how to handle the case where we have a known loss
+			//longestloss tells us how to handle the case where we have a known loss
 			if(longestloss){
 				depth = child->proofdepth;
 				if(best_outcome < outcome || backup == NULL){ //better outcome is always preferable
 					best_outcome = outcome;
 					bestdepth = depth;
 					backup = child;
-				}else if(best_outcome == outcome && ((outcome == 0 && bestdepth < depth) || bestdepth > depth)){
+				}else if(best_outcome == outcome && ((outcome == 0 && bestdepth < depth) || (outcome != 0 && bestdepth > depth))){
 					//find long losses or easy wins/draws
 					bestdepth = depth;
 					backup = child;
@@ -308,7 +308,7 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 					best_outcome = outcome;
 					bestsims = sims;
 					backup = child;
-				}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || bestsims > sims)){
+				}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || (outcome != 0 && bestsims > sims))){
 					//find long losses or easy wins/draws
 					bestsims = sims;
 					backup = child;

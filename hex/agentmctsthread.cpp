@@ -298,7 +298,7 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 					best_outcome = outcome;
 					bestdepth = depth;
 					backup = child;
-				}else if(best_outcome == outcome && ((outcome == 0 && bestdepth < depth) || bestdepth > depth)){
+				}else if(best_outcome == outcome && ((outcome == 0 && bestdepth < depth) || (outcome != 0 && bestdepth > depth))){
 					//find long losses or easy wins/draws
 					bestdepth = depth;
 					backup = child;
@@ -310,12 +310,12 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 					best_outcome = outcome;
 					bestsims = sims;
 					backup = child;
-				}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || bestsims > sims)){
+				}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || (outcome != 0 && bestsims > sims))){
 					//find long losses or easy wins/draws
 					bestsims = sims;
 					backup = child;
 				}
-			}	
+			}		
 		}
 
 		if(best_outcome == 3) //no win, but found an unknown
