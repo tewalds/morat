@@ -1,4 +1,4 @@
-
+ 
 #pragma once
 
 #include <algorithm>
@@ -39,7 +39,7 @@ struct TimeControl {
 		remain = game;
 	}
 
-	double get_time(int moves_made, int moves_max, int moves_remain_estimate) {
+	double get_time(int max_moves_remaining, int moves_remain_estimate) {
 		double ret = 0;
 
 		switch(method){
@@ -52,7 +52,7 @@ struct TimeControl {
 					break;
 				}//fall back to even
 			case EVEN:
-				ret += 2.0 * param * remain / (moves_max - moves_made);
+				ret += 2.0 * param * remain / max_moves_remaining;
 				break;
 		}
 

@@ -20,7 +20,7 @@ GTPResponse GTP::gtp_solve(vecstr args){
 
 	double use_time = (args.size() >= 1 ?
 			from_str<double>(args[0]) :
-			time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen()));
+			time_control.get_time(hist->moves_remain(), agent->gamelen()));
 
 	if(verbose)
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
@@ -47,7 +47,7 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 
 	double use_time = (args.size() >= 2 ?
 			from_str<double>(args[1]) :
-			time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen()));
+			time_control.get_time(hist->moves_remain(), agent->gamelen()));
 
 
 	if(verbose)

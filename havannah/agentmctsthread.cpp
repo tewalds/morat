@@ -263,9 +263,11 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 		return false;
 
 
-	uint8_t proofdepth = backup->proofdepth;
+	uint8_t proofdepth = backup->proofdepth+1;
 	if(backup->outcome != toplay){
-		uint64_t sims = 0, bestsims = 0, outcome = 0, best_outcome = 0;
+		uint64_t sims = 0, bestsims = 0, outcome = 0, best_outcome = 0,
+						depth = 0, bestdepth = 0;//depending on longestlose setting we care about either sims or depth
+
 		backup = NULL;
 
 		Node * child = node->children.begin(),
@@ -301,16 +303,31 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 				assert(false && "How'd I get here? All outcomes should be tested above");
 			}
 
-			sims = child->exp.num();
-			if(best_outcome < outcome){ //better outcome is always preferable
-				best_outcome = outcome;
-				bestsims = sims;
-				backup = child;
-			}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || bestsims > sims)){
-				//find long losses or easy wins/draws
-				bestsims = sims;
-				backup = child;
-			}
+			//longestloss tells us how to handle the case where we have a known loss
+			if(longestloss){
+				depth = child->proofdepth;
+				if(best_outcome < outcome || backup == NULL){ //better outcome is always preferable
+					best_outcome = outcome;
+					bestdepth = depth;
+					backup = child;
+				}else if(best_outcome == outcome && ((outcome == 0 && bestdepth < depth) || (outcome != 0 && bestdepth > depth))){
+					//find long losses or easy wins/draws
+					bestdepth = depth;
+					backup = child;
+				}
+ 			}
+			else{
+				sims = child->exp.num();
+				if(best_outcome < outcome || backup == NULL){ //better outcome is always preferable
+					best_outcome = outcome;
+					bestsims = sims;
+					backup = child;
+				}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || (outcome != 0 && bestsims > sims))){
+					//find long losses or easy wins/draws
+					bestsims = sims;
+					backup = child;
+				}
+			}	
 		}
 
 		if(best_outcome == 3) //no win, but found an unknown
