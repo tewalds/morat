@@ -36,6 +36,7 @@ test: \
 		lib/sgf_test.o \
 		lib/string.o \
 		lib/string_test.o \
+		lib/timecontrol_test.o \
 		lib/zobrist.o \
 		gomoku/agentmcts.o \
 		gomoku/agentmctsthread.o \
