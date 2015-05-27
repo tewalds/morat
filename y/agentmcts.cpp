@@ -279,29 +279,28 @@ Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
 	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
+	assert(!node->children.empty());
+
 	double val, maxval = -1000000000000.0; //1 trillion
 
-	Node * ret = NULL,
-		 * child = node->children.begin(),
-		 * end = node->children.end();
-
-	for( ; child != end; child++){
-		if(child->outcome >= Outcome::DRAW){
-			if(child->outcome == toplay)             val =  800000000000.0 - child->exp.num(); //shortest win
-			else if(child->outcome == Outcome::DRAW) val = -400000000000.0 + child->exp.num(); //longest tie
-			else                                     val = -800000000000.0 + child->exp.num(); //longest loss
+	const Node * ret = NULL;
+	for(const auto& child : node->children) {
+		if(child.outcome >= Outcome::DRAW){
+			if(child.outcome == toplay)             val =  800000000000.0 - child.exp.num(); //shortest win
+			else if(child.outcome == Outcome::DRAW) val = -400000000000.0 + child.exp.num(); //longest tie
+			else                                    val = -800000000000.0 + child.exp.num(); //longest loss
 		}else{ //not proven
 			if(msrave == -1) //num simulations
-				val = child->exp.num();
+				val = child.exp.num();
 			else if(msrave == -2) //num wins
-				val = child->exp.sum();
+				val = child.exp.sum();
 			else
-				val = child->value(msrave, 0, 0) - msexplore*sqrt(log(node->exp.num())/(child->exp.num() + 1));
+				val = child.value(msrave, 0, 0) - msexplore*sqrt(log(node->exp.num())/(child.exp.num() + 1));
 		}
 
 		if(maxval < val){
 			maxval = val;
-			ret = child;
+			ret = &child;
 		}
 	}
 

@@ -103,7 +103,7 @@ public:
 		}
 
 		//new way, more standard way of changing over from rave scores to real scores
-		float value(float ravefactor, bool knowledge, float fpurgency){
+		float value(float ravefactor, bool knowledge, float fpurgency) const {
 			float val = fpurgency;
 			float expnum = exp.num();
 			float ravenum = rave.num();
