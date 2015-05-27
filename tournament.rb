@@ -1,4 +1,5 @@
 #!/usr/bin/ruby
+# encoding: utf-8
 
 	$against = false;
 	$parallel = 1;
@@ -60,7 +61,7 @@ trap("SIGTERM") { $interrupt = true; }
 trap("SIGINT")  { $interrupt = true; }
 trap("SIGHUP")  { $interrupt = true; }
 
-require 'lib.rb'
+require './lib.rb'
 
 def play_game(n, p1, p2)
 #start the programs
