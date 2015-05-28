@@ -1,5 +1,7 @@
 .PHONY: clean fresh run gendeps
 
+-include .Makefile.local
+
 #CXX=clang++
 CPPFLAGS += -std=c++0x -Wall
 LDFLAGS  += -pthread

@@ -1,5 +1,6 @@
 # dependencies
 .Makefile
+.Makefile.local
 
 # object files
 *.o
@@ -26,4 +27,3 @@ callgrind.out.*
 *.make
 *.d
 *.fls
-
