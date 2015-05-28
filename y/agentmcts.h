@@ -255,8 +255,8 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vecmove get_pv() const;
-	std::string move_stats(const vecmove moves) const;
+	vecmove get_pv(const vecmove& moves) const;
+	std::string move_stats(const vecmove& moves) const;
 
 	bool done() {
 		//solved or finished runs

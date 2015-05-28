@@ -93,7 +93,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
 		std::string pvstr;
-		for(auto m : get_pv())
+		for(const auto& m : Agent::get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
@@ -235,13 +235,14 @@ double AgentMCTS::gamelen() const {
 	return len.avg();
 }
 
-std::vector<Move> AgentMCTS::get_pv() const {
+std::vector<Move> AgentMCTS::get_pv(const vecmove& moves) const {
 	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
+	int i = 0;
 	while(n && !n->children.empty()){
-		Move m = return_move(n, turn);
+		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
 		pv.push_back(m);
 		n = find_child(n, m);
 		turn = ~turn;
@@ -253,13 +254,16 @@ std::vector<Move> AgentMCTS::get_pv() const {
 	return pv;
 }
 
-std::string AgentMCTS::move_stats(vecmove moves) const {
-	std::string s = "";
+std::string AgentMCTS::move_stats(const vecmove& moves) const {
+	std::string s;
 	const Node * node = & root;
+
+	s += "root:\n";
+	s += node->to_s() + "\n";
 
 	if(moves.size()){
 		s += "path:\n";
-		for(auto m : moves){
+		for(const auto& m : moves){
 			if(node){
 				node = find_child(node, m);
 				s += node->to_s() + "\n";

@@ -70,8 +70,11 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 
 
 GTPResponse GTP::gtp_pv(vecstr args){
+	vector<Move> moves;
+	for(auto s : args)
+		moves.push_back(Move(s));
 	string pvstr = "";
-	vector<Move> pv = agent->get_pv();
+	vector<Move> pv = agent->get_pv(moves);
 	for(unsigned int i = 0; i < pv.size(); i++)
 		pvstr += pv[i].to_s() + " ";
 	return GTPResponse(true, pvstr);
