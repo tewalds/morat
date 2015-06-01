@@ -28,6 +28,11 @@ template <class T> T from_str(const std::string & str){
 	return ret;
 }
 
+template <class T> void from_str(T& ret, const std::string & str) {
+	std::istringstream sin(str);
+	sin >> ret;
+}
+
 
 void trim(std::string & str);
 void ltrim(std::string & str);

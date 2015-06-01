@@ -16,6 +16,14 @@ TEST_CASE("to_str", "[string]"){
 TEST_CASE("from_str", "[string]"){
 	REQUIRE(1 == from_str<int>("1"));
 	REQUIRE(1.5 == from_str<float>("1.5"));
+
+	int i;
+	from_str(i, "1");
+	REQUIRE(i == 1);
+
+	double d;
+	from_str(d, "1.5");
+	REQUIRE(d == 1.5);
 }
 
 TEST_CASE("trim", "[string]"){
