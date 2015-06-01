@@ -275,8 +275,8 @@ public:
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 	double gamelen() const;
-	vecmove get_pv() const;
-	std::string move_stats(const vecmove moves) const;
+	vecmove get_pv(const vecmove& moves) const;
+	std::string move_stats(const vecmove& moves) const;
 
 	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
 		if(limit < 0){

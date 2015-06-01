@@ -93,7 +93,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
 
 		std::string pvstr;
-		for(auto m : get_pv())
+		for(const auto& m : Agent::get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
@@ -142,6 +142,7 @@ AgentMCTS::AgentMCTS() : pool(this) {
 	visitexpand = 1;
 	prunesymmetry = false;
 	gcsolved    = 100000;
+	longestloss = false;
 
 	localreply  = 5;
 	locality    = 5;
@@ -234,13 +235,14 @@ double AgentMCTS::gamelen() const {
 	return len.avg();
 }
 
-std::vector<Move> AgentMCTS::get_pv() const {
+std::vector<Move> AgentMCTS::get_pv(const vecmove& moves) const {
 	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
+	int i = 0;
 	while(n && !n->children.empty()){
-		Move m = return_move(n, turn);
+		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
 		pv.push_back(m);
 		n = find_child(n, m);
 		turn = ~turn;
@@ -252,13 +254,16 @@ std::vector<Move> AgentMCTS::get_pv() const {
 	return pv;
 }
 
-std::string AgentMCTS::move_stats(vecmove moves) const {
-	std::string s = "";
+std::string AgentMCTS::move_stats(const vecmove& moves) const {
+	std::string s;
 	const Node * node = & root;
+
+	s += "root:\n";
+	s += node->to_s() + "\n";
 
 	if(moves.size()){
 		s += "path:\n";
-		for(auto m : moves){
+		for(const auto& m : moves){
 			if(node){
 				node = find_child(node, m);
 				s += node->to_s() + "\n";
@@ -278,29 +283,28 @@ Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
 	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
+	assert(!node->children.empty());
+
 	double val, maxval = -1000000000000.0; //1 trillion
 
-	Node * ret = NULL,
-		 * child = node->children.begin(),
-		 * end = node->children.end();
-
-	for( ; child != end; child++){
-		if(child->outcome >= Outcome::DRAW){
-			if(child->outcome == toplay)             val =  800000000000.0 - child->exp.num(); //shortest win
-			else if(child->outcome == Outcome::DRAW) val = -400000000000.0 + child->exp.num(); //longest tie
-			else                                     val = -800000000000.0 + child->exp.num(); //longest loss
+	const Node * ret = NULL;
+	for(const auto& child : node->children) {
+		if(child.outcome >= Outcome::DRAW){
+			if(child.outcome == toplay)             val =  800000000000.0 - child.exp.num(); //shortest win
+			else if(child.outcome == Outcome::DRAW) val = -400000000000.0 + child.exp.num(); //longest tie
+			else                                    val = -800000000000.0 + child.exp.num(); //longest loss
 		}else{ //not proven
 			if(msrave == -1) //num simulations
-				val = child->exp.num();
+				val = child.exp.num();
 			else if(msrave == -2) //num wins
-				val = child->exp.sum();
+				val = child.exp.sum();
 			else
-				val = child->value(msrave, 0, 0) - msexplore*sqrt(log(node->exp.num())/(child->exp.num() + 1));
+				val = child.value(msrave, 0, 0) - msexplore*sqrt(log(node->exp.num())/(child.exp.num() + 1));
 		}
 
 		if(maxval < val){
 			maxval = val;
-			ret = child;
+			ret = &child;
 		}
 	}
 

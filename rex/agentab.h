@@ -97,8 +97,8 @@ public:
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(rootboard, verbose); }
 	double gamelen() const { return rootboard.movesremain(); }
-	vecmove get_pv() const;
-	std::string move_stats(vecmove moves) const;
+	vecmove get_pv(const vecmove& moves) const;
+	std::string move_stats(const vecmove& moves) const;
 
 	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
 		log("gen_sgf not supported in the ab agent.");

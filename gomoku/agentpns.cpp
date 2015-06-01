@@ -74,7 +74,7 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
 
 		std::string pvstr;
-		for(auto m : get_pv())
+		for(auto m : Agent::get_pv())
 			pvstr += " " + m.to_s();
 		logerr("PV:         " + pvstr + "\n");
 
@@ -219,13 +219,14 @@ double AgentPNS::gamelen() const {
 	return rootboard.movesremain();
 }
 
-std::vector<Move> AgentPNS::get_pv() const {
+std::vector<Move> AgentPNS::get_pv(const vecmove& moves) const {
 	vecmove pv;
 
 	const Node * n = & root;
 	Side turn = rootboard.toplay();
+	int i = 0;
 	while(n && !n->children.empty()){
-		Move m = return_move(n, turn);
+		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
 		pv.push_back(m);
 		n = find_child(n, m);
 		turn = ~turn;
@@ -237,7 +238,7 @@ std::vector<Move> AgentPNS::get_pv() const {
 	return pv;
 }
 
-std::string AgentPNS::move_stats(vecmove moves) const {
+std::string AgentPNS::move_stats(const vecmove& moves) const {
 	std::string s = "";
 	const Node * node = & root;
 
@@ -357,5 +358,5 @@ void AgentPNS::load_sgf(SGFParser<Move> & sgf, const Board & board, Node & node)
 	}
 }
 
-}; // namespace Havannah
+}; // namespace Gomoku
 }; // namespace Morat

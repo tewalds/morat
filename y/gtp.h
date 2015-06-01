@@ -51,6 +51,7 @@ public:
 		newcallback("zobrist",         std::bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
 		newcallback("clear_board",     std::bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
 		newcallback("clear",           std::bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
+		newcallback("reset",           std::bind(&GTP::gtp_clearboard,    this, _1), "Alias for clear_board");
 		newcallback("boardsize",       std::bind(&GTP::gtp_boardsize,     this, _1), "Clear the board, set the board size");
 		newcallback("size",            std::bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
 		newcallback("play",            std::bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");

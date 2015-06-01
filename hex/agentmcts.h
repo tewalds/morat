@@ -103,7 +103,7 @@ public:
 		}
 
 		//new way, more standard way of changing over from rave scores to real scores
-		float value(float ravefactor, bool knowledge, float fpurgency){
+		float value(float ravefactor, bool knowledge, float fpurgency) const {
 			float val = fpurgency;
 			float expnum = exp.num();
 			float ravenum = rave.num();
@@ -212,6 +212,7 @@ public:
 	uint  visitexpand;//number of visits before expanding a node
 	bool  prunesymmetry; //prune symmetric children from the move list, useful for proving but likely not for playing
 	uint  gcsolved;   //garbage collect solved nodes or keep them in the tree, assuming they meet the required amount of work
+	bool  longestloss;//if we have a proven loss, if true backup the longest loss, else backup the hardest loss to solve
 
 //knowledge
 	int   localreply; //boost for a local reply, ie a move near the previous move
@@ -254,8 +255,8 @@ public:
 	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
 
 	double gamelen() const;
-	vecmove get_pv() const;
-	std::string move_stats(const vecmove moves) const;
+	vecmove get_pv(const vecmove& moves) const;
+	std::string move_stats(const vecmove& moves) const;
 
 	bool done() {
 		//solved or finished runs
@@ -298,7 +299,7 @@ public:
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, Node * backup, Side toplay);
+	bool do_backup(Node * node, const Node * backup, Side toplay);
 	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
 
 	Node * find_child(const Node * node, const Move & move) const ;

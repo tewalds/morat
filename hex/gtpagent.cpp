@@ -18,9 +18,10 @@ GTPResponse GTP::gtp_solve(vecstr args){
 	if(hist->won() >= 0)
 		return GTPResponse(true, "resign");
 
-	double use_time = (args.size() >= 1 ?
-			from_str<double>(args[0]) :
-			time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen()));
+	double use_time = (args.size() >= 1 ? from_str<double>(args[0]) : 0);
+	if (use_time == 0)
+		use_time = time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen());
+
 
 	if(verbose)
 		logerr("time remain: " + to_str(time_control.remain, 1) + ", time: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
@@ -45,10 +46,9 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 	if(hist->won() >= 0)
 		return GTPResponse(true, "resign");
 
-	double use_time = (args.size() >= 2 ?
-			from_str<double>(args[1]) :
-			time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen()));
-
+	double use_time = (args.size() >= 2 ? from_str<double>(args[1]) : 0);
+	if (use_time == 0)
+		use_time = time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen());
 
 	if(verbose)
 		logerr("time:        remain: " + to_str(time_control.remain, 1) + ", use: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
@@ -70,8 +70,11 @@ GTPResponse GTP::gtp_genmove(vecstr args){
 
 
 GTPResponse GTP::gtp_pv(vecstr args){
+	vector<Move> moves;
+	for(auto s : args)
+		moves.push_back(Move(s));
 	string pvstr = "";
-	vector<Move> pv = agent->get_pv();
+	vector<Move> pv = agent->get_pv(moves);
 	for(unsigned int i = 0; i < pv.size(); i++)
 		pvstr += pv[i].to_s() + " ";
 	return GTPResponse(true, pvstr);
@@ -144,6 +147,7 @@ GTPResponse GTP::gtp_mcts_params(vecstr args){
 			"  -x --visitexpand Number of visits before expanding a node          [" + to_str(mcts->visitexpand) + "]\n" +
 			"  -P --symmetry    Prune symmetric moves, good for proof, not play   [" + to_str(mcts->prunesymmetry) + "]\n" +
 			"     --gcsolved    Garbage collect solved nodes with fewer sims than [" + to_str(mcts->gcsolved) + "]\n" +
+			"  -L --longestloss For known losses take longest over hardest solve  [" + to_str(mcts->longestloss) + "]\n"+
 			"Node initialization knowledge, Give a bonus:\n" +
 			"  -l --localreply  based on the distance to the previous move        [" + to_str(mcts->localreply) + "]\n" +
 			"  -y --locality    to stones near other stones of the same color     [" + to_str(mcts->locality) + "]\n" +
@@ -196,6 +200,8 @@ GTPResponse GTP::gtp_mcts_params(vecstr args){
 			mcts->minimax = from_str<int>(args[++i]);
 		}else if((arg == "-P" || arg == "--symmetry") && i+1 < args.size()){
 			mcts->prunesymmetry = from_str<bool>(args[++i]);
+		}else if((arg == "-L" || arg == "--longestloss") && i+1 < args.size()){
+			mcts->longestloss = from_str<bool>(args[++i]);
 		}else if((               arg == "--gcsolved") && i+1 < args.size()){
 			mcts->gcsolved = from_str<uint>(args[++i]);
 		}else if((arg == "-r" || arg == "--userave") && i+1 < args.size()){

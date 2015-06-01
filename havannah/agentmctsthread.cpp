@@ -248,13 +248,13 @@ backup in this order:
 6 win
 5 win/draw
 4 draw if draw/loss
-3 win/draw/loss
+3 win/draw/loss, ie unknown
 2 draw
 1 draw/loss
 0 lose
 return true if fully solved, false if it's unknown or partially unknown
 */
-bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
+bool AgentMCTS::do_backup(Node * node, const Node * backup, Side toplay){
 	Outcome node_outcome = node->outcome;
 	if(node_outcome >= Outcome::DRAW) //already proven, probably by a different thread
 		return true;
@@ -262,32 +262,27 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 	if(backup->outcome == Outcome::UNKNOWN) //nothing proven by this child, so no chance
 		return false;
 
-
 	uint8_t proofdepth = backup->proofdepth;
 	if(backup->outcome != toplay){
-		uint64_t sims = 0, bestsims = 0, outcome = 0, best_outcome = 0;
+		int best_outcome = 0;
 		backup = NULL;
 
-		Node * child = node->children.begin(),
-			 * end = node->children.end();
-
-		for( ; child != end; child++){
-			Outcome child_outcome = child->outcome; //save a copy to avoid race conditions
-
-			if(proofdepth < child->proofdepth+1)
-				proofdepth = child->proofdepth+1;
+		for (const auto& child : node->children) {
+			Outcome child_outcome = child.outcome; //save a copy to avoid race conditions
+			int outcome = 0;
 
 			//these should be sorted in likelyness of matching, most likely first
 			if(child_outcome == Outcome::UNKNOWN){ // win/draw/loss
 				outcome = 3;
 			}else if(child_outcome == toplay){ //win
-				backup = child;
-				outcome = 6;
-				proofdepth = child->proofdepth+1;
+				backup = &child;
+				best_outcome = 6;
+				proofdepth = child.proofdepth;
 				break;
 			}else if(child_outcome == ~toplay){ //loss
 				outcome = 0;
-			}else if(child_outcome == Outcome::DRAW){ //draw
+			}else if(child_outcome == Outcome::DRAW ||
+			         child_outcome == Outcome::DRAW2){ //draw
 				if(node_outcome == -toplay) //draw/loss, ie I can't win
 					outcome = 4;
 				else
@@ -301,15 +296,35 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 				assert(false && "How'd I get here? All outcomes should be tested above");
 			}
 
-			sims = child->exp.num();
-			if(best_outcome < outcome){ //better outcome is always preferable
+			if(proofdepth < child.proofdepth)
+				proofdepth = child.proofdepth;
+
+			auto better_than_best = [&]() -> bool {
+				// any child is better than nothing
+				if (backup == NULL)
+					return true;
+
+				// a better outcome is always preferable
+				if (best_outcome < outcome)
+					return true;
+				if (best_outcome > outcome)
+					return false;
+
+				// do we care about depth? if so, take the longest.
+				if (longestloss) {
+					if (backup->proofdepth < child.proofdepth)
+						return true;
+					if (backup->proofdepth > child.proofdepth)
+						return false;
+				}
+
+				// all else equal, take the hardest to solve
+				return (backup->exp.num() < child.exp.num());
+			};
+
+			if (better_than_best()) {
 				best_outcome = outcome;
-				bestsims = sims;
-				backup = child;
-			}else if(best_outcome == outcome && ((outcome == 0 && bestsims < sims) || bestsims > sims)){
-				//find long losses or easy wins/draws
-				bestsims = sims;
-				backup = child;
+				backup = &child;
 			}
 		}
 
@@ -319,7 +334,7 @@ bool AgentMCTS::do_backup(Node * node, Node * backup, Side toplay){
 
 	if(node->outcome.cas(node_outcome, backup->outcome)){
 		node->bestmove = backup->move;
-		node->proofdepth = proofdepth;
+		node->proofdepth = proofdepth + 1;
 	}else //if it was in a race, try again, might promote a partial solve to full solve
 		return do_backup(node, backup, toplay);
 

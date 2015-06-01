@@ -294,5 +294,5 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	return true;
 }
 
-}; // namespace Havannah
+}; // namespace Gomoku
 }; // namespace Morat
