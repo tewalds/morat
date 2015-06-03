@@ -4,6 +4,7 @@
 
 # object files
 *.o
+*.o-*
 
 # executables
 morat-*
