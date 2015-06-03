@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "../lib/base_board.h"
 #include "../lib/bitcount.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
@@ -46,11 +47,11 @@ static MoveValid * staticneighbourlist[20] = {
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, 
+	NULL, NULL, NULL, NULL, NULL,
 }; //one per boardsize
 
 
-class Board{
+class Board : public BaseBoard {
 public:
 
 	static constexpr const char * name = "gomoku";
@@ -61,7 +62,6 @@ public:
 	static const int num_win_types = 1;
 
 	static const int pattern_cells = 24;
-	typedef uint64_t Pattern;
 
 	struct Cell {
 		Side    piece;   //who controls this cell, 0 for none, 1,2 for players
@@ -74,95 +74,28 @@ public:
 		std::string to_s(int i) const;
 	};
 
-	class MoveIterator { //only returns valid moves...
-		const Board & board;
-		int lineend;
-		MoveValid move;
-		bool unique;
-		HashSet hashes;
-	public:
-		MoveIterator(const Board & b, bool Unique) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
-			if(board.outcome >= Outcome::DRAW){
-				move = MoveValid(0, board.get_size(), -1); //already done
-			} else {
-				if(unique)
-					hashes.init(board.movesremain());
-				++(*this); //find the first valid move
-			}
-		}
-
-		const MoveValid & operator * ()  const { return move; }
-		const MoveValid * operator -> () const { return & move; }
-		bool done() const { return (move.y >= board.get_size()); }
-		bool operator == (const Board::MoveIterator & rhs) const { return (move == rhs.move); }
-		bool operator != (const Board::MoveIterator & rhs) const { return (move != rhs.move); }
-		MoveIterator & operator ++ (){ //prefix form
-			while(true){
-				do{
-					move.x++;
-					move.xy++;
-
-					if(move.x >= lineend){
-						move.y++;
-						if(move.y >= board.get_size()){ //done
-							move.xy = -1;
-							return *this;
-						}
-						move.x = board.linestart(move.y);
-						move.xy = board.xy(move.x, move.y);
-						lineend = board.lineend(move.y);
-					}
-				}while(!board.valid_move_fast(move));
-
-				if(unique){
-					uint64_t h = board.test_hash(move, board.toplay());
-					if(!hashes.add(h))
-						continue;
-				}
-				break;
-			}
-			return *this;
-		}
-	};
 
 private:
-	char size; //the length of one side
-	char sizem1; //size - 1
-
-	short num_cells;
-	short nummoves;
-	Move last;
-	Side toPlay;
-	Outcome outcome;
-	char wintype; //0 no win, 1 = 5 in a row
 
 	std::vector<Cell> cells;
-	Zobrist<1> hash;
+	Zobrist<1> hash_;
 	const MoveValid * neighbourlist;
 
 public:
-	Board(){
-		size = 0;
-	}
+	Board() : BaseBoard() {	}
 
-	Board(int s){
-		size = s;
-		sizem1 = s - 1;
-		last = M_NONE;
-		nummoves = 0;
-		toPlay = Side::P1;
-		outcome = Outcome::UNKNOWN;
-		wintype = 0;
+	Board(int s) : BaseBoard() {
+		size_x_ = s;
+		size_y_ = s;
 		neighbourlist = get_neighbour_list();
-		num_cells = vecsize();
 
-		cells.resize(vecsize());
+		cells.resize(vec_size());
 
-		for(int y = 0; y < size; y++){
-			for(int x = 0; x < size; x++){
+		for(int y = 0; y < size_y_; y++){
+			for(int x = 0; x < size_x_; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
-				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
+				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_large_hood(i); i < e; i++){
 					if(!i->onboard())
 						p |= j;
 					j <<= 2;
@@ -173,25 +106,9 @@ public:
 		}
 	}
 
-/*	~Board(){
-		printf("~Board");
-	}
-*/
-	int memsize() const { return sizeof(Board) + sizeof(Cell)*vecsize(); }
+	~Board() {}
 
-	int get_size() const{ return size; }
-
-	int vecsize() const { return size*size; }
-	int numcells() const { return num_cells; }
-
-	int num_moves() const { return nummoves; }
-	int movesremain() const { return (won() >= Outcome::DRAW ? 0 : num_cells - nummoves); }
-
-	int xy(int x, int y)   const { return   y*size +   x; }
-	int xy(const Move & m) const { return m.y*size + m.x; }
-	int xy(const MoveValid & m) const { return m.xy; }
-
-	MoveValid yx(int i) const { return MoveValid(i % size, i / size, i); }
+	int mem_size() const { return sizeof(Board) + sizeof(Cell) * vec_size(); }
 
 	int dist(const Move & a, const Move & b) const {
 		return std::max(abs(a.x - b.x), abs(a.y - b.y));
@@ -203,12 +120,9 @@ public:
 	const Cell * cell(const MoveValid & m) const { return cell(m.xy); }
 
 	//assumes valid x,y
-	Side get(int i)          const { return cells[i].piece; }
-	Side get(int x, int y)   const { return get(xy(x, y)); }
-	Side get(const Move & m) const { return get(xy(m)); }
-	Side get(const MoveValid & m) const { return get(m.xy); }
+	using BaseBoard::get;
+	Side get(i16 i)          const { return cells[i].piece; }
 
-	Side geton(const MoveValid & m) const { return (m.onboard() ? get(m.xy) : Side::UNDEF); }
 
 	int local(const MoveValid & m, Side turn) const { return local(m.xy, turn); }
 	int local(const Move      & m, Side turn) const { return local(xy(m), turn); }
@@ -221,44 +135,26 @@ public:
 		       (p & 0xFFFF00000000 ? 1 : 0);
 	}
 
-
-	//assumes x, y are in array bounds
-	bool onboard_fast(int x, int y)   const { return true; }
-	bool onboard_fast(const Move & m) const { return true; }
-	//checks array bounds too
-	bool onboard(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size &&   y < size && onboard_fast(x, y) ); }
-	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size && m.y < size && onboard_fast(m) ); }
-	bool onboard(const MoveValid & m) const { return m.onboard(); }
-
-	//assumes x, y are in bounds and the game isn't already finished
-	bool valid_move_fast(int i)               const { return get(i) == Side::NONE; }
-	bool valid_move_fast(int x, int y)        const { return valid_move_fast(xy(x, y)); }
-	bool valid_move_fast(const Move & m)      const { return valid_move_fast(xy(m)); }
-	bool valid_move_fast(const MoveValid & m) const { return valid_move_fast(m.xy); }
-	//checks array bounds too
-	bool valid_move(int x, int y)        const { return (outcome < Outcome::DRAW && onboard(x, y) && valid_move_fast(x, y)); }
-	bool valid_move(const Move & m)      const { return (outcome < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
-	bool valid_move(const MoveValid & m) const { return (outcome < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
+	bool test_local(const MoveValid & pos, Side turn) const {
+		return (local(pos, turn) == 3);
+	}
 
 	//iterator through neighbours of a position
-	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
-	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return &neighbourlist[i*24]; }
-
-	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
-	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
-	const MoveValid * nb_end(int i)          const { return nb_end(nb_begin(i)); }
-	const MoveValid * nb_end(const MoveValid * m) const { return m + 8; }
-	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 16; }
-	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 24; }
+	using BaseBoard::nb_begin;
+	const MoveValid * nb_begin(i16 i) const { return &neighbourlist[i*24]; }
+	using BaseBoard::nb_end;
+	const MoveValid * nb_end(i16 i)   const { return nb_end_small_hood(nb_begin(i)); }
+	const MoveValid * nb_end_small_hood( const MoveValid * m) const { return m + 8; }
+	const MoveValid * nb_end_medium_hood(const MoveValid * m) const { return m + 16; }
+	const MoveValid * nb_end_large_hood( const MoveValid * m) const { return m + 24; }
 
 	MoveValid * get_neighbour_list() {
-		if(!staticneighbourlist[(int)size]){
-			MoveValid * list = new MoveValid[vecsize()*24];
+		if(!staticneighbourlist[(int)size_x_]){
+			MoveValid * list = new MoveValid[vec_size()*24];
 			MoveValid * a = list;
-			for(int y = 0; y < size; y++){
-				for(int x = 0; x < size; x++){
-					Move pos(x,y);
+			for(int y = 0; y < size_y_; y++){
+				for(int x = 0; x < size_x_; x++){
+					Move pos(x, y);
 
 					for(int i = 0; i < 24; i++){
 						Move loc = pos + neighbours[i];
@@ -268,85 +164,42 @@ public:
 				}
 			}
 
-			staticneighbourlist[(int)size] = list;
+			staticneighbourlist[(int)size_x_] = list;
 		}
 
-		return staticneighbourlist[(int)size];
+		return staticneighbourlist[(int)size_x_];
 	}
 
-	int linestart(int y) const { return 0; }
-	int lineend(int y)   const { return size; }
-	int linelen(int y)   const { return size; }
-
-	std::string to_s(bool color) const;
+	using BaseBoard::to_s;
 	std::string to_s(bool color, std::function<std::string(Move)> func) const;
 
-	friend std::ostream& operator<< (std::ostream &out, const Board & b) { return out << b.to_s(true); }
-
-	void print(bool color = true) const {
-		printf("%s", to_s(color).c_str());
-	}
-
-	Outcome won() const {
-		return outcome;
-	}
-
-	char getwintype() const { return wintype; }
-
-	Side toplay() const {
-		return toPlay;
-	}
-
-	MoveIterator moveit(bool unique = false) const {
-		return MoveIterator(*this, false);
-	}
-
 	void set(const Move & m, bool perm = true) {
-		last = m;
+		last_move_ = m;
 		Cell * cell = & cells[xy(m)];
-		cell->piece = toPlay;
+		cell->piece = to_play_;
 		cell->perm = perm;
-		nummoves++;
-		toPlay = ~toPlay;
+		moves_made_++;
+		to_play_ = ~to_play_;
 	}
 
 	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
-		toPlay = ~toPlay;
-		nummoves--;
+		to_play_ = ~to_play_;
+		moves_made_--;
 		Cell * cell = & cells[xy(m)];
 		cell->piece = Side::NONE;
 		cell->perm = 0;
 	}
 
-	hash_t gethash() const {
-		return hash.get(0);
+	hash_t hash() const {
+		return hash_.get(0);
 	}
 
-	std::string hashstr() const {
-		static const char hexlookup[] = "0123456789abcdef";
-		char buf[19] = "0x";
-		hash_t val = gethash();
-		for(int i = 15; i >= 0; i--){
-			buf[i+2] = hexlookup[val & 15];
-			val >>= 4;
-		}
-		buf[18] = '\0';
-		return (char *)buf;
+	void update_hash(const MoveValid & m, Side side) {
+		hash_.update(0, 3 * m.xy + side.to_i());
 	}
 
-	void update_hash(const Move & pos, Side side) {
-		int turn = side.to_i();
-		hash.update(0, 3*xy(pos) + turn);
-		return;
-	}
-
-	hash_t test_hash(const Move & pos) const {
-		return test_hash(pos, toplay());
-	}
-
-	hash_t test_hash(const Move & pos, Side side) const {
-		int turn = side.to_i();
-		return hash.test(0, 3*xy(pos) + turn);
+	hash_t test_hash(const MoveValid & m, Side side) const {
+		return hash_.test(0, 3 * m.xy + side.to_i());
 	}
 
 	Pattern sympattern(const MoveValid & pos) const { return sympattern(pos.xy); }
@@ -417,29 +270,31 @@ public:
 		return m;
 	}
 
-	bool move(const Move & pos, bool checkwin = true, bool permanent = true) {
-		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
+	i16 knowledge() const {
+		return 0;
 	}
-	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true) {
-		assert(outcome < Outcome::DRAW);
 
-		if(!valid_move(pos))
+	using BaseBoard::move;
+	bool move(const MoveValid & m, bool checkwin = true, bool permanent = true) {
+		assert(outcome_ < Outcome::DRAW);
+
+		if(!valid_move(m))
 			return false;
 
-		Side turn = toplay();
+		Side turn = to_play();
 
 		if(checkwin) {
-			outcome = test_outcome(pos, turn);
-			if(outcome > Outcome::DRAW) {
-				wintype = 1;
+			outcome_ = test_outcome(m, turn);
+			if(outcome_ > Outcome::DRAW) {
+				win_type_ = 1;
 			}
 		}
 
-		set(pos, permanent);
+		set(m, permanent);
 
 		// update the nearby patterns
 		Pattern p = turn.to_i();
-		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
+		for(const MoveValid * i = nb_begin(m.xy), *e = nb_end_large_hood(i); i < e; i++){
 			if(i->onboard()){
 				cells[i->xy].pattern |= p;
 			}
@@ -449,31 +304,24 @@ public:
 		return true;
 	}
 
-	bool test_local(const Move & pos, Side turn) const { return test_local(MoveValid(pos, xy(pos)), turn); }
-	bool test_local(const MoveValid & pos, Side turn) const {
-		return (local(pos, turn) == 3);
-	}
-
 	//test if making this move would win, but don't actually make the move
-	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, toplay()); }
-	Outcome test_outcome(const Move & pos, Side turn) const { return test_outcome(MoveValid(pos, xy(pos)), turn); }
-	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, toplay()); }
-	Outcome test_outcome(const MoveValid & pos, Side turn) const {
-		if (test_local(pos, turn)) {
+	using BaseBoard::test_outcome;
+	Outcome test_outcome(const MoveValid & m, Side turn) const {
+		if (test_local(m, turn)) {
 			for (int d = 0; d < 4; d++) {
 				int num = 1;
-				MoveValid nb = pos;
+				MoveValid nb = m;
 				for (int i = 0; i < 4; i++) {
-					nb = nb_begin(nb)[d];
-					if (nb.onboard() && get(nb) == turn)
+					nb = BaseBoard::nb_begin(nb)[d];
+					if (nb.onboard() && BaseBoard::get(nb) == turn)
 						num++;
 					else
 						break;
 				}
-				nb = pos;
+				nb = m;
 				for (int i = 0; i < 4; i++) {
-					nb = nb_begin(nb)[d + 4];
-					if (nb.onboard() && get(nb) == turn)
+					nb = BaseBoard::nb_begin(nb)[d + 4];
+					if (nb.onboard() && BaseBoard::get(nb) == turn)
 						num++;
 					else
 						break;
@@ -483,7 +331,7 @@ public:
 			}
 		}
 
-		if(nummoves+1 == num_cells)
+		if(moves_made_+1 == num_cells())
 			return Outcome::DRAW;
 
 		return Outcome::UNKNOWN;

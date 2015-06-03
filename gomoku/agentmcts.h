@@ -172,8 +172,8 @@ public:
 		void walk_tree(Board & board, Node * node, int depth);
 		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
-		Node * choose_move(const Node * node, Side toplay, int remain) const;
-		void update_rave(const Node * node, Side toplay);
+		Node * choose_move(const Node * node, Side to_play, int remain) const;
+		void update_rave(const Node * node, Side to_play);
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
 
 		Outcome rollout(Board & board, Move move, int depth);
@@ -246,7 +246,7 @@ public:
 	void move(const Move & m);
 
 	void search(double time, uint64_t maxruns, int verbose);
-	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
+	Move return_move(int verbose) const { return return_move(& root, rootboard.to_play(), verbose); }
 
 	double gamelen() const;
 	vecmove get_pv(const vecmove& moves) const;
@@ -254,7 +254,7 @@ public:
 
 	bool done() {
 		//solved or finished runs
-		return (rootboard.won() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
+		return (rootboard.outcome() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
 	}
 
 	bool need_gc() {
@@ -283,7 +283,7 @@ public:
 	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
 		if(limit < 0)
 			limit = root.exp.num()/1000;
-		gen_sgf(sgf, limit, root, rootboard.toplay());
+		gen_sgf(sgf, limit, root, rootboard.to_play());
 	}
 
 	void load_sgf(SGFParser<Move> & sgf) {
@@ -293,8 +293,8 @@ public:
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, const Node * backup, Side toplay);
-	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
+	bool do_backup(Node * node, const Node * backup, Side to_play);
+	Move return_move(const Node * node, Side to_play, int verbose = 0) const;
 
 	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);

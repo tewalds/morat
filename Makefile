@@ -31,8 +31,10 @@ all: morat-gomoku morat-havannah morat-hex morat-pentago morat-rex morat-y
 
 test: \
 		lib/test.o \
+		lib/base_board.o \
 		lib/fileio.o \
 		lib/move_test.o \
+		lib/move_iterator.o \
 		lib/outcome.o \
 		lib/outcome_test.o \
 		lib/sgf_test.o \
@@ -94,8 +96,10 @@ morat-gomoku: \
 		gomoku/board.o \
 		gomoku/gtpgeneral.o \
 		gomoku/gtpagent.o \
+		lib/base_board.o \
 		lib/fileio.o \
 		lib/gtpcommon.o \
+		lib/move_iterator.o \
 		lib/outcome.o \
 		lib/string.o \
 		lib/zobrist.o \

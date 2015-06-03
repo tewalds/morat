@@ -10,11 +10,6 @@ std::string Board::Cell::to_s(int i) const {
 		", pattern: " + to_str((int)pattern);
 }
 
-std::string empty(Move m) { return "."; }
-
-std::string Board::to_s(bool color) const {
-	return to_s(color, empty);
-}
 std::string Board::to_s(bool color, std::function<std::string(Move)> func) const {
 	using std::string;
 	string white = "O",
@@ -31,23 +26,23 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 
 	string s;
 	s += ' ';
-	for(int i = 0; i < size; i++)
+	for(int i = 0; i < size_x_; i++)
 		s += " " + coord + to_str(i+1);
 	s += "\n";
 
-	for(int y = 0; y < size; y++){
+	for(int y = 0; y < size_y_; y++){
 		s += coord + char('A' + y);
-		int end = lineend(y);
-		for(int x = linestart(y); x < end; x++){
-			s += (last == Move(x, y)   ? coord + "[" :
-			      last == Move(x-1, y) ? coord + "]" : " ");
+		int end = line_end(y);
+		for(int x = line_start(y); x < end; x++){
+			s += (last_move_ == Move(x, y)   ? coord + "[" :
+			      last_move_ == Move(x-1, y) ? coord + "]" : " ");
 			Side p = get(x, y);
 			if(     p == Side::NONE) s += reset + func(Move(x, y));
 			else if(p == Side::P1)   s += white;
 			else if(p == Side::P2)   s += black;
 			else                     s += "?";
 		}
-		s += (last == Move(end-1, y) ? coord + "]" : " ");
+		s += (last_move_ == Move(end-1, y) ? coord + "]" : " ");
 		s += '\n';
 	}
 

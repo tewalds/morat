@@ -25,8 +25,8 @@ public:
 	// only need to save the valid moves once since all the rollouts start from the same position
 	void prepare(const Board & board) {
 		num = 0;
-		for(auto m = board.moveit(false); !m.done(); ++m)
-			moves[num++] = *m;
+		for (auto m : board)
+			moves[num++] = m;
 	}
 
 	// reset the set of moves to make from above. Since they're used in random order they don't need to be in iterator order

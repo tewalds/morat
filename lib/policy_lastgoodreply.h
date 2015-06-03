@@ -22,7 +22,7 @@ public:
 
 	Move choose_move(const Board & board, const Move & prev) const {
 		if (enabled && prev != M_SWAP) {
-			Move move = goodreply[board.toplay().to_i() - 1][board.xy(prev)];
+			Move move = goodreply[board.to_play().to_i() - 1][board.xy(prev)];
 			if(move != M_UNKNOWN && board.valid_move_fast(move))
 				return move;
 		}

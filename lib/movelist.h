@@ -30,7 +30,7 @@ struct MoveList {
 		board = b;
 		exp[0].clear();
 		exp[1].clear();
-		for(int i = 0; i < b->vecsize(); i++){
+		for(int i = 0, vec_size = b->vec_size(); i < vec_size; i++){
 			rave[0][i].clear();
 			rave[1][i].clear();
 		}

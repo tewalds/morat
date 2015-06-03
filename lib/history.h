@@ -37,7 +37,7 @@ public:
 	std::vector<Move>::const_iterator end()   const { return hist.end(); }
 
 	const Board get_board() const {
-		Board b(board.get_size());
+		Board b(board.size());
 		for(auto m : hist)
 			b.move(m);
 		return b;

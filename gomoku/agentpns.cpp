@@ -42,7 +42,7 @@ void AgentPNS::test() {
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
-	if(rootboard.won() >= 0)
+	if(rootboard.outcome() >= Outcome::DRAW)
 		return;
 
 	Time starttime;
@@ -66,12 +66,12 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 			logerr("Tree depth:  " + treelen.to_s() + "\n");
 		}
 
-		Side toplay = rootboard.toplay();
+		Side to_play = rootboard.to_play();
 
 		logerr("Root:        " + root.to_s() + "\n");
-		Outcome outcome = root.to_outcome(~toplay);
+		Outcome outcome = root.to_outcome(~to_play);
 		if(outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
+			logerr("Solved as a " + outcome.to_s_rel(to_play) + "\n");
 
 		std::string pvstr;
 		for(auto m : Agent::get_pv())
@@ -101,27 +101,27 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 		if(!node->children.lock())
 			return false;
 
-		int numnodes = board.movesremain();
+		int numnodes = board.moves_remain();
 		CompactTree<Node>::Children temp;
 		temp.alloc(numnodes, agent->ctmem);
 
 		unsigned int i = 0;
-		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		for(auto move : board) { // TODO: symmetry?
 			unsigned int pd;
 			Outcome outcome;
 
 			if(agent->ab){
 				Board next = board;
-				next.move(*move);
+				next.move(move);
 
 				pd = 0;
 				outcome = (agent->ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
 			}else{
 				pd = 1;
-				outcome = board.test_outcome(*move);
+				outcome = board.test_outcome(move);
 			}
 
-			temp[i] = Node(*move).outcome(outcome, board.toplay(), agent->ties, pd);
+			temp[i] = Node(move).outcome(outcome, board.to_play(), agent->ties, pd);
 			i++;
 		}
 		nodes_seen += i;
@@ -216,14 +216,14 @@ bool AgentPNS::AgentThread::updatePDnum(Node * node){
 
 double AgentPNS::gamelen() const {
 	//TODO: how to calculate this?
-	return rootboard.movesremain();
+	return rootboard.moves_remain();
 }
 
 std::vector<Move> AgentPNS::get_pv(const vecmove& moves) const {
 	vecmove pv;
 
 	const Node * n = & root;
-	Side turn = rootboard.toplay();
+	Side turn = rootboard.to_play();
 	int i = 0;
 	while(n && !n->children.empty()){
 		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
@@ -260,7 +260,7 @@ std::string AgentPNS::move_stats(const vecmove& moves) const {
 	return s;
 }
 
-Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
+Move AgentPNS::return_move(const Node * node, Side to_play, int verbose) const {
 	double val, maxval = -1000000000000.0; //1 trillion
 
 	Node * ret = NULL,
@@ -268,9 +268,9 @@ Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		Outcome outcome = child->to_outcome(toplay);
+		Outcome outcome = child->to_outcome(to_play);
 		if(outcome >= Outcome::DRAW){
-			if(     outcome == +toplay)       val =  800000000000.0 - (double)child->work; //shortest win
+			if(     outcome == +to_play)       val =  800000000000.0 - (double)child->work; //shortest win
 			else if(outcome == Outcome::DRAW) val = -400000000000.0 + (double)child->work; //longest tie
 			else                              val = -800000000000.0 + (double)child->work; //longest loss
 		}else{ //not proven
@@ -315,11 +315,11 @@ void AgentPNS::garbage_collect(Node * node){
 
 void AgentPNS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
-	node->children.alloc(board.movesremain(), ctmem);
+	node->children.alloc(board.moves_remain(), ctmem);
 	unsigned int i = 0;
-	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
-		Outcome outcome = board.test_outcome(*move);
-		node->children[i] = Node(*move).outcome(outcome, board.toplay(), ties, 1);
+	for (auto move : board) {
+		Outcome outcome = board.test_outcome(move);
+		node->children[i] = Node(move).outcome(outcome, board.to_play(), ties, 1);
 		i++;
 	}
 	PLUS(nodes, i);

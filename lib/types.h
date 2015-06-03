@@ -22,6 +22,7 @@ typedef  int64_t i64;
 typedef uint64_t u64;
 
 typedef uint64_t hash_t;
+typedef uint64_t Pattern;
 
 #if __WORDSIZE == 16
 	typedef  int16_t iword;

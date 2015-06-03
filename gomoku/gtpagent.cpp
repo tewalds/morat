@@ -15,12 +15,12 @@ GTPResponse GTP::gtp_move_stats(vecstr args){
 }
 
 GTPResponse GTP::gtp_solve(vecstr args){
-	if(hist->won() >= 0)
+	if(hist->outcome() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 1 ? from_str<double>(args[0]) : 0);
 	if (use_time == 0)
-		use_time = time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen());
+		use_time = time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen());
 
 
 	if(verbose)
@@ -43,12 +43,12 @@ GTPResponse GTP::gtp_solve(vecstr args){
 
 
 GTPResponse GTP::gtp_genmove(vecstr args){
-	if(hist->won() >= 0)
+	if(hist->outcome() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 2 ? from_str<double>(args[1]) : 0);
 	if (use_time == 0)
-		use_time = time_control.get_time(hist.len(), hist->movesremain(), agent->gamelen());
+		use_time = time_control.get_time(hist.len(), hist->moves_remain(), agent->gamelen());
 
 	if(verbose)
 		logerr("time:        remain: " + to_str(time_control.remain, 1) + ", use: " + to_str(use_time, 3) + ", sims: " + to_str(time_control.max_sims) + "\n");
