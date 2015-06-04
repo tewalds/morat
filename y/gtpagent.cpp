@@ -15,7 +15,7 @@ GTPResponse GTP::gtp_move_stats(vecstr args){
 }
 
 GTPResponse GTP::gtp_solve(vecstr args){
-	if(hist->won() >= 0)
+	if(hist->outcome() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 1 ? from_str<double>(args[0]) : 0);
@@ -43,7 +43,7 @@ GTPResponse GTP::gtp_solve(vecstr args){
 
 
 GTPResponse GTP::gtp_genmove(vecstr args){
-	if(hist->won() >= 0)
+	if(hist->outcome() >= 0)
 		return GTPResponse(true, "resign");
 
 	double use_time = (args.size() >= 2 ? from_str<double>(args[1]) : 0);

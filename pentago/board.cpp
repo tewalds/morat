@@ -34,7 +34,7 @@ Board::Board(std::string str) {
 	sides[1] = 0;
 	sides[2] = 0;
 	num_moves_ = 0;
-	outcome = -4;
+	outcome_ = -4;
 	cached_score = default_score;
 	cached_hash = 0;
 

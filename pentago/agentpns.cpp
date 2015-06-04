@@ -43,7 +43,7 @@ void AgentPNS::test() {
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
-	if(rootboard.won() >= 0)
+	if(rootboard.outcome() >= 0)
 		return;
 
 	Time starttime;
@@ -119,7 +119,7 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				outcome = solve1ply(move.board(), pd);
 			}else{
 				pd = 1;
-				outcome = move.board().won();
+				outcome = move.board().outcome();
 			}
 
 			temp[i] = Node(*move).outcome(outcome, board.to_play(), agent->ties, pd);
@@ -318,7 +318,7 @@ void AgentPNS::create_children_simple(const Board & board, Node * node){
 	node->children.alloc(board.moves_avail(), ctmem);
 	unsigned int i = 0;
 	for(MoveIterator move(board); !move.done(); ++move){
-		Outcome outcome = move.board().won();
+		Outcome outcome = move.board().outcome();
 		node->children[i] = Node(*move).outcome(outcome, board.to_play(), ties, 1);
 		i++;
 	}

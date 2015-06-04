@@ -44,7 +44,7 @@ class Board{
 	uint64_t sides[3]; // sides[0] = sides[1] | sides[2]; bitmap of position for each side
 	uint8_t num_moves_;  // how many moves have been made so far
 	Side    to_play_;   // who's turn is it next, 1|2
-	mutable Outcome outcome; //-3 = unknown, 0 = tie, 1,2 = player win
+	mutable Outcome outcome_; //-3 = unknown, 0 = tie, 1,2 = player win
 	mutable int16_t cached_score;
 	mutable uint64_t cached_hash;
 	static const int16_t default_score = 0xDEAD;
@@ -64,7 +64,7 @@ public:
 		sides[2] = 0;
 		num_moves_ = 0;
 		to_play_ = Side::P1;
-		outcome = Outcome::UNDEF;
+		outcome_ = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 	}
@@ -75,7 +75,7 @@ public:
 	static void test();
 
 	int moves_made() const { return num_moves_; }
-	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : 36 - num_moves_); }
+	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : 36 - num_moves_); }
 	int moves_avail() const { return moves_remain()*8; } //upper bound
 
 	int get_size() const {
@@ -106,10 +106,10 @@ public:
 		return to_play_;
 	}
 
-	Outcome won() const {
-		if(outcome == Outcome::UNDEF)
-			outcome = won_calc();
-		return outcome;
+	Outcome outcome() const {
+		if(outcome_ == Outcome::UNDEF)
+			outcome_ = won_calc();
+		return outcome_;
 	}
 	Outcome won_calc() const {
 		Outcome wonside = Outcome::DRAW;
@@ -154,7 +154,7 @@ public:
 	}
 
 	bool move(Move m){
-		assert(outcome < 0);
+		assert(outcome_ < 0);
 
 		//TODO: only call valid_move if the move didn't come from an iterator?
 		if(!valid_move(m))
@@ -179,7 +179,7 @@ public:
 
 		num_moves_++;
 		to_play_ = ~to_play_;
-		outcome = Outcome::UNDEF;
+		outcome_ = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 
@@ -214,7 +214,7 @@ public:
 
 		num_moves_++;
 		to_play_ = ~to_play_;
-		outcome = Outcome::UNDEF;
+		outcome_ = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 
@@ -246,7 +246,7 @@ public:
 
 		sides[0] = sides[1] | sides[2];
 
-		outcome = Outcome::UNDEF;
+		outcome_ = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
 

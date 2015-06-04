@@ -110,7 +110,7 @@ GTPResponse GTP::play(const std::string & pos, Side to_play){
 	if(to_play != hist->to_play())
 		return GTPResponse(false, "It is the other player's turn!");
 
-	if(hist->won() >= Outcome::DRAW)
+	if(hist->outcome() >= Outcome::DRAW)
 		return GTPResponse(false, "The game is already over.");
 
 	Move m(pos);
@@ -121,7 +121,7 @@ GTPResponse GTP::play(const std::string & pos, Side to_play){
 	move(m);
 
 	if(verbose >= 2)
-		logerr("Placement: " + m.to_s() + ", outcome: " + hist->won().to_s() + "\n" + hist->to_s(colorboard));
+		logerr("Placement: " + m.to_s() + ", outcome: " + hist->outcome().to_s() + "\n" + hist->to_s(colorboard));
 
 	return GTPResponse(true);
 }
@@ -161,7 +161,7 @@ GTPResponse GTP::gtp_playblack(vecstr args){
 }
 
 GTPResponse GTP::gtp_winner(vecstr args){
-	return GTPResponse(true, hist->won().to_s());
+	return GTPResponse(true, hist->outcome().to_s());
 }
 
 GTPResponse GTP::gtp_name(vecstr args){

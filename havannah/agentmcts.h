@@ -268,7 +268,7 @@ public:
 
 	bool done() {
 		//solved or finished runs
-		return (rootboard.won() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
+		return (rootboard.outcome() >= Outcome::DRAW || root.outcome >= Outcome::DRAW || (maxruns > 0 && runs >= maxruns));
 	}
 
 	bool need_gc() {

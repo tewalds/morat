@@ -82,7 +82,7 @@ public:
 		HashSet hashes;
 	public:
 		MoveIterator(const Board & b, bool Unique) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
-			if(board.outcome >= Outcome::DRAW){
+			if(board.outcome_ >= Outcome::DRAW){
 				move = MoveValid(0, board.get_size(), -1); //already done
 			} else {
 				if(unique)
@@ -133,7 +133,7 @@ private:
 	short num_moves_;
 	Move last_move_;
 	Side to_play_;
-	Outcome outcome;
+	Outcome outcome_;
 	char win_type_; //0 no win, 1 = 5 in a row
 
 	std::vector<Cell> cells;
@@ -151,7 +151,7 @@ public:
 		last_move_ = M_NONE;
 		num_moves_ = 0;
 		to_play_ = Side::P1;
-		outcome = Outcome::UNKNOWN;
+		outcome_ = Outcome::UNKNOWN;
 		win_type_ = 0;
 		neighbourlist = get_neighbour_list();
 		num_cells_ = vec_size();
@@ -185,7 +185,7 @@ public:
 	int num_cells() const { return num_cells_; }
 
 	int moves_made() const { return num_moves_; }
-	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
+	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
 
 	int xy(int x, int y)   const { return   y*size +   x; }
 	int xy(const Move & m) const { return m.y*size + m.x; }
@@ -236,9 +236,9 @@ public:
 	bool valid_move_fast(const Move & m)      const { return valid_move_fast(xy(m)); }
 	bool valid_move_fast(const MoveValid & m) const { return valid_move_fast(m.xy); }
 	//checks array bounds too
-	bool valid_move(int x, int y)        const { return (outcome < Outcome::DRAW && onboard(x, y) && valid_move_fast(x, y)); }
-	bool valid_move(const Move & m)      const { return (outcome < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
-	bool valid_move(const MoveValid & m) const { return (outcome < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
+	bool valid_move(int x, int y)        const { return (outcome_ < Outcome::DRAW && onboard(x, y) && valid_move_fast(x, y)); }
+	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
+	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
 
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
@@ -287,8 +287,8 @@ public:
 		printf("%s", to_s(color).c_str());
 	}
 
-	Outcome won() const {
-		return outcome;
+	Outcome outcome() const {
+		return outcome_;
 	}
 
 	char win_type() const { return win_type_; }
@@ -421,7 +421,7 @@ public:
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
 	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true) {
-		assert(outcome < Outcome::DRAW);
+		assert(outcome_ < Outcome::DRAW);
 
 		if(!valid_move(pos))
 			return false;
@@ -429,8 +429,8 @@ public:
 		Side turn = to_play();
 
 		if(checkwin) {
-			outcome = test_outcome(pos, turn);
-			if(outcome > Outcome::DRAW) {
+			outcome_ = test_outcome(pos, turn);
+			if(outcome_ > Outcome::DRAW) {
 				win_type_ = 1;
 			}
 		}

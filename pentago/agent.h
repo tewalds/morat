@@ -47,7 +47,7 @@ protected:
 		Side turn = board.to_play();
 		for(MoveIterator move(board); !move.done(); ++move){
 			++nodes;
-			Outcome won = move.board().won();
+			Outcome won = move.board().outcome();
 
 			if(won == +turn)
 				return won;

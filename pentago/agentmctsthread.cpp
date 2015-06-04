@@ -67,7 +67,7 @@ void AgentMCTS::AgentThread::walk_tree(Board & board, Node * node, int depth){
 		timestamps[1] = Time();
 	}
 
-	Outcome won = (agent->minimax ? node->outcome : board.won());
+	Outcome won = (agent->minimax ? node->outcome : board.outcome());
 
 	//if it's not already decided
 	if(won < Outcome::DRAW){
@@ -125,7 +125,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 		const Board & after = move.board();
 
 		if(agent->minimax){
-			child->outcome = after.won();
+			child->outcome = after.outcome();
 
 			if(child->outcome == board.to_play()){ //proven win from here, don't need children
 				node->outcome = child->outcome;
@@ -286,7 +286,7 @@ void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Nod
 //play a random game starting from a board state, and return the results of who won
 Outcome AgentMCTS::AgentThread::rollout(Board & board, Move move, int depth){
 	Outcome won;
-	while((won = board.won()) < Outcome::DRAW) {
+	while((won = board.outcome()) < Outcome::DRAW) {
 		board.move_rand(rand64);
 	}
 	gamelen.add(board.moves_made());

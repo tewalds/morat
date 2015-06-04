@@ -48,7 +48,7 @@ bool AgentMCTS::Node::from_s(std::string s) {
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 	Side to_play = rootboard.to_play();
 
-	if(rootboard.won() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
+	if(rootboard.outcome() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
 		return;
 
 	Time starttime;
@@ -221,7 +221,7 @@ void AgentMCTS::move(const Move & m){
 	rootboard.move(m);
 
 	root.exp.addwins(visitexpand+1); //+1 to compensate for the virtual loss
-	if(rootboard.won() < Outcome::DRAW)
+	if(rootboard.outcome() < Outcome::DRAW)
 		root.outcome = Outcome::UNKNOWN;
 
 	if(ponder)

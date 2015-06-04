@@ -23,7 +23,7 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 		REQUIRE(b.to_play() == side);
 		REQUIRE(b.test_outcome(move) == expected);
 		REQUIRE(b.move(move));
-		REQUIRE(b.won() == expected);
+		REQUIRE(b.outcome() == expected);
 		side = ~side;
 		made++;
 		remain--;

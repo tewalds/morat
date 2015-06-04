@@ -76,7 +76,7 @@ void AgentMCTS::AgentThread::walk_tree(Board & board, Node * node, int depth){
 		timestamps[1] = Time();
 	}
 
-	Outcome won = (agent->minimax ? node->outcome : board.won());
+	Outcome won = (agent->minimax ? node->outcome : board.outcome());
 
 	//if it's not already decided
 	if(won < Outcome::DRAW){
@@ -357,7 +357,7 @@ Outcome AgentMCTS::AgentThread::rollout(Board & board, Move move, int depth){
 
 	random_policy.rollout_start(board);
 
-	while((won = board.won()) < Outcome::DRAW){
+	while((won = board.outcome()) < Outcome::DRAW){
 		Side turn = board.to_play();
 
 		move = rollout_choose_move(board, move);

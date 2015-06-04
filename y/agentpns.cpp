@@ -42,7 +42,7 @@ void AgentPNS::test() {
 void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 	max_nodes_seen = maxiters;
 
-	if(rootboard.won() >= 0)
+	if(rootboard.outcome() >= 0)
 		return;
 
 	Time starttime;

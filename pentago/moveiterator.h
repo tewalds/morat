@@ -20,7 +20,7 @@ public:
 	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP) {
 		unique = (Unique == -1 ? base_board.moves_made() <= Board::unique_depth : Unique);
 
-		if(base_board.won() >= Outcome::DRAW){
+		if(base_board.outcome() >= Outcome::DRAW){
 			move = Move(36, 8); //already done
 		} else {
 			if(unique)

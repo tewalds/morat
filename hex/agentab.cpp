@@ -12,7 +12,7 @@ namespace Hex {
 
 void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 	reset();
-	if(rootboard.won() >= 0)
+	if(rootboard.outcome() >= 0)
 		return;
 
 	if(TT == NULL)
@@ -60,7 +60,7 @@ void AgentAB::search(double time, uint64_t maxiters, int verbose) {
 int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int depth) {
 	nodes_seen++;
 
-	Outcome won = board.won();
+	Outcome won = board.outcome();
 	if(won >= Outcome::DRAW){
 		if(won == Outcome::DRAW)
 			return SCORE_DRAW;
