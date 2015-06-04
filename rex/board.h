@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <functional>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -40,14 +41,7 @@ const MoveScore neighbours[18] = {
 	MoveScore( 0,-1, 3), MoveScore(1,-1, 3), MoveScore(1, 0, 3), MoveScore( 0, 1, 3), MoveScore(-1, 1, 3), MoveScore(-1, 0, 3), //direct neighbours, clockwise
 	MoveScore( 1,-2, 2), MoveScore(2,-1, 2), MoveScore(1, 1, 2), MoveScore(-1, 2, 2), MoveScore(-2, 1, 2), MoveScore(-1,-1, 2), //sides of ring 2, virtual connections
 	MoveScore( 0,-2, 1), MoveScore(2,-2, 1), MoveScore(2, 0, 1), MoveScore( 0, 2, 1), MoveScore(-2, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
-	};
-
-static MoveValid * staticneighbourlist[17] = {
-	NULL,NULL,NULL,NULL,
-	NULL,NULL,NULL,NULL,
-	NULL,NULL,NULL,NULL,
-	NULL,NULL,NULL,NULL,
-	NULL}; //one per boardsize
+};
 
 
 class Board{
@@ -145,7 +139,7 @@ private:
 
 	std::vector<Cell> cells;
 	Zobrist<6> hash;
-	const MoveValid * neighbourlist;
+	std::shared_ptr<MoveValid> neighbourlist;
 
 public:
 	Board(){
@@ -184,10 +178,10 @@ public:
 		printf("~Board");
 	}
 */
-	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
 
 	int get_size() const{ return size; }
 
+	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
 	int vec_size() const { return size*size; }
 	int num_cells() const { return num_cells_; }
 
@@ -208,7 +202,6 @@ public:
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }
 	const Cell * cell(const MoveValid & m) const { return cell(m.xy); }
-
 
 	//assumes valid x,y
 	Side get(int i)          const { return cells[i].piece; }
@@ -250,7 +243,7 @@ public:
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
 	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return &neighbourlist[i*18]; }
+	const MoveValid * nb_begin(int i)          const { return neighbourlist.get() + i*18; }
 
 	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
@@ -261,26 +254,22 @@ public:
 
 	int edges(int x, int y) const;
 
-	MoveValid * get_neighbour_list(){
-		if(!staticneighbourlist[(int)size]){
-			MoveValid * list = new MoveValid[vec_size()*18];
-			MoveValid * a = list;
-			for(int y = 0; y < size; y++){
-				for(int x = 0; x < size; x++){
-					Move pos(x,y);
+	std::shared_ptr<MoveValid> get_neighbour_list() {
+		std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
+		MoveValid * a = list.get();
+		for(int y = 0; y < size; y++){
+			for(int x = 0; x < size; x++){
+				Move pos(x,y);
 
-					for(int i = 0; i < 18; i++){
-						Move loc = pos + neighbours[i];
-						*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
-						++a;
-					}
+				for(int i = 0; i < 18; i++){
+					Move loc = pos + neighbours[i];
+					*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
+					++a;
 				}
 			}
-
-			staticneighbourlist[(int)size] = list;
 		}
 
-		return staticneighbourlist[(int)size];
+		return list;
 	}
 
 	int linestart(int y) const { return 0; }

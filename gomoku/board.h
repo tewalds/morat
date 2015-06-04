@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <functional>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -41,13 +42,6 @@ const MoveScore neighbours[24] = {
 	MoveScore(-2,-2, 2), MoveScore(0,-2, 2), MoveScore(2,-2, 2), MoveScore(2, 0, 2), MoveScore(2, 2, 2), MoveScore( 0, 2, 2), MoveScore(-2, 2, 2), MoveScore(-2, 0, 2), //corners
 	MoveScore(-1,-2, 1), MoveScore(1,-2, 1), MoveScore(2,-1, 1), MoveScore(2, 1, 1), MoveScore(1, 2, 1), MoveScore(-1, 2, 1), MoveScore(-2, 1, 1), MoveScore(-2,-1, 1), //knight's move
 };
-
-static MoveValid * staticneighbourlist[20] = {
-	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL,
-}; //one per boardsize
 
 
 class Board{
@@ -138,7 +132,7 @@ private:
 
 	std::vector<Cell> cells;
 	Zobrist<1> hash;
-	const MoveValid * neighbourlist;
+	std::shared_ptr<MoveValid> neighbourlist;
 
 public:
 	Board(){
@@ -243,7 +237,7 @@ public:
 	//iterator through neighbours of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
 	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return &neighbourlist[i*24]; }
+	const MoveValid * nb_begin(int i)          const { return neighbourlist.get() + i*24; }
 
 	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
@@ -252,26 +246,22 @@ public:
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 16; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 24; }
 
-	MoveValid * get_neighbour_list() {
-		if(!staticneighbourlist[(int)size]){
-			MoveValid * list = new MoveValid[vec_size()*24];
-			MoveValid * a = list;
-			for(int y = 0; y < size; y++){
-				for(int x = 0; x < size; x++){
-					Move pos(x,y);
+	std::shared_ptr<MoveValid> get_neighbour_list() {
+		std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*24]);
+		MoveValid * a = list.get();
+		for(int y = 0; y < size; y++){
+			for(int x = 0; x < size; x++){
+				Move pos(x,y);
 
-					for(int i = 0; i < 24; i++){
-						Move loc = pos + neighbours[i];
-						*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
-						++a;
-					}
+				for(int i = 0; i < 24; i++){
+					Move loc = pos + neighbours[i];
+					*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
+					++a;
 				}
 			}
-
-			staticneighbourlist[(int)size] = list;
 		}
 
-		return staticneighbourlist[(int)size];
+		return list;
 	}
 
 	int linestart(int y) const { return 0; }
