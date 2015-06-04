@@ -83,7 +83,7 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 		unsigned int p = board.pattern(*move);
 		if(symmetric)
 			p = board.pattern_symmetry(p);
-		if(invert && board.toplay() == Side::P2)
+		if(invert && board.to_play() == Side::P2)
 			p = board.pattern_invert(p);
 		ret += to_str(p);
 		ret += "\n";
@@ -105,8 +105,8 @@ GTPResponse GTP::gtp_history(vecstr args){
 	return GTPResponse(true, ret);
 }
 
-GTPResponse GTP::play(const std::string & pos, Side toplay){
-	if(toplay != hist->toplay())
+GTPResponse GTP::play(const std::string & pos, Side to_play){
+	if(to_play != hist->to_play())
 		return GTPResponse(false, "It is the other player's turn!");
 
 	if(hist->won() >= Outcome::DRAW)
@@ -129,7 +129,7 @@ GTPResponse GTP::gtp_playgame(vecstr args){
 	GTPResponse ret(true);
 
 	for(unsigned int i = 0; ret.success && i < args.size(); i++)
-		ret = play(args[i], hist->toplay());
+		ret = play(args[i], hist->to_play());
 
 	return ret;
 }
@@ -198,9 +198,9 @@ GTPResponse GTP::gtp_extended(vecstr args){
 GTPResponse GTP::gtp_debug(vecstr args){
 	std::string str = "\n";
 	str += "Board size:  " + to_str(hist->get_size()) + "\n";
-	str += "Board cells: " + to_str(hist->numcells()) + "\n";
-	str += "Board vec:   " + to_str(hist->vecsize()) + "\n";
-	str += "Board mem:   " + to_str(hist->memsize()) + "\n";
+	str += "Board cells: " + to_str(hist->num_cells()) + "\n";
+	str += "Board vec:   " + to_str(hist->vec_size()) + "\n";
+	str += "Board mem:   " + to_str(hist->mem_size()) + "\n";
 
 	return GTPResponse(true, str);
 }

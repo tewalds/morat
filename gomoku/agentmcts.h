@@ -144,7 +144,7 @@ public:
 
 	public:
 		DepthStats treelen, gamelen;
-		DepthStats wintypes[2][4]; //player,wintype
+		DepthStats win_types[2][4]; //player,win_type_
 		double times[4]; //time spent in each of the stages
 		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
@@ -160,7 +160,7 @@ public:
 
 			for(int a = 0; a < 2; a++)
 				for(int b = 0; b < 4; b++)
-					wintypes[a][b].reset();
+					win_types[a][b].reset();
 
 			for(int a = 0; a < 4; a++)
 				times[a] = 0;
@@ -172,8 +172,8 @@ public:
 		void walk_tree(Board & board, Node * node, int depth);
 		bool create_children(const Board & board, Node * node);
 		void add_knowledge(const Board & board, Node * node, Node * child);
-		Node * choose_move(const Node * node, Side toplay, int remain) const;
-		void update_rave(const Node * node, Side toplay);
+		Node * choose_move(const Node * node, Side to_play, int remain) const;
+		void update_rave(const Node * node, Side to_play);
 		bool test_bridge_probe(const Board & board, const Move & move, const Move & test) const;
 
 		Outcome rollout(Board & board, Move move, int depth);
@@ -246,7 +246,7 @@ public:
 	void move(const Move & m);
 
 	void search(double time, uint64_t maxruns, int verbose);
-	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
+	Move return_move(int verbose) const { return return_move(& root, rootboard.to_play(), verbose); }
 
 	double gamelen() const;
 	vecmove get_pv(const vecmove& moves) const;
@@ -283,7 +283,7 @@ public:
 	void gen_sgf(SGFPrinter<Move> & sgf, int limit) const {
 		if(limit < 0)
 			limit = root.exp.num()/1000;
-		gen_sgf(sgf, limit, root, rootboard.toplay());
+		gen_sgf(sgf, limit, root, rootboard.to_play());
 	}
 
 	void load_sgf(SGFParser<Move> & sgf) {
@@ -293,8 +293,8 @@ public:
 protected:
 
 	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
-	bool do_backup(Node * node, const Node * backup, Side toplay);
-	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
+	bool do_backup(Node * node, const Node * backup, Side to_play);
+	Move return_move(const Node * node, Side to_play, int verbose = 0) const;
 
 	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);

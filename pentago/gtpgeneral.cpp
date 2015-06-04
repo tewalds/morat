@@ -76,8 +76,8 @@ GTPResponse GTP::gtp_history(vecstr args){
 	return GTPResponse(true, ret);
 }
 
-GTPResponse GTP::play(const std::string & pos, Side toplay){
-	if(toplay != hist->toplay())
+GTPResponse GTP::play(const std::string & pos, Side to_play){
+	if(to_play != hist->to_play())
 		return GTPResponse(false, "It is the other player's turn!");
 
 	if(hist->won() >= Outcome::DRAW)
@@ -100,7 +100,7 @@ GTPResponse GTP::gtp_playgame(vecstr args){
 	GTPResponse ret(true);
 
 	for(unsigned int i = 0; ret.success && i < args.size(); i++)
-		ret = play(args[i], hist->toplay());
+		ret = play(args[i], hist->to_play());
 
 	return ret;
 }

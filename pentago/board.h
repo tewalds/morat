@@ -42,8 +42,8 @@ class Board{
 	static const  int16_t scoremap[6];      // how many points a given line with how many pieces is worth
 
 	uint64_t sides[3]; // sides[0] = sides[1] | sides[2]; bitmap of position for each side
-	uint8_t nummoves;  // how many moves have been made so far
-	Side    to_play;   // who's turn is it next, 1|2
+	uint8_t num_moves_;  // how many moves have been made so far
+	Side    to_play_;   // who's turn is it next, 1|2
 	mutable Outcome outcome; //-3 = unknown, 0 = tie, 1,2 = player win
 	mutable int16_t cached_score;
 	mutable uint64_t cached_hash;
@@ -62,8 +62,8 @@ public:
 		sides[0] = 0;
 		sides[1] = 0;
 		sides[2] = 0;
-		nummoves = 0;
-		to_play = Side::P1;
+		num_moves_ = 0;
+		to_play_ = Side::P1;
 		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
@@ -74,8 +74,8 @@ public:
 
 	static void test();
 
-	int num_moves() const { return nummoves; }
-	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : 36 - nummoves); }
+	int moves_made() const { return num_moves_; }
+	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : 36 - num_moves_); }
 	int moves_avail() const { return moves_remain()*8; } //upper bound
 
 	int get_size() const {
@@ -102,8 +102,8 @@ public:
 
 	std::string won_str() const ;
 
-	Side toplay() const {
-		return to_play;
+	Side to_play() const {
+		return to_play_;
 	}
 
 	Outcome won() const {
@@ -126,7 +126,7 @@ public:
 			return wonside;
 		if(wonside == Outcome::DRAW2) // both sides win simultaneously
 			return Outcome::DRAW;
-		return (nummoves >= 36 ? Outcome::DRAW : Outcome::UNKNOWN);
+		return (num_moves_ >= 36 ? Outcome::DRAW : Outcome::UNKNOWN);
 	}
 
 	int16_t score() const {
@@ -150,7 +150,7 @@ public:
 		}
 		//return the score from the perspective of the player that just played
 		//ie not the player whose turn it is now
-		return (to_play == Side::P1 ? -s : s);
+		return (to_play_ == Side::P1 ? -s : s);
 	}
 
 	bool move(Move m){
@@ -162,11 +162,11 @@ public:
 
 		if(m == M_SWAP){
 			std::swap(sides[1], sides[2]);
-			to_play = 1;
+			to_play_ = 1;
 			return true;
 		}
 
-		sides[to_play.to_i()] |= xybits[m.l];
+		sides[to_play_.to_i()] |= xybits[m.l];
 
 		if (m.direction() == 0) {
 			sides[1] = rotate_quad_ccw(sides[1], m.quadrant());
@@ -177,8 +177,8 @@ public:
 		}
 		sides[0] = sides[1] | sides[2];
 
-		nummoves++;
-		to_play = ~to_play;
+		num_moves_++;
+		to_play_ = ~to_play_;
 		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
@@ -197,7 +197,7 @@ public:
 		} while(move & (move-1));
 //		} while(bitcount(move) > 1); // if there's only one bit left, that's our move
 
-		sides[to_play.to_i()] |= move;
+		sides[to_play_.to_i()] |= move;
 
 		uint64_t rotation = (mask >> 36); //mask is already a random number, so just re-use the unused high bits
 		uint64_t direction = rotation & 0x4;
@@ -212,8 +212,8 @@ public:
 		}
 		sides[0] = sides[1] | sides[2];
 
-		nummoves++;
-		to_play = ~to_play;
+		num_moves_++;
+		to_play_ = ~to_play_;
 		outcome = Outcome::UNDEF;
 		cached_score = default_score;
 		cached_hash = 0;
@@ -227,12 +227,12 @@ public:
 
 		if(m == M_SWAP){
 			std::swap(sides[1], sides[2]);
-			to_play = 1;
+			to_play_ = 1;
 			return true;
 		}
 
-		to_play = ~to_play;
-		nummoves--;
+		to_play_ = ~to_play_;
+		num_moves_--;
 
 		if (m.direction() == 0) {
 			sides[1] = rotate_quad_cw(sides[1], m.quadrant());
@@ -242,7 +242,7 @@ public:
 			sides[2] = rotate_quad_ccw(sides[2], m.quadrant());
 		}
 
-		sides[to_play.to_i()] &= ~xybits[m.l];
+		sides[to_play_.to_i()] &= ~xybits[m.l];
 
 		sides[0] = sides[1] | sides[2];
 
@@ -268,7 +268,7 @@ public:
 	}
 
 	uint64_t full_hash() const {
-		if(nummoves >= fullhash_depth)
+		if(num_moves_ >= fullhash_depth)
 			return simple_hash();
 
 		if(cached_hash)

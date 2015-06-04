@@ -43,7 +43,7 @@ protected:
 	//new values must be the same as current smallest, or larger but smaller than min + maxvals
 	class IntPQueue {
 		static const int maxvals = 4; //maximum number of distinct values that can be stored
-		MoveDist vals[maxvals][Board::max_vecsize];
+		MoveDist vals[maxvals][Board::max_vec_size];
 		int counts[maxvals];
 		int current; //which vector
 		int num; //int num elements total
@@ -78,7 +78,7 @@ protected:
 		}
 	};
 
-	int dists[Board::LBDist_directions][2][Board::max_vecsize]; //[edge/corner][player][cell]
+	int dists[Board::LBDist_directions][2][Board::max_vec_size]; //[edge/corner][player][cell]
 	static const int maxdist = 1000;
 	IntPQueue Q;
 	const Board * board;
@@ -109,7 +109,7 @@ public:
 
 		for(int i = 0; i < Board::LBDist_directions; i++)
 			for(int j = 0; j < 2; j++)
-				for(int k = 0; k < board->vecsize(); k++)
+				for(int k = 0; k < board->vec_size(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
 		if((side & Side::P1) == Side::P1) static_cast<SubClass*>(this)->init_player(crossvcs, Side::P1);

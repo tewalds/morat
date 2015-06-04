@@ -42,7 +42,7 @@ public:
 			return M_UNKNOWN;
 
 		MoveValid start, cur, loss = M_UNKNOWN;
-		Side turn = ~board.toplay();
+		Side turn = ~board.to_play();
 
 		//find the first empty cell
 		int dir = -1;

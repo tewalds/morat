@@ -10,8 +10,8 @@ namespace Morat {
 template<class Board>
 struct MoveList {
 	ExpPair    exp[2];       //aggregated outcomes overall
-	ExpPair    rave[2][Board::max_vecsize]; //aggregated outcomes per move
-	MovePlayer moves[Board::max_vecsize];   //moves made in order
+	ExpPair    rave[2][Board::max_vec_size]; //aggregated outcomes per move
+	MovePlayer moves[Board::max_vec_size];   //moves made in order
 	int        tree;         //number of moves in the tree
 	int        rollout;      //number of moves in the rollout
 	Board *    board;        //reference to rootboard for xy()
@@ -30,7 +30,7 @@ struct MoveList {
 		board = b;
 		exp[0].clear();
 		exp[1].clear();
-		for(int i = 0; i < b->vecsize(); i++){
+		for(int i = 0; i < b->vec_size(); i++){
 			rave[0][i].clear();
 			rave[1][i].clear();
 		}

@@ -44,7 +44,7 @@ bool AgentMCTS::Node::from_s(std::string s) {
 }
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
-	Side toplay = rootboard.toplay();
+	Side to_play = rootboard.to_play();
 
 	if(rootboard.won() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
 		return;
@@ -88,7 +88,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		}
 
 		if(root.outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
+			logerr("Solved as a " + root.outcome.to_s_rel(to_play) + "\n");
 
 		std::string pvstr;
 		for(auto m : get_pv())
@@ -217,7 +217,7 @@ std::vector<Move> AgentMCTS::get_pv() const {
 	vecmove pv;
 
 	const Node * n = & root;
-	Side turn = rootboard.toplay();
+	Side turn = rootboard.to_play();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
@@ -253,7 +253,7 @@ std::string AgentMCTS::move_stats(vecmove moves) const {
 	return s;
 }
 
-Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
+Move AgentMCTS::return_move(const Node * node, Side to_play, int verbose) const {
 	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
@@ -265,7 +265,7 @@ Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
 
 	for( ; child != end; child++){
 		if(child->outcome >= Outcome::DRAW){
-			if(child->outcome == toplay)             val =  800000000000.0 - child->exp.num(); //shortest win
+			if(child->outcome == to_play)             val =  800000000000.0 - child->exp.num(); //shortest win
 			else if(child->outcome == Outcome::DRAW) val = -400000000000.0 + child->exp.num(); //longest tie
 			else                                     val = -800000000000.0 + child->exp.num(); //longest loss
 		}else{ //not proven
@@ -291,12 +291,12 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
-	Side toplay = board.toplay();
+	Side to_play = board.to_play();
 	for( ; child != end; child++){
 		if(child->children.num() == 0)
 			continue;
 
-		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
+		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != to_play || child->outcome == to_play || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
 			(node->outcome <  Outcome::DRAW && child->exp.num() > (child->outcome >= Outcome::DRAW ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
 			board.move(child->move);
 			garbage_collect(board, child);
@@ -335,14 +335,14 @@ void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end   = node->children.end();
 	MoveIterator moveit(board, prunesymmetry);
-	int nummoves = 0;
+	int num_moves = 0;
 	for(; !moveit.done() && child != end; ++moveit, ++child){
 		*child = Node(*moveit);
-		nummoves++;
+		num_moves++;
 	}
 
 	if(prunesymmetry)
-		node->children.shrink(nummoves); //shrink the node to ignore the extra moves
+		node->children.shrink(num_moves); //shrink the node to ignore the extra moves
 	else //both end conditions should happen in parallel
 		assert(moveit.done() && child == end);
 

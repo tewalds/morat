@@ -10,19 +10,19 @@ namespace Morat {
 
 template<class Board>
 class LastGoodReply : public Policy<Board> {
-	Move goodreply[2][Board::max_vecsize];
+	Move goodreply[2][Board::max_vec_size];
 	int enabled;
 public:
 
 	LastGoodReply(int _enabled = 2) : enabled(_enabled) {
 		for(int p = 0; p < 2; p++)
-			for(int i = 0; i < Board::max_vecsize; i++)
+			for(int i = 0; i < Board::max_vec_size; i++)
 				goodreply[p][i] = M_UNKNOWN;
 	}
 
 	Move choose_move(const Board & board, const Move & prev) const {
 		if (enabled && prev != M_SWAP) {
-			Move move = goodreply[board.toplay().to_i() - 1][board.xy(prev)];
+			Move move = goodreply[board.to_play().to_i() - 1][board.xy(prev)];
 			if(move != M_UNKNOWN && board.valid_move_fast(move))
 				return move;
 		}

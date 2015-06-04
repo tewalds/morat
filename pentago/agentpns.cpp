@@ -67,12 +67,12 @@ void AgentPNS::search(double time, uint64_t maxiters, int verbose){
 			logerr("Tree depth:  " + treelen.to_s() + "\n");
 		}
 
-		Side toplay = rootboard.toplay();
+		Side to_play = rootboard.to_play();
 
 		logerr("Root:        " + root.to_s() + "\n");
-		Outcome outcome = root.to_outcome(~toplay);
+		Outcome outcome = root.to_outcome(~to_play);
 		if(outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + outcome.to_s_rel(toplay) + "\n");
+			logerr("Solved as a " + outcome.to_s_rel(to_play) + "\n");
 
 		std::string pvstr;
 		for(auto m : get_pv())
@@ -122,7 +122,7 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 				outcome = move.board().won();
 			}
 
-			temp[i] = Node(*move).outcome(outcome, board.toplay(), agent->ties, pd);
+			temp[i] = Node(*move).outcome(outcome, board.to_play(), agent->ties, pd);
 			i++;
 		}
 		nodes_seen += i;
@@ -224,7 +224,7 @@ std::vector<Move> AgentPNS::get_pv() const {
 	vecmove pv;
 
 	const Node * n = & root;
-	Side turn = rootboard.toplay();
+	Side turn = rootboard.to_play();
 	while(n && !n->children.empty()){
 		Move m = return_move(n, turn);
 		pv.push_back(m);
@@ -260,7 +260,7 @@ std::string AgentPNS::move_stats(vecmove moves) const {
 	return s;
 }
 
-Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
+Move AgentPNS::return_move(const Node * node, Side to_play, int verbose) const {
 	double val, maxval = -1000000000000.0; //1 trillion
 
 	Node * ret = NULL,
@@ -268,9 +268,9 @@ Move AgentPNS::return_move(const Node * node, Side toplay, int verbose) const {
 		 * end = node->children.end();
 
 	for( ; child != end; child++){
-		Outcome outcome = child->to_outcome(toplay);
+		Outcome outcome = child->to_outcome(to_play);
 		if(outcome >= Outcome::DRAW){
-			if(     outcome == +toplay)       val =  800000000000.0 - (double)child->work; //shortest win
+			if(     outcome == +to_play)       val =  800000000000.0 - (double)child->work; //shortest win
 			else if(outcome == Outcome::DRAW) val = -400000000000.0 + (double)child->work; //longest tie
 			else                              val = -800000000000.0 + (double)child->work; //longest loss
 		}else{ //not proven
@@ -319,7 +319,7 @@ void AgentPNS::create_children_simple(const Board & board, Node * node){
 	unsigned int i = 0;
 	for(MoveIterator move(board); !move.done(); ++move){
 		Outcome outcome = move.board().won();
-		node->children[i] = Node(*move).outcome(outcome, board.toplay(), ties, 1);
+		node->children[i] = Node(*move).outcome(outcome, board.to_play(), ties, 1);
 		i++;
 	}
 	PLUS(nodes, i);

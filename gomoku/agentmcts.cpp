@@ -46,7 +46,7 @@ bool AgentMCTS::Node::from_s(std::string s) {
 }
 
 void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
-	Side toplay = rootboard.toplay();
+	Side to_play = rootboard.to_play();
 
 	if(rootboard.won() >= Outcome::DRAW || (time <= 0 && max_runs == 0))
 		return;
@@ -72,7 +72,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 
 	if(verbose){
 		DepthStats gamelen, treelen;
-		DepthStats wintypes[2][4];
+		DepthStats win_types[2][4];
 		uint64_t games = 0;
 		double times[4] = {0,0,0,0};
 		for(auto & t : pool){
@@ -81,8 +81,8 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 
 			for(int a = 0; a < 2; a++){
 				for(int b = 0; b < 4; b++){
-					wintypes[a][b] += t->wintypes[a][b];
-					games += t->wintypes[a][b].num;
+					win_types[a][b] += t->win_types[a][b];
+					games += t->win_types[a][b].num;
 				}
 			}
 
@@ -99,7 +99,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		}
 
 		if(root.outcome != Outcome::UNKNOWN)
-			logerr("Solved as a " + root.outcome.to_s_rel(toplay) + "\n");
+			logerr("Solved as a " + root.outcome.to_s_rel(to_play) + "\n");
 
 		std::string pvstr;
 		for(const auto& m : Agent::get_pv())
@@ -241,7 +241,7 @@ std::vector<Move> AgentMCTS::get_pv(const vecmove& moves) const {
 	vecmove pv;
 
 	const Node * n = & root;
-	Side turn = rootboard.toplay();
+	Side turn = rootboard.to_play();
 	int i = 0;
 	while(n && !n->children.empty()){
 		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
@@ -281,7 +281,7 @@ std::string AgentMCTS::move_stats(const vecmove& moves) const {
 	return s;
 }
 
-Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
+Move AgentMCTS::return_move(const Node * node, Side to_play, int verbose) const {
 	if(node->outcome >= Outcome::DRAW)
 		return node->bestmove;
 
@@ -292,7 +292,7 @@ Move AgentMCTS::return_move(const Node * node, Side toplay, int verbose) const {
 	const Node * ret = NULL;
 	for(const auto& child : node->children) {
 		if(child.outcome >= Outcome::DRAW){
-			if(child.outcome == toplay)             val =  800000000000.0 - child.exp.num(); //shortest win
+			if(child.outcome == to_play)             val =  800000000000.0 - child.exp.num(); //shortest win
 			else if(child.outcome == Outcome::DRAW) val = -400000000000.0 + child.exp.num(); //longest tie
 			else                                    val = -800000000000.0 + child.exp.num(); //longest loss
 		}else{ //not proven
@@ -322,12 +322,12 @@ void AgentMCTS::garbage_collect(Board & board, Node * node){
 	Node * child = node->children.begin(),
 		 * end = node->children.end();
 
-	Side toplay = board.toplay();
+	Side to_play = board.to_play();
 	for( ; child != end; child++){
 		if(child->children.num() == 0)
 			continue;
 
-		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != toplay || child->outcome == toplay || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
+		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != to_play || child->outcome == to_play || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
 			(node->outcome <  Outcome::DRAW && child->exp.num() > (child->outcome >= Outcome::DRAW ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
 			board.set(child->move);
 			garbage_collect(board, child);
@@ -360,19 +360,19 @@ void AgentMCTS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node &
 void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
 
-	node->children.alloc(board.movesremain(), ctmem);
+	node->children.alloc(board.moves_remain(), ctmem);
 
 	Node * child = node->children.begin(),
 		 * end   = node->children.end();
 	Board::MoveIterator moveit = board.moveit(prunesymmetry);
-	int nummoves = 0;
+	int num_moves = 0;
 	for(; !moveit.done() && child != end; ++moveit, ++child){
 		*child = Node(*moveit);
-		nummoves++;
+		num_moves++;
 	}
 
 	if(prunesymmetry)
-		node->children.shrink(nummoves); //shrink the node to ignore the extra moves
+		node->children.shrink(num_moves); //shrink the node to ignore the extra moves
 	else //both end conditions should happen in parallel
 		assert(moveit.done() && child == end);
 

@@ -9,7 +9,7 @@ using namespace Morat;
 using namespace Y;
 
 void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
-	REQUIRE(b.num_moves() == 0);
+	REQUIRE(b.moves_made() == 0);
 	Side side = Side::P1;
 	for(auto s : moves) {
 		Outcome expected = (s == moves.back() ? outcome : Outcome::UNKNOWN);
@@ -17,7 +17,7 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 		CAPTURE(move);
 		CAPTURE(b);
 		REQUIRE(b.valid_move(move));
-		REQUIRE(b.toplay() == side);
+		REQUIRE(b.to_play() == side);
 		REQUIRE(b.test_outcome(move) == expected);
 		REQUIRE(b.move(move));
 		REQUIRE(b.won() == expected);
@@ -33,7 +33,7 @@ TEST_CASE("Y::Board [y][board]") {
 
 	SECTION("Basics") {
 		REQUIRE(b.get_size() == 7);
-		REQUIRE(b.movesremain() == 28);
+		REQUIRE(b.moves_remain() == 28);
 	}
 
 	SECTION("valid moves") {

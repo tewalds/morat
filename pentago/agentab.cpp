@@ -64,7 +64,7 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 	if(won >= Outcome::DRAW){
 		if(won == Outcome::DRAW)
 			return SCORE_DRAW;
-		if(won == +board.toplay())
+		if(won == +board.to_play())
 			return SCORE_WIN;
 		return SCORE_LOSS;
 	}

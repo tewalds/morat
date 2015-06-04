@@ -46,7 +46,7 @@ static MoveValid * staticneighbourlist[20] = {
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, 
+	NULL, NULL, NULL, NULL, NULL,
 }; //one per boardsize
 
 
@@ -57,7 +57,7 @@ public:
 	static const int default_size = 13;
 	static const int min_size = 5;
 	static const int max_size = 19;
-	static const int max_vecsize = 19*19;
+	static const int max_vec_size = 19*19;
 	static const int num_win_types = 1;
 
 	static const int pattern_cells = 24;
@@ -86,7 +86,7 @@ public:
 				move = MoveValid(0, board.get_size(), -1); //already done
 			} else {
 				if(unique)
-					hashes.init(board.movesremain());
+					hashes.init(board.moves_remain());
 				++(*this); //find the first valid move
 			}
 		}
@@ -115,7 +115,7 @@ public:
 				}while(!board.valid_move_fast(move));
 
 				if(unique){
-					uint64_t h = board.test_hash(move, board.toplay());
+					uint64_t h = board.test_hash(move, board.to_play());
 					if(!hashes.add(h))
 						continue;
 				}
@@ -129,12 +129,12 @@ private:
 	char size; //the length of one side
 	char sizem1; //size - 1
 
-	short num_cells;
-	short nummoves;
-	Move last;
-	Side toPlay;
+	short num_cells_;
+	short num_moves_;
+	Move last_move_;
+	Side to_play_;
 	Outcome outcome;
-	char wintype; //0 no win, 1 = 5 in a row
+	char win_type_; //0 no win, 1 = 5 in a row
 
 	std::vector<Cell> cells;
 	Zobrist<1> hash;
@@ -148,15 +148,15 @@ public:
 	Board(int s){
 		size = s;
 		sizem1 = s - 1;
-		last = M_NONE;
-		nummoves = 0;
-		toPlay = Side::P1;
+		last_move_ = M_NONE;
+		num_moves_ = 0;
+		to_play_ = Side::P1;
 		outcome = Outcome::UNKNOWN;
-		wintype = 0;
+		win_type_ = 0;
 		neighbourlist = get_neighbour_list();
-		num_cells = vecsize();
+		num_cells_ = vec_size();
 
-		cells.resize(vecsize());
+		cells.resize(vec_size());
 
 		for(int y = 0; y < size; y++){
 			for(int x = 0; x < size; x++){
@@ -177,15 +177,15 @@ public:
 		printf("~Board");
 	}
 */
-	int memsize() const { return sizeof(Board) + sizeof(Cell)*vecsize(); }
 
 	int get_size() const{ return size; }
 
-	int vecsize() const { return size*size; }
-	int numcells() const { return num_cells; }
+	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
+	int vec_size() const { return size*size; }
+	int num_cells() const { return num_cells_; }
 
-	int num_moves() const { return nummoves; }
-	int movesremain() const { return (won() >= Outcome::DRAW ? 0 : num_cells - nummoves); }
+	int moves_made() const { return num_moves_; }
+	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
 
 	int xy(int x, int y)   const { return   y*size +   x; }
 	int xy(const Move & m) const { return m.y*size + m.x; }
@@ -254,7 +254,7 @@ public:
 
 	MoveValid * get_neighbour_list() {
 		if(!staticneighbourlist[(int)size]){
-			MoveValid * list = new MoveValid[vecsize()*24];
+			MoveValid * list = new MoveValid[vec_size()*24];
 			MoveValid * a = list;
 			for(int y = 0; y < size; y++){
 				for(int x = 0; x < size; x++){
@@ -291,10 +291,10 @@ public:
 		return outcome;
 	}
 
-	char getwintype() const { return wintype; }
+	char win_type() const { return win_type_; }
 
-	Side toplay() const {
-		return toPlay;
+	Side to_play() const {
+		return to_play_;
 	}
 
 	MoveIterator moveit(bool unique = false) const {
@@ -302,17 +302,17 @@ public:
 	}
 
 	void set(const Move & m, bool perm = true) {
-		last = m;
+		last_move_ = m;
 		Cell * cell = & cells[xy(m)];
-		cell->piece = toPlay;
+		cell->piece = to_play_;
 		cell->perm = perm;
-		nummoves++;
-		toPlay = ~toPlay;
+		num_moves_++;
+		to_play_ = ~to_play_;
 	}
 
 	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
-		toPlay = ~toPlay;
-		nummoves--;
+		to_play_ = ~to_play_;
+		num_moves_--;
 		Cell * cell = & cells[xy(m)];
 		cell->piece = Side::NONE;
 		cell->perm = 0;
@@ -341,7 +341,7 @@ public:
 	}
 
 	hash_t test_hash(const Move & pos) const {
-		return test_hash(pos, toplay());
+		return test_hash(pos, to_play());
 	}
 
 	hash_t test_hash(const Move & pos, Side side) const {
@@ -426,12 +426,12 @@ public:
 		if(!valid_move(pos))
 			return false;
 
-		Side turn = toplay();
+		Side turn = to_play();
 
 		if(checkwin) {
 			outcome = test_outcome(pos, turn);
 			if(outcome > Outcome::DRAW) {
-				wintype = 1;
+				win_type_ = 1;
 			}
 		}
 
@@ -455,9 +455,9 @@ public:
 	}
 
 	//test if making this move would win, but don't actually make the move
-	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, toplay()); }
+	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, to_play()); }
 	Outcome test_outcome(const Move & pos, Side turn) const { return test_outcome(MoveValid(pos, xy(pos)), turn); }
-	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, toplay()); }
+	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, to_play()); }
 	Outcome test_outcome(const MoveValid & pos, Side turn) const {
 		if (test_local(pos, turn)) {
 			for (int d = 0; d < 4; d++) {
@@ -483,7 +483,7 @@ public:
 			}
 		}
 
-		if(nummoves+1 == num_cells)
+		if(num_moves_+1 == num_cells_)
 			return Outcome::DRAW;
 
 		return Outcome::UNKNOWN;

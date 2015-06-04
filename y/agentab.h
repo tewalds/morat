@@ -96,7 +96,7 @@ public:
 
 	void search(double time, uint64_t maxiters, int verbose);
 	Move return_move(int verbose) const { return return_move(rootboard, verbose); }
-	double gamelen() const { return rootboard.movesremain(); }
+	double gamelen() const { return rootboard.moves_remain(); }
 	vecmove get_pv(const vecmove& moves) const;
 	std::string move_stats(const vecmove& moves) const;
 

@@ -33,7 +33,7 @@ const int16_t Board::scoremap[6] = { 0, 1, 3, 9, 27, 127 };
 Board::Board(std::string str) {
 	sides[1] = 0;
 	sides[2] = 0;
-	nummoves = 0;
+	num_moves_ = 0;
 	outcome = -4;
 	cached_score = default_score;
 	cached_hash = 0;
@@ -45,14 +45,14 @@ Board::Board(std::string str) {
 		assert(side >= 0 && side <= 2);
 
 		if(side > 0){
-			nummoves++;
+			num_moves_++;
 			sides[side] |= xybits[i];
 			moved[side]++;
 		}
 	}
 	assert(moved[1] == moved[2] || moved[1] == moved[2] + 1); //even number of moves per player
 	sides[0] = sides[1] | sides[2];
-	to_play = (nummoves % 2) + 1;
+	to_play_ = (num_moves_ % 2) + 1;
 }
 
 std::string Board::state() const {

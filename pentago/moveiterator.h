@@ -18,7 +18,7 @@ class MoveIterator { //only returns valid moves...
 	HashSet hashes;
 public:
 	MoveIterator(const Board & b, int Unique = -1) : base_board(b), move(M_SWAP) {
-		unique = (Unique == -1 ? base_board.num_moves() <= Board::unique_depth : Unique);
+		unique = (Unique == -1 ? base_board.moves_made() <= Board::unique_depth : Unique);
 
 		if(base_board.won() >= Outcome::DRAW){
 			move = Move(36, 8); //already done

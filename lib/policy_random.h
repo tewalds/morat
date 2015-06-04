@@ -14,7 +14,7 @@ namespace Morat {
 template<class Board>
 class RandomPolicy : public Policy<Board> {
 	XORShift_uint32 rand;
-	Move moves[Board::max_vecsize];
+	Move moves[Board::max_vec_size];
 	int num;
 	int cur;
 public:

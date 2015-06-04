@@ -57,7 +57,7 @@ public:
 	static const int default_size = 10;
 	static const int min_size = 5;
 	static const int max_size = 16;
-	static const int max_vecsize = max_size * max_size;
+	static const int max_vec_size = max_size * max_size;
 	static const int num_win_types = 1;
 	static const int LBDist_directions = 3;
 
@@ -93,7 +93,7 @@ mutable uint16_t parent;  //parent for this group of cells
 				move = MoveValid(0, board.size, -1); //already done
 			} else {
 				if(unique)
-					hashes.init(board.movesremain());
+					hashes.init(board.moves_remain());
 				++(*this); //find the first valid move
 			}
 		}
@@ -122,7 +122,7 @@ mutable uint16_t parent;  //parent for this group of cells
 				}while(!board.valid_move_fast(move));
 
 				if(unique){
-					uint64_t h = board.test_hash(move, board.toplay());
+					uint64_t h = board.test_hash(move, board.to_play());
 					if(!hashes.add(h))
 						continue;
 				}
@@ -136,11 +136,11 @@ private:
 	char size; //the length of one side of the hexagon
 	char sizem1; //size - 1
 
-	short num_cells;
-	short nummoves;
+	short num_cells_;
+	short num_moves_;
 	short unique_depth; //update and test rotations/symmetry with less than this many pieces on the board
-	Move last;
-	Side toPlay;
+	Move last_move_;
+	Side to_play_;
 	Outcome outcome;
 
 	std::vector<Cell> cells;
@@ -155,15 +155,15 @@ public:
 	Board(int s){
 		size = s;
 		sizem1 = s - 1;
-		last = M_NONE;
-		nummoves = 0;
+		last_move_ = M_NONE;
+		num_moves_ = 0;
 		unique_depth = 5;
-		toPlay = Side::P1;
+		to_play_ = Side::P1;
 		outcome = Outcome::UNKNOWN;
 		neighbourlist = get_neighbour_list();
-		num_cells = vecsize() - (size*sizem1/2);
+		num_cells_ = vec_size() - (size*sizem1/2);
 
-		cells.resize(vecsize());
+		cells.resize(vec_size());
 
 		for(int y = 0; y < size; y++){
 			for(int x = 0; x < size; x++){
@@ -184,15 +184,15 @@ public:
 		printf("~Board");
 	}
 */
-	int memsize() const { return sizeof(Board) + sizeof(Cell)*vecsize(); }
+	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
 
 	int get_size() const{ return size; }
 
-	int vecsize() const { return size*size; }
-	int numcells() const { return num_cells; }
+	int vec_size() const { return size*size; }
+	int num_cells() const { return num_cells_; }
 
-	int num_moves() const { return nummoves; }
-	int movesremain() const { return (won() >= Outcome::DRAW ? 0 : num_cells - nummoves); }
+	int moves_made() const { return num_moves_; }
+	int moves_remain() const { return (won() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
 
 	int xy(int x, int y)   const { return   y*size +   x; }
 	int xy(const Move & m) const { return m.y*size + m.x; }
@@ -263,7 +263,7 @@ public:
 
 	MoveValid * get_neighbour_list(){
 		if(!staticneighbourlist[(int)size]){
-			MoveValid * list = new MoveValid[vecsize()*18];
+			MoveValid * list = new MoveValid[vec_size()*18];
 			MoveValid * a = list;
 			for(int y = 0; y < size; y++){
 				for(int x = 0; x < size; x++){
@@ -300,30 +300,30 @@ public:
 		return outcome;
 	}
 
-	char getwintype() const { return outcome > Outcome::DRAW; }
+	char win_type() const { return outcome > Outcome::DRAW; }
 
-	Side toplay() const {
-		return toPlay;
+	Side to_play() const {
+		return to_play_;
 	}
 
 	MoveIterator moveit(bool unique = false) const {
-		return MoveIterator(*this, (unique ? nummoves <= unique_depth : false));
+		return MoveIterator(*this, (unique ? num_moves_ <= unique_depth : false));
 	}
 
 	void set(const Move & m, bool perm = true) {
-		last = m;
+		last_move_ = m;
 		Cell * cell = & cells[xy(m)];
-		cell->piece = toPlay;
+		cell->piece = to_play_;
 		cell->perm = perm;
-		nummoves++;
-		update_hash(m, toPlay); //depends on nummoves
-		toPlay = ~toPlay;
+		num_moves_++;
+		update_hash(m, to_play_); //depends on num_moves_
+		to_play_ = ~to_play_;
 	}
 
 	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
-		toPlay = ~toPlay;
-		update_hash(m, toPlay);
-		nummoves--;
+		to_play_ = ~to_play_;
+		update_hash(m, to_play_);
+		num_moves_--;
 		Cell * cell = & cells[xy(m)];
 		cell->piece = Side::NONE;
 		cell->perm = 0;
@@ -365,7 +365,7 @@ public:
 	}
 
 	Cell test_cell(const Move & pos) const {
-		Side turn = toplay();
+		Side turn = to_play();
 		int posxy = xy(pos);
 
 		Cell testcell = cells[find_group(pos)];
@@ -392,7 +392,7 @@ public:
 
 
 	hash_t gethash() const {
-		return (nummoves > unique_depth ? hash.get(0) : hash.get());
+		return (num_moves_ > unique_depth ? hash.get(0) : hash.get());
 	}
 
 	std::string hashstr() const {
@@ -409,7 +409,7 @@ public:
 
 	void update_hash(const Move & pos, Side side) {
 		int turn = side.to_i();
-		if(nummoves > unique_depth){ //simple update, no rotations/symmetry
+		if(num_moves_ > unique_depth){ //simple update, no rotations/symmetry
 			hash.update(0, 3*xy(pos) + turn);
 			return;
 		}
@@ -428,12 +428,12 @@ public:
 	}
 
 	hash_t test_hash(const Move & pos) const {
-		return test_hash(pos, toplay());
+		return test_hash(pos, to_play());
 	}
 
 	hash_t test_hash(const Move & pos, Side side) const {
 		int turn = side.to_i();
-		if(nummoves >= unique_depth) //simple test, no rotations/symmetry
+		if(num_moves_ >= unique_depth) //simple test, no rotations/symmetry
 			return hash.test(0, 3*xy(pos) + turn);
 
 		int x = pos.x,
@@ -520,7 +520,7 @@ public:
 		if(!valid_move(pos))
 			return false;
 
-		Side turn = toplay();
+		Side turn = to_play();
 		set(pos, permanent);
 
 		// update the nearby patterns
@@ -555,9 +555,9 @@ public:
 	}
 
 	//test if making this move would win, but don't actually make the move
-	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, toplay()); }
+	Outcome test_outcome(const Move & pos) const { return test_outcome(pos, to_play()); }
 	Outcome test_outcome(const Move & pos, Side turn) const { return test_outcome(MoveValid(pos, xy(pos)), turn); }
-	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, toplay()); }
+	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, to_play()); }
 	Outcome test_outcome(const MoveValid & pos, Side turn) const {
 		if(test_local(pos, turn)){
 			Cell testcell = cells[find_group(pos.xy)];

@@ -56,9 +56,9 @@ public:
 			assert(children.empty());
 		}
 
-		Node & abval(int ab_outcome, Side toplay, Side assign, int value = 1){
+		Node & abval(int ab_outcome, Side to_play, Side assign, int value = 1){
 			if(assign != Side::NONE && (ab_outcome == 1 || ab_outcome == -1))
-				ab_outcome = (toplay == assign ? 2 : -2);
+				ab_outcome = (to_play == assign ? 2 : -2);
 
 			if(     ab_outcome ==  0)   { phi = value; delta = value; }
 			else if(ab_outcome ==  2)   { phi = LOSS;  delta = 0;     }
@@ -67,20 +67,20 @@ public:
 			return *this;
 		}
 
-		Node & outcome(Outcome outcome, Side toplay, Side assign, int value = 1){
+		Node & outcome(Outcome outcome, Side to_play, Side assign, int value = 1){
 			if(assign != Side::NONE && outcome == Outcome::DRAW)
 				outcome = +assign;
 
 			if(     outcome == Outcome::UNKNOWN) { phi = value; delta = value; }
-			else if(outcome == +toplay)          { phi = LOSS;  delta = 0;     }
-			else if(outcome == +~toplay)         { phi = 0;     delta = LOSS; }
+			else if(outcome == +to_play)          { phi = LOSS;  delta = 0;     }
+			else if(outcome == +~to_play)         { phi = 0;     delta = LOSS; }
 			else /*(outcome == Outcome::DRAW)*/  { phi = 0;     delta = DRAW; }
 			return *this;
 		}
 
-		Outcome to_outcome(Side toplay) const {
-			if(phi   == LOSS) return +toplay;
-			if(delta == LOSS) return +~toplay;
+		Outcome to_outcome(Side to_play) const {
+			if(phi   == LOSS) return +to_play;
+			if(delta == LOSS) return +~to_play;
 			if(delta == DRAW) return Outcome::DRAW;
 			return Outcome::UNKNOWN;
 		}
@@ -273,7 +273,7 @@ public:
 	}
 
 	void search(double time, uint64_t maxiters, int verbose);
-	Move return_move(int verbose) const { return return_move(& root, rootboard.toplay(), verbose); }
+	Move return_move(int verbose) const { return return_move(& root, rootboard.to_play(), verbose); }
 	double gamelen() const;
 	vecmove get_pv() const;
 	std::string move_stats(const vecmove moves) const;
@@ -286,7 +286,7 @@ public:
 				limit += child.work;
 			limit /= 1000;
 		}
-		gen_sgf(sgf, limit, root, rootboard.toplay());
+		gen_sgf(sgf, limit, root, rootboard.to_play());
 	}
 
 	void load_sgf(SGFParser<Move> & sgf) {
@@ -298,7 +298,7 @@ public:
 private:
 //remove all the nodes with little work to free up some memory
 	void garbage_collect(Node * node);
-	Move return_move(const Node * node, Side toplay, int verbose = 0) const;
+	Move return_move(const Node * node, Side to_play, int verbose = 0) const;
 	Node * find_child(const Node * node, const Move & move) const ;
 	void create_children_simple(const Board & board, Node * node);
 

@@ -38,7 +38,7 @@ public:
 
 	Move choose_move(const Board & board, const Move & prev) {
 		uint32_t p = board.pattern_small(prev);
-		uint16_t r = lookup[board.toplay().to_i()-1][p];
+		uint16_t r = lookup[board.to_play().to_i()-1][p];
 
 		if(!r) // nothing to save
 			return M_UNKNOWN;

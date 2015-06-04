@@ -43,15 +43,15 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 		s += coord + char('A' + y);
 		int end = lineend(y);
 		for(int x = linestart(y); x < end; x++){
-			s += (last == Move(x, y)   ? coord + "[" :
-			      last == Move(x-1, y) ? coord + "]" : " ");
+			s += (last_move_ == Move(x, y)   ? coord + "[" :
+			      last_move_ == Move(x-1, y) ? coord + "]" : " ");
 			Side p = get(x, y);
 			if(     p == Side::NONE) s += reset + func(Move(x, y));
 			else if(p == Side::P1)   s += white;
 			else if(p == Side::P2)   s += black;
 			else                     s += "?";
 		}
-		s += (last == Move(end-1, y) ? coord + "]" : " ");
+		s += (last_move_ == Move(end-1, y) ? coord + "]" : " ");
 		s += '\n';
 	}
 

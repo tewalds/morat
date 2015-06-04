@@ -92,7 +92,7 @@ public:
 	GTPResponse gtp_undo(vecstr args);
 	GTPResponse gtp_all_legal(vecstr args);
 	GTPResponse gtp_history(vecstr args);
-	GTPResponse play(const std::string & pos, Side toplay);
+	GTPResponse play(const std::string & pos, Side to_play);
 	GTPResponse gtp_playgame(vecstr args);
 	GTPResponse gtp_play(vecstr args);
 	GTPResponse gtp_playwhite(vecstr args);

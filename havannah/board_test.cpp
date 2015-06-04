@@ -8,7 +8,7 @@ using namespace Morat;
 using namespace Havannah;
 
 void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
-	REQUIRE(b.num_moves() == 0);
+	REQUIRE(b.moves_made() == 0);
 	Side side = Side::P1;
 	int made = 0, remain = 37;
 	for(auto s : moves) {
@@ -16,10 +16,10 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 		Move move(s);
 		CAPTURE(move);
 		CAPTURE(b);
-		REQUIRE(b.num_moves() == made);
-		REQUIRE(b.movesremain() == remain);
+		REQUIRE(b.moves_made() == made);
+		REQUIRE(b.moves_remain() == remain);
 		REQUIRE(b.valid_move(move));
-		REQUIRE(b.toplay() == side);
+		REQUIRE(b.to_play() == side);
 		REQUIRE(b.test_outcome(move) == expected);
 		REQUIRE(b.move(move));
 		REQUIRE(b.won() == expected);
@@ -27,8 +27,8 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 		made++;
 		remain--;
 	}
-	REQUIRE(b.num_moves() == made);
-	REQUIRE(b.movesremain() == (outcome == Outcome::UNKNOWN ? remain : 0));
+	REQUIRE(b.moves_made() == made);
+	REQUIRE(b.moves_remain() == (outcome == Outcome::UNKNOWN ? remain : 0));
 }
 
 TEST_CASE("Havannah::Board", "[havannah][board]") {
@@ -37,7 +37,7 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 	SECTION("Basics") {
 		REQUIRE(b.get_size() == 4);
 		REQUIRE(b.get_size_d() == 7);
-		REQUIRE(b.movesremain() == 37);
+		REQUIRE(b.moves_remain() == 37);
 	}
 
 	SECTION("valid moves") {
@@ -114,14 +114,14 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 		};
 		int made = 0, remain = 37;
 		for(auto m : moves) {
-			REQUIRE(b.num_moves() == made);
-			REQUIRE(b.movesremain() == remain);
+			REQUIRE(b.moves_made() == made);
+			REQUIRE(b.moves_remain() == remain);
 			b.move(Move(m));
 			made++;
 			remain--;
 		}
-		REQUIRE(b.num_moves() == made);
-		REQUIRE(b.movesremain() == remain);
+		REQUIRE(b.moves_made() == made);
+		REQUIRE(b.moves_remain() == remain);
 	}
 
 	SECTION("move distance") {

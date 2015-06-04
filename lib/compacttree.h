@@ -51,7 +51,7 @@ template <class Node> class CompactTree {
 		}
 
 		//how big is this structure in bytes by capacity or used
-		size_t memsize() const { return sizeof(Data) + sizeof(Node)*capacity; }
+		size_t mem_size() const { return sizeof(Data) + sizeof(Node)*capacity; }
 		size_t memused() const { return sizeof(Data) + sizeof(Node)*used; }
 
 		bool empty() const { return (header <= oldcount); }
@@ -354,7 +354,7 @@ public:
 	void dealloc(Data * d){
 		assert(!d->empty() && d->capacity > 0 && d->capacity < MAX_NUM);
 
-		unsigned int size = d->memsize();
+		unsigned int size = d->mem_size();
 		PLUS(memused, -size);
 
 		//call the destructor
@@ -396,7 +396,7 @@ public:
 			Data * s = (Data *)(schunk->mem + soff);
 			assert(s->capacity > 0 && s->capacity < MAX_NUM);
 
-			int ssize = s->memsize(); //how much to move the source pointer
+			int ssize = s->mem_size(); //how much to move the source pointer
 
 			//move from -> to, update parent pointer
 			if(s->empty()){

@@ -44,7 +44,7 @@ protected:
 
 	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
 		Outcome outcome = Outcome::UNDEF;
-		Side turn = board.toplay();
+		Side turn = board.to_play();
 		for(MoveIterator move(board); !move.done(); ++move){
 			++nodes;
 			Outcome won = move.board().won();
