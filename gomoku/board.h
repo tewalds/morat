@@ -130,7 +130,7 @@ private:
 	Outcome outcome_;
 	char win_type_; //0 no win, 1 = 5 in a row
 
-	std::vector<Cell> cells;
+	std::vector<Cell> cells_;
 	Zobrist<1> hash;
 	std::shared_ptr<MoveValid> neighbor_list_;
 
@@ -150,7 +150,7 @@ public:
 		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size();
 
-		cells.resize(vec_size());
+		cells_.resize(vec_size());
 
 		for(int y = 0; y < size; y++){
 			for(int x = 0; x < size; x++){
@@ -162,7 +162,7 @@ public:
 					j <<= 2;
 				}
 				Side s = (onboard(x, y) ? Side::NONE : Side::UNDEF);
-				cells[posxy] = Cell(s, pattern_reverse(p));
+				cells_[posxy] = Cell(s, pattern_reverse(p));
 			}
 		}
 	}
@@ -191,13 +191,13 @@ public:
 		return std::max(abs(a.x - b.x), abs(a.y - b.y));
 	}
 
-	const Cell * cell(int i)          const { return & cells[i]; }
+	const Cell * cell(int i)          const { return & cells_[i]; }
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }
 	const Cell * cell(const MoveValid & m) const { return cell(m.xy); }
 
 	//assumes valid x,y
-	Side get(int i)          const { return cells[i].piece; }
+	Side get(int i)          const { return cells_[i].piece; }
 	Side get(int x, int y)   const { return get(xy(x, y)); }
 	Side get(const Move & m) const { return get(xy(m)); }
 	Side get(const MoveValid & m) const { return get(m.xy); }
@@ -293,7 +293,7 @@ public:
 
 	void set(const Move & m, bool perm = true) {
 		last_move_ = m;
-		Cell * cell = & cells[xy(m)];
+		Cell * cell = & cells_[xy(m)];
 		cell->piece = to_play_;
 		cell->perm = perm;
 		num_moves_++;
@@ -303,7 +303,7 @@ public:
 	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
 		to_play_ = ~to_play_;
 		num_moves_--;
-		Cell * cell = & cells[xy(m)];
+		Cell * cell = & cells_[xy(m)];
 		cell->piece = Side::NONE;
 		cell->perm = 0;
 	}
@@ -348,7 +348,7 @@ public:
 	Pattern pattern(int posxy)             const {
 		// this is from the opposite perspective
 		// so rotate into this move's perspective
-		return pattern_reverse(cells[posxy].pattern);
+		return pattern_reverse(cells_[posxy].pattern);
 	}
 
 	Pattern pattern_medium(const MoveValid & pos) const { return pattern_medium(pos.xy); }
@@ -431,7 +431,7 @@ public:
 		Pattern p = turn.to_i();
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
 			if(i->onboard()){
-				cells[i->xy].pattern |= p;
+				cells_[i->xy].pattern |= p;
 			}
 			p <<= 2;
 		}

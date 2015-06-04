@@ -142,7 +142,7 @@ private:
 	Outcome outcome_;
 	char win_type_; //0 no win, 1 = edge, 2 = corner, 3 = ring
 
-	std::vector<Cell> cells;
+	std::vector<Cell> cells_;
 	Zobrist<12> hash;
 	std::shared_ptr<MoveValid> neighbor_list_;
 
@@ -169,7 +169,7 @@ public:
 		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size() - size*sizem1;
 
-		cells.resize(vec_size());
+		cells_.resize(vec_size());
 
 		for(int y = 0; y < size_d; y++){
 			for(int x = 0; x < size_d; x++){
@@ -181,7 +181,7 @@ public:
 					j <<= 2;
 				}
 				Side s = (onboard(x, y) ? Side::NONE : Side::UNDEF);
-				cells[posxy] = Cell(s, posxy, 1, (1 << iscorner(x, y)), (1 << isedge(x, y)), pattern_reverse(p));
+				cells_[posxy] = Cell(s, posxy, 1, (1 << iscorner(x, y)), (1 << isedge(x, y)), pattern_reverse(p));
 			}
 		}
 	}
@@ -214,14 +214,14 @@ public:
 		return (abs(a.x - b.x) + abs(a.y - b.y) + abs((a.x - a.y) - (b.x - b.y)) )/2;
 	}
 
-	const Cell * cell(int i)          const { return & cells[i]; }
+	const Cell * cell(int i)          const { return & cells_[i]; }
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }
 	const Cell * cell(const MoveValid & m) const { return cell(m.xy); }
 
 
 	//assumes valid x,y
-	Side get(int i)          const { return cells[i].piece; }
+	Side get(int i)          const { return cells_[i].piece; }
 	Side get(int x, int y)   const { return get(xy(x, y)); }
 	Side get(const Move & m) const { return get(xy(m)); }
 	Side get(const MoveValid & m) const { return get(m.xy); }
@@ -316,7 +316,7 @@ public:
 
 	void set(const Move & m, bool perm = true) {
 		last_move_ = m;
-		Cell * cell = & cells[xy(m)];
+		Cell * cell = & cells_[xy(m)];
 		cell->piece = to_play_;
 		cell->perm = perm;
 		num_moves_++;
@@ -328,7 +328,7 @@ public:
 		to_play_ = ~to_play_;
 		update_hash(m, to_play_);
 		num_moves_--;
-		Cell * cell = & cells[xy(m)];
+		Cell * cell = & cells_[xy(m)];
 		cell->piece = Side::NONE;
 		cell->perm = 0;
 	}
@@ -337,12 +337,12 @@ public:
 	int find_group(const Move & m) const { return find_group(xy(m)); }
 	int find_group(int x, int y)   const { return find_group(xy(x, y)); }
 	int find_group(unsigned int i) const {
-		unsigned int p = cells[i].parent;
+		unsigned int p = cells_[i].parent;
 		if(p != i){
 			do{
-				p = cells[p].parent;
-			}while(p != cells[p].parent);
-			cells[i].parent = p; //do path compression, but only the current one, not all, to avoid recursion
+				p = cells_[p].parent;
+			}while(p != cells_[p].parent);
+			cells_[i].parent = p; //do path compression, but only the current one, not all, to avoid recursion
 		}
 		return p;
 	}
@@ -358,13 +358,13 @@ public:
 		if(i == j)
 			return true;
 
-		if(cells[i].size < cells[j].size) //force i's subtree to be bigger
+		if(cells_[i].size < cells_[j].size) //force i's subtree to be bigger
 			std::swap(i, j);
 
-		cells[j].parent = i;
-		cells[i].size   += cells[j].size;
-		cells[i].corner |= cells[j].corner;
-		cells[i].edge   |= cells[j].edge;
+		cells_[j].parent = i;
+		cells_[i].size   += cells_[j].size;
+		cells_[i].corner |= cells_[j].corner;
+		cells_[i].edge   |= cells_[j].edge;
 
 		return false;
 	}
@@ -373,10 +373,10 @@ public:
 		Side turn = to_play();
 		int posxy = xy(pos);
 
-		Cell testcell = cells[find_group(pos)];
+		Cell testcell = cells_[find_group(pos)];
 		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
 			if(i->onboard() && turn == get(i->xy)){
-				const Cell * g = & cells[find_group(i->xy)];
+				const Cell * g = & cells_[find_group(i->xy)];
 				testcell.corner |= g->corner;
 				testcell.edge   |= g->edge;
 				testcell.size   += g->size; //not quite accurate if it's joining the same group twice
@@ -402,7 +402,7 @@ public:
 		Side otherplayer = ~player;
 		int posxy = xy(pos);
 
-		const Cell * g = & cells[find_group(posxy)];
+		const Cell * g = & cells_[find_group(posxy)];
 		if(g->piece == otherplayer && (g->edge || g->corner))
 			return false;
 
@@ -499,7 +499,7 @@ public:
 	Pattern pattern(int posxy)             const {
 		// this is from the opposite perspective
 		// so rotate into this move's perspective
-		return pattern_reverse(cells[posxy].pattern);
+		return pattern_reverse(cells_[posxy].pattern);
 	}
 
 	Pattern pattern_medium(const MoveValid & pos) const { return pattern_medium(pos.xy); }
@@ -568,7 +568,7 @@ public:
 		Pattern p = turn.to_i();
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
 			if(i->onboard()){
-				cells[i->xy].pattern |= p;
+				cells_[i->xy].pattern |= p;
 			}
 			p <<= 2;
 		}
@@ -584,7 +584,7 @@ public:
 		}
 
 		if(checkwin){
-			Cell * g = & cells[find_group(pos.xy)];
+			Cell * g = & cells_[find_group(pos.xy)];
 			if(g->numedges() >= 3){
 				outcome_ = +turn;
 				win_type_ = 1;
@@ -612,11 +612,11 @@ public:
 	Outcome test_outcome(const MoveValid & pos) const { return test_outcome(pos, to_play()); }
 	Outcome test_outcome(const MoveValid & pos, Side turn) const {
 		if(test_local(pos, turn)){
-			Cell testcell = cells[find_group(pos.xy)];
+			Cell testcell = cells_[find_group(pos.xy)];
 			int numgroups = 0;
 			for(const MoveValid * i = nb_begin(pos), *e = nb_end(i); i < e; i++){
 				if(i->onboard() && turn == get(i->xy)){
-					const Cell * g = & cells[find_group(i->xy)];
+					const Cell * g = & cells_[find_group(i->xy)];
 					testcell.corner |= g->corner;
 					testcell.edge   |= g->edge;
 					testcell.size   += g->size;
