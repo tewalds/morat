@@ -75,7 +75,7 @@ struct MoveValid : public Move {
 	MoveValid(int x, int y, int XY) : Move(x,y), xy(XY) { }
 	MoveValid(const Move & m, int XY) : Move(m), xy(XY) { }
 	MoveValid(const std::string & m, int XY) : Move(m), xy(XY) { }
-	bool onboard() const { return xy != -1; }
+	bool on_board() const { return xy != -1; }
 	bool operator< (const MoveValid & b) const { return (xy <  b.xy); }
 	bool operator<=(const MoveValid & b) const { return (xy <= b.xy); }
 	bool operator> (const MoveValid & b) const { return (xy >  b.xy); }

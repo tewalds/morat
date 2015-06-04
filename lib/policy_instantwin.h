@@ -49,7 +49,7 @@ public:
 		for(int i = 0; i <= 5; i++){
 			start = board.nb_begin(prev)[i];
 
-			if(!board.onboard(start) || board.get(start) != turn){
+			if(!board.on_board(start) || board.get(start) != turn){
 				dir = (i + 5) % 6;
 				break;
 			}
@@ -67,7 +67,7 @@ public:
 		do{
 //			logerr(" " + cur.to_s());
 			//check the current cell
-			if(board.onboard(cur) && board.get(cur) == Side::NONE && board.test_outcome(cur, turn) == +turn){
+			if(board.on_board(cur) && board.get(cur) == Side::NONE && board.test_outcome(cur, turn) == +turn){
 //				logerr(" loss");
 				if(loss == M_UNKNOWN){
 					loss = cur;
@@ -82,7 +82,7 @@ public:
 				int nd = (dir + i) % 6;
 				MoveValid next = board.nb_begin(cur)[nd];
 
-				if(!board.onboard(next) || board.get(next) != turn){
+				if(!board.on_board(next) || board.get(next) != turn){
 					cur = next;
 					dir = nd;
 					break;

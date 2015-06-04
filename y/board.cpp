@@ -41,8 +41,8 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	for(int y = 0; y < size; y++){
 		s += string(y, ' ');
 		s += coord + char('A' + y);
-		int end = lineend(y);
-		for(int x = linestart(y); x < end; x++){
+		int end = line_end(y);
+		for(int x = line_start(y); x < end; x++){
 			s += (last_move_ == Move(x, y)   ? coord + "[" :
 			      last_move_ == Move(x-1, y) ? coord + "]" : " ");
 			Side p = get(x, y);

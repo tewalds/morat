@@ -80,12 +80,12 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 
 	class MoveIterator { //only returns valid moves...
 		const Board & board;
-		int lineend;
+		int line_end;
 		MoveValid move;
 		bool unique;
 		HashSet hashes;
 	public:
-		MoveIterator(const Board & b, bool Unique) : board(b), lineend(0), move(Move(M_SWAP), -1), unique(Unique) {
+		MoveIterator(const Board & b, bool Unique) : board(b), line_end(0), move(Move(M_SWAP), -1), unique(Unique) {
 			if(board.outcome_ >= Outcome::DRAW){
 				move = MoveValid(0, board.get_size_d(), -1); //already done
 			} else {
@@ -106,15 +106,15 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 					move.x++;
 					move.xy++;
 
-					if(move.x >= lineend){
+					if(move.x >= line_end){
 						move.y++;
 						if(move.y >= board.get_size_d()){ //done
 							move.xy = -1;
 							return *this;
 						}
-						move.x = board.linestart(move.y);
+						move.x = board.line_start(move.y);
 						move.xy = board.xy(move.x, move.y);
-						lineend = board.lineend(move.y);
+						line_end = board.line_end(move.y);
 					}
 				}while(!board.valid_move_fast(move));
 
@@ -176,11 +176,11 @@ public:
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
 				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
-					if(!i->onboard())
+					if(!i->on_board())
 						p |= j;
 					j <<= 2;
 				}
-				Side s = (onboard(x, y) ? Side::NONE : Side::UNDEF);
+				Side s = (on_board(x, y) ? Side::NONE : Side::UNDEF);
 				cells_[posxy] = Cell(s, posxy, 1, (1 << iscorner(x, y)), (1 << isedge(x, y)), pattern_reverse(p));
 			}
 		}
@@ -226,8 +226,6 @@ public:
 	Side get(const Move & m) const { return get(xy(m)); }
 	Side get(const MoveValid & m) const { return get(m.xy); }
 
-	Side geton(const MoveValid & m) const { return (m.onboard() ? get(m.xy) : Side::UNDEF); }
-
 	int local(const Move & m, Side turn) const { return local(xy(m), turn); }
 	int local(int i,          Side turn) const {
 		Pattern p = pattern(i);
@@ -240,12 +238,12 @@ public:
 
 
 	//assumes x, y are in array bounds
-	bool onboard_fast(int x, int y)   const { return (  y -   x < size) && (  x -   y < size); }
-	bool onboard_fast(const Move & m) const { return (m.y - m.x < size) && (m.x - m.y < size); }
+	bool on_board_fast(int x, int y)   const { return (  y -   x < size) && (  x -   y < size); }
+	bool on_board_fast(const Move & m) const { return (m.y - m.x < size) && (m.x - m.y < size); }
 	//checks array bounds too
-	bool onboard(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_d &&   y < size_d && onboard_fast(x, y) ); }
-	bool onboard(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_d && m.y < size_d && onboard_fast(m) ); }
-	bool onboard(const MoveValid & m) const { return m.onboard(); }
+	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_d &&   y < size_d && on_board_fast(x, y) ); }
+	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_d && m.y < size_d && on_board_fast(m) ); }
+	bool on_board(const MoveValid & m) const { return m.on_board(); }
 
 	//assumes x, y are in bounds and the game isn't already finished
 	bool valid_move_fast(int i)               const { return get(i) == Side::NONE; }
@@ -253,9 +251,9 @@ public:
 	bool valid_move_fast(const Move & m)      const { return valid_move_fast(xy(m)); }
 	bool valid_move_fast(const MoveValid & m) const { return valid_move_fast(m.xy); }
 	//checks array bounds too
-	bool valid_move(int x, int y)        const { return (outcome_ < Outcome::DRAW && onboard(x, y) && valid_move_fast(x, y)); }
-	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
-	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
+	bool valid_move(int x, int y)        const { return (outcome_ < Outcome::DRAW && on_board(x, y) && valid_move_fast(x, y)); }
+	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && on_board(m)    && valid_move_fast(m)); }
+	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.on_board()   && valid_move_fast(m)); }
 
 	//iterator through neighbors of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
@@ -278,7 +276,7 @@ public:
 
 				for(int i = 0; i < 18; i++){
 					Move loc = pos + neighbors[i];
-					*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
+					*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
 					++a;
 				}
 			}
@@ -287,9 +285,9 @@ public:
 		return list;
 	}
 
-	int linestart(int y) const { return (y < size ? 0 : y - sizem1); }
-	int lineend(int y)   const { return (y < size ? size + y : size_d); }
-	int linelen(int y)   const { return size_d - abs(sizem1 - y); }
+	int line_start(int y) const { return (y < size ? 0 : y - sizem1); }
+	int line_end(int y)   const { return (y < size ? size + y : size_d); }
+	int line_len(int y)   const { return size_d - abs(sizem1 - y); }
 
 	std::string to_s(bool color) const;
 	std::string to_s(bool color, std::function<std::string(Move)> func) const;
@@ -375,7 +373,7 @@ public:
 
 		Cell testcell = cells_[find_group(pos)];
 		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
-			if(i->onboard() && turn == get(i->xy)){
+			if(i->on_board() && turn == get(i->xy)){
 				const Cell * g = & cells_[find_group(i->xy)];
 				testcell.corner |= g->corner;
 				testcell.edge   |= g->edge;
@@ -407,7 +405,7 @@ public:
 			return false;
 
 		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
-			if(!i->onboard())
+			if(!i->on_board())
 				return false;
 
 			const Cell * g = cell(find_group(i->xy));
@@ -567,7 +565,7 @@ public:
 		// update the nearby patterns
 		Pattern p = turn.to_i();
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
-			if(i->onboard()){
+			if(i->on_board()){
 				cells_[i->xy].pattern |= p;
 			}
 			p <<= 2;
@@ -576,7 +574,7 @@ public:
 		// join the groups for win detection
 		bool alreadyjoined = false; //useful for finding rings
 		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end(i); i < e; i++){
-			if(i->onboard() && turn == get(i->xy)){
+			if(i->on_board() && turn == get(i->xy)){
 				alreadyjoined |= join_groups(pos.xy, i->xy);
 				i++; //skip the next one. If it is the same group,
 					 //it is already connected and forms a corner, which we can ignore
@@ -615,7 +613,7 @@ public:
 			Cell testcell = cells_[find_group(pos.xy)];
 			int numgroups = 0;
 			for(const MoveValid * i = nb_begin(pos), *e = nb_end(i); i < e; i++){
-				if(i->onboard() && turn == get(i->xy)){
+				if(i->on_board() && turn == get(i->xy)){
 					const Cell * g = & cells_[find_group(i->xy)];
 					testcell.corner |= g->corner;
 					testcell.edge   |= g->edge;

@@ -28,8 +28,8 @@ TEST_CASE("Move", "[move]"){
 TEST_CASE("MoveValid", "[move]"){
 	REQUIRE(MoveValid() == M_UNKNOWN);
 	REQUIRE(MoveValid(M_UNKNOWN) == M_UNKNOWN);
-	REQUIRE(!MoveValid().onboard());
-	REQUIRE(MoveValid("a1", 0).onboard());
+	REQUIRE(!MoveValid().on_board());
+	REQUIRE(MoveValid("a1", 0).on_board());
 	REQUIRE(MoveValid("a1", 0).xy == 0);
 	REQUIRE(MoveValid("c5", 42).xy == 42);
 	REQUIRE(MoveValid("a1", 0).to_s() == "a1");

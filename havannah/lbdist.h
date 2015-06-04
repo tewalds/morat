@@ -36,7 +36,7 @@ public:
 	Outcome isdraw() {
 		Outcome outcome = Outcome::DRAW;  // assume neither side can win
 		for(int y = 0; y < board->get_size_d(); y++) {
-			for(int x = board->linestart(y); x < board->lineend(y); x++) {
+			for(int x = board->line_start(y); x < board->line_end(y); x++) {
 				MoveValid pos(x, y, board->xy(x, y));
 
 				if(board->encirclable(pos, Side::P1) || get(pos.xy, Side::P1) < maxdist-5)

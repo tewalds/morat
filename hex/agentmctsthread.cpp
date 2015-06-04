@@ -380,7 +380,7 @@ bool AgentMCTS::AgentThread::test_bridge_probe(const Board & board, const Move &
 	for(int i = 0; i < 8; i++){
 		Move cur = move + neighbors[i % 6];
 
-		bool on = board.onboard(cur);
+		bool on = board.on_board(cur);
 		Side v = Side::NONE;
 		if(on)
 			v = board.get(cur);

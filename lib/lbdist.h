@@ -150,7 +150,7 @@ protected:
 				int nd = (cur.dir + i) % 6;
 				MoveDist next(board->nb_begin(cur.pos)[nd], cur.dist, nd);
 
-				if(board->onboard(next.pos)){
+				if(board->on_board(next.pos)){
 					Side colour = board->get(next.pos);
 
 					if(colour == otherplayer)

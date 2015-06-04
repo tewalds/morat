@@ -47,7 +47,7 @@ TEST_CASE("Y::Board [y][board]") {
 		                  "g1",
 		};
 		for(auto m : valid){
-			REQUIRE(b.onboard(m));
+			REQUIRE(b.on_board(m));
 			REQUIRE(b.valid_move(m));
 		}
 	}
@@ -55,7 +55,7 @@ TEST_CASE("Y::Board [y][board]") {
 	SECTION("invalid moves") {
 		std::string invalid[] = {"a0", "a8", "a10", "b7", "c6", "g2", "e8", "f8", "f0", "h1", "f0"};
 		for(auto m : invalid){
-			REQUIRE_FALSE(b.onboard(m));
+			REQUIRE_FALSE(b.on_board(m));
 			REQUIRE_FALSE(b.valid_move(m));
 		}
 	}

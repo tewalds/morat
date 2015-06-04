@@ -246,7 +246,7 @@ GTPResponse GTP::gtp_dists(vecstr args){
 	for(int y = 0; y < size; y++){
 		s += string(y, ' ');
 		s += coord + char('A' + y);
-		int end = board.lineend(y);
+		int end = board.line_end(y);
 		for(int x = 0; x < end; x++){
 			Side p = board.get(x, y);
 			s += ' ';

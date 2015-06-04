@@ -63,7 +63,7 @@ TEST_CASE("Gomoku::Board", "[gomoku][board]") {
 			"g1", "g2", "g3", "g4", "g5", "g6", "g7",
 		};
 		for(auto m : valid){
-			REQUIRE(b.onboard(m));
+			REQUIRE(b.on_board(m));
 			REQUIRE(b.valid_move(m));
 		}
 	}
@@ -71,7 +71,7 @@ TEST_CASE("Gomoku::Board", "[gomoku][board]") {
 	SECTION("invalid moves") {
 		std::string invalid[] = {"a0", "a8", "a10", "b8", "e8", "h1", "f0"};
 		for(auto m : invalid){
-			REQUIRE_FALSE(b.onboard(m));
+			REQUIRE_FALSE(b.on_board(m));
 			REQUIRE_FALSE(b.valid_move(m));
 		}
 	}

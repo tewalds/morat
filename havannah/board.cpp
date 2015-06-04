@@ -43,8 +43,8 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	for(int y = 0; y < size_d; y++){
 		s += string(abs(sizem1 - y) + 2, ' ');
 		s += coord + char('A' + y);
-		int end = lineend(y);
-		for(int x = linestart(y); x < end; x++){
+		int end = line_end(y);
+		for(int x = line_start(y); x < end; x++){
 			s += (last_move_ == Move(x, y)   ? coord + "[" :
 			      last_move_ == Move(x-1, y) ? coord + "]" : " ");
 			Side p = get(x, y);
@@ -65,7 +65,7 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 
 
 int Board::iscorner(int x, int y) const {
-	if(!onboard(x,y))
+	if(!on_board(x,y))
 		return -1;
 
 	int m = sizem1, e = size_d-1;
@@ -81,7 +81,7 @@ int Board::iscorner(int x, int y) const {
 }
 
 int Board::isedge(int x, int y) const {
-	if(!onboard(x,y))
+	if(!on_board(x,y))
 		return -1;
 
 	int m = sizem1, e = size_d-1;
@@ -104,7 +104,7 @@ bool Board::checkring_df(const MoveValid & pos, const Side turn) const {
 	for(int i = 0; i < 4; i++){ //4 instead of 6 since any ring must have its first endpoint in the first 4
 		MoveValid loc = nb_begin(pos)[i];
 
-		if(!loc.onboard())
+		if(!loc.on_board())
 			continue;
 
 		const Cell * g = cell(loc);
@@ -129,7 +129,7 @@ bool Board::followring(const MoveValid & cur, const int & dir, const Side & turn
 		int nd = (dir + i) % 6;
 		MoveValid next = nb_begin(cur)[nd];
 
-		if(!next.onboard())
+		if(!next.on_board())
 			continue;
 
 		const Cell * g = cell(next);
@@ -224,7 +224,7 @@ bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 	const MoveValid * s = nb_begin(pos);
 	for(const MoveValid * i = s, *e = nb_end(i); i < e; i++){
 		bitpattern <<= 1;
-		if(i->onboard() && turn == get(i->xy))
+		if(i->on_board() && turn == get(i->xy))
 			bitpattern |= 1;
 	}
 
@@ -268,7 +268,7 @@ bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 }
 //checks for 3 more stones, a should be the corner
 bool Board::checkring_back(const MoveValid & a, const MoveValid & b, const MoveValid & c, Side turn) const {
-	return (a.onboard() && get(a) == turn && get(b) == turn && get(c) == turn);
+	return (a.on_board() && get(a) == turn && get(b) == turn && get(c) == turn);
 }
 
 
