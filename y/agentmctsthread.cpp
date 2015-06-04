@@ -378,7 +378,7 @@ bool AgentMCTS::AgentThread::test_bridge_probe(const Board & board, const Move &
 	int state = 0;
 	Side piece = ~board.get(move);
 	for(int i = 0; i < 8; i++){
-		Move cur = move + neighbours[i % 6];
+		Move cur = move + neighbors[i % 6];
 
 		bool on = board.onboard(cur);
 		Side v = Side::NONE;

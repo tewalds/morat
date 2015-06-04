@@ -29,7 +29,7 @@ namespace Gomoku {
  * B 3 4 5
  * C 6 7 8
  *
- * neighbours are laid out in this pattern:
+ * neighbors are laid out in this pattern:
  *  8  16 9 17 10
  * 23  0  1  2 18
  * 15  7  X  3 11
@@ -37,8 +37,8 @@ namespace Gomoku {
  * 14 21 13 20 12
  */
 
-const MoveScore neighbours[24] = {
-	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 1, 3), MoveScore(-1, 0, 3), //direct neighbours, clockwise
+const MoveScore neighbors[24] = {
+	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
 	MoveScore(-2,-2, 2), MoveScore(0,-2, 2), MoveScore(2,-2, 2), MoveScore(2, 0, 2), MoveScore(2, 2, 2), MoveScore( 0, 2, 2), MoveScore(-2, 2, 2), MoveScore(-2, 0, 2), //corners
 	MoveScore(-1,-2, 1), MoveScore(1,-2, 1), MoveScore(2,-1, 1), MoveScore(2, 1, 1), MoveScore(1, 2, 1), MoveScore(-1, 2, 1), MoveScore(-2, 1, 1), MoveScore(-2,-1, 1), //knight's move
 };
@@ -60,7 +60,7 @@ public:
 	struct Cell {
 		Side    piece;   //who controls this cell, 0 for none, 1,2 for players
 		uint8_t perm;    //is this a permanent piece or a randomly placed piece?
-		Pattern pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
+		Pattern pattern; //the pattern of pieces for neighbors, but from their perspective. Rotate 180 for my perpective
 
 		Cell() : piece(Side::NONE), perm(0), pattern(0) { }
 		Cell(Side p, Pattern t) : piece(p), perm(0), pattern(t) { }
@@ -132,7 +132,7 @@ private:
 
 	std::vector<Cell> cells;
 	Zobrist<1> hash;
-	std::shared_ptr<MoveValid> neighbourlist;
+	std::shared_ptr<MoveValid> neighbor_list_;
 
 public:
 	Board(){
@@ -147,7 +147,7 @@ public:
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
 		win_type_ = 0;
-		neighbourlist = get_neighbour_list();
+		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size();
 
 		cells.resize(vec_size());
@@ -234,10 +234,10 @@ public:
 	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
 	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
 
-	//iterator through neighbours of a position
+	//iterator through neighbors of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
 	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return neighbourlist.get() + i*24; }
+	const MoveValid * nb_begin(int i)          const { return neighbor_list_.get() + i*24; }
 
 	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
@@ -246,7 +246,7 @@ public:
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 16; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 24; }
 
-	std::shared_ptr<MoveValid> get_neighbour_list() {
+	std::shared_ptr<MoveValid> get_neighbor_list() {
 		std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*24]);
 		MoveValid * a = list.get();
 		for(int y = 0; y < size; y++){
@@ -254,7 +254,7 @@ public:
 				Move pos(x,y);
 
 				for(int i = 0; i < 24; i++){
-					Move loc = pos + neighbours[i];
+					Move loc = pos + neighbors[i];
 					*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
 					++a;
 				}

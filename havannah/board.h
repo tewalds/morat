@@ -30,15 +30,15 @@ namespace Havannah {
  * C 6 7 8       7 8      7 8
  */
 
-/* neighbours are laid out in this pattern:
+/* neighbors are laid out in this pattern:
  *     12   6  13         12  6 13
  *   11   0   1   7       11  0  1  7
  * 17   5   X   2  14 <=> 17  5  X  2 14
  *   10   4   3   8          10  4  3  8
  *     16   9  15               16  9 15
  */
-const MoveScore neighbours[18] = {
-	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 0, 3), //direct neighbours, clockwise
+const MoveScore neighbors[18] = {
+	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
 	MoveScore(-1,-2, 2), MoveScore(1,-1, 2), MoveScore(2, 1, 2), MoveScore(1, 2, 2), MoveScore(-1, 1, 2), MoveScore(-2,-1, 2), //sides of ring 2, virtual connections
 	MoveScore(-2,-2, 1), MoveScore(0,-2, 1), MoveScore(2, 0, 1), MoveScore(2, 2, 1), MoveScore( 0, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
 };
@@ -66,7 +66,7 @@ mutable uint16_t parent; //parent for this group of cells
 		uint8_t edge;    //which edges are this group connected to
 mutable uint8_t mark;    //when doing a ring search, has this position been seen?
 		uint8_t perm;    //is this a permanent piece or a randomly placed piece?
-		Pattern pattern; //the pattern of pieces for neighbours, but from their perspective. Rotate 180 for my perpective
+		Pattern pattern; //the pattern of pieces for neighbors, but from their perspective. Rotate 180 for my perpective
 
 		Cell() : piece(Side::NONE), size(0), parent(0), corner(0), edge(0), mark(0), perm(0), pattern(0) { }
 		Cell(Side p, unsigned int a, unsigned int s, unsigned int c, unsigned int e, Pattern t) :
@@ -144,7 +144,7 @@ private:
 
 	std::vector<Cell> cells;
 	Zobrist<12> hash;
-	std::shared_ptr<MoveValid> neighbourlist;
+	std::shared_ptr<MoveValid> neighbor_list_;
 
 public:
 	bool check_rings; // whether to look for rings at all
@@ -166,7 +166,7 @@ public:
 		win_type_ = 0;
 		check_rings = true;
 		perm_rings = 0;
-		neighbourlist = get_neighbour_list();
+		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size() - size*sizem1;
 
 		cells.resize(vec_size());
@@ -257,10 +257,10 @@ public:
 	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && onboard(m)    && valid_move_fast(m)); }
 	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.onboard()   && valid_move_fast(m)); }
 
-	//iterator through neighbours of a position
+	//iterator through neighbors of a position
 	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
 	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return neighbourlist.get() + i*18; }
+	const MoveValid * nb_begin(int i)          const { return neighbor_list_.get() + i*18; }
 
 	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
 	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
@@ -269,7 +269,7 @@ public:
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
-	std::shared_ptr<MoveValid> get_neighbour_list() {
+	std::shared_ptr<MoveValid> get_neighbor_list() {
 		std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
 		MoveValid * a = list.get();
 		for(int y = 0; y < size_d; y++){
@@ -277,7 +277,7 @@ public:
 				Move pos(x,y);
 
 				for(int i = 0; i < 18; i++){
-					Move loc = pos + neighbours[i];
+					Move loc = pos + neighbors[i];
 					*a = MoveValid(loc, (onboard(loc) ? xy(loc) : -1) );
 					++a;
 				}
@@ -397,7 +397,7 @@ public:
 	}
 
 	//check if a position is encirclable by a given player
-	//false if it or one of its neighbours are the opponent's and connected to an edge or corner
+	//false if it or one of its neighbors are the opponent's and connected to an edge or corner
 	bool encirclable(const Move pos, Side player) const {
 		Side otherplayer = ~player;
 		int posxy = xy(pos);

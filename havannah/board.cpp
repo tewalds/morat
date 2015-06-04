@@ -151,7 +151,7 @@ bool Board::followring(const MoveValid & cur, const int & dir, const Side & turn
 }
 
 // do an O(1) ring check
-// must be done before placing the stone and joining it with the neighbouring groups
+// must be done before placing the stone and joining it with the neighboring groups
 bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 	static const unsigned char ringdata[64][10] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, //000000
@@ -237,7 +237,7 @@ bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 		case 1: //simple case (000101, 001101, 001011, 011011)
 			return (find_group(s[d[1]]) == find_group(s[d[2]]));
 
-		case 2:{ //3 non-neighbours (010101)
+		case 2:{ //3 non-neighbors (010101)
 			int a = find_group(s[d[1]]), b = find_group(s[d[2]]), c = find_group(s[d[3]]);
 			return (a == b || a == c || b == c);
 		}
@@ -247,19 +247,19 @@ bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 				return true;
 			//fall through
 
-		case 3: // 3 neighbours (000111)
+		case 3: // 3 neighbors (000111)
 			return checkring_back(s[d[1]], s[d[2]], s[d[3]], turn);
 
-		case 4: // 4 neighbours (001111)
+		case 4: // 4 neighbors (001111)
 			return checkring_back(s[d[1]], s[d[2]], s[d[3]], turn) ||
 			       checkring_back(s[d[4]], s[d[5]], s[d[6]], turn);
 
-		case 5: // 5 neighbours (011111)
+		case 5: // 5 neighbors (011111)
 			return checkring_back(s[d[1]], s[d[2]], s[d[3]], turn) ||
 			       checkring_back(s[d[4]], s[d[5]], s[d[6]], turn) ||
 			       checkring_back(s[d[7]], s[d[8]], s[d[9]], turn);
 
-		case 6: // 6 neighbours (111111)
+		case 6: // 6 neighbors (111111)
 			return true; //a ring around this position? how'd that happen
 
 		default:
