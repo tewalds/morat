@@ -53,6 +53,7 @@ public:
 	static const int max_size = 10;
 	static const int max_vec_size = 19*19;
 	static const int num_win_types = 3;
+	static const int unique_depth = 5; //update and test rotations/symmetry with less than this many pieces on the board
 	static const int LBDist_directions = 12;
 
 	static const int pattern_cells = 18;
@@ -136,7 +137,6 @@ private:
 
 	short num_cells_;
 	short num_moves_;
-	short unique_depth; //update and test rotations/symmetry with less than this many pieces on the board
 	Move last_move_;
 	Side to_play_;
 	Outcome outcome_;
@@ -158,18 +158,20 @@ public:
 		size = s;
 		sizem1 = s - 1;
 		size_d = s*2-1;
+		neighbor_list_ = get_neighbor_list();
+		num_cells_ = vec_size() - size*sizem1;
+		cells_.resize(vec_size());
+		clear();
+	}
+
+	void clear() {
 		last_move_ = M_NONE;
 		num_moves_ = 0;
-		unique_depth = 5;
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
 		win_type_ = 0;
 		check_rings = true;
 		perm_rings = 0;
-		neighbor_list_ = get_neighbor_list();
-		num_cells_ = vec_size() - size*sizem1;
-
-		cells_.resize(vec_size());
 
 		for(int y = 0; y < size_d; y++){
 			for(int x = 0; x < size_d; x++){
@@ -186,15 +188,10 @@ public:
 		}
 	}
 
-/*	~Board(){
-		printf("~Board");
-	}
-*/
-	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
-
 	int get_size_d() const { return size_d; }
 	int get_size() const{ return size; }
 
+	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
 	int vec_size() const { return size_d*size_d; }
 	int num_cells() const { return num_cells_; }
 
@@ -218,7 +215,6 @@ public:
 	const Cell * cell(int x, int y)   const { return cell(xy(x,y)); }
 	const Cell * cell(const Move & m) const { return cell(xy(m)); }
 	const Cell * cell(const MoveValid & m) const { return cell(m.xy); }
-
 
 	//assumes valid x,y
 	Side get(int i)          const { return cells_[i].piece; }

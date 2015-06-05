@@ -36,20 +36,13 @@ public:
 	std::vector<Move>::const_iterator begin() const { return hist.begin(); }
 	std::vector<Move>::const_iterator end()   const { return hist.end(); }
 
-	const Board get_board() const {
-		Board b(board.get_size());
-		for(auto m : hist)
-			b.move(m);
-		return b;
-	}
-
 	int len() const {
 		return hist.size();
 	}
 
 	void clear() {
 		hist.clear();
-		board = get_board();
+		board.clear();
 	}
 
 	bool undo() {
@@ -57,7 +50,11 @@ public:
 			return false;
 
 		hist.pop_back();
-		board = get_board();
+
+		board.clear();
+		for(auto m : hist) {
+			board.move(m);
+		}
 		return true;
 	}
 

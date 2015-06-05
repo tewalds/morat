@@ -53,6 +53,7 @@ public:
 	static const int max_size = 16;
 	static const int max_vec_size = max_size * max_size;
 	static const int num_win_types = 1;
+	static const int unique_depth = 5; //update and test rotations/symmetry with less than this many pieces on the board
 	static const int LBDist_directions = 2;
 
 	static const int pattern_cells = 18;
@@ -132,7 +133,6 @@ private:
 
 	short num_cells_;
 	short num_moves_;
-	short unique_depth; //update and test rotations/symmetry with less than this many pieces on the board
 	Move last_move_;
 	Side to_play_;
 	Outcome outcome_;
@@ -149,15 +149,17 @@ public:
 	Board(int s){
 		size = s;
 		sizem1 = s - 1;
-		last_move_ = M_NONE;
-		num_moves_ = 0;
-		unique_depth = 5;
-		to_play_ = Side::P1;
-		outcome_ = Outcome::UNKNOWN;
 		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size();
-
 		cells_.resize(vec_size());
+		clear();
+	}
+
+	void clear() {
+		last_move_ = M_NONE;
+		num_moves_ = 0;
+		to_play_ = Side::P1;
+		outcome_ = Outcome::UNKNOWN;
 
 		for(int y = 0; y < size; y++){
 			for(int x = 0; x < size; x++){
@@ -173,11 +175,6 @@ public:
 			}
 		}
 	}
-
-/*	~Board(){
-		printf("~Board");
-	}
-*/
 
 	int get_size() const{ return size; }
 

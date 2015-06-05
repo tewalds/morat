@@ -142,15 +142,18 @@ public:
 	Board(int s){
 		size = s;
 		sizem1 = s - 1;
+		neighbor_list_ = get_neighbor_list();
+		num_cells_ = vec_size();
+		cells_.resize(vec_size());
+		clear();
+	}
+
+	void clear() {
 		last_move_ = M_NONE;
 		num_moves_ = 0;
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
 		win_type_ = 0;
-		neighbor_list_ = get_neighbor_list();
-		num_cells_ = vec_size();
-
-		cells_.resize(vec_size());
 
 		for(int y = 0; y < size; y++){
 			for(int x = 0; x < size; x++){
@@ -166,11 +169,6 @@ public:
 			}
 		}
 	}
-
-/*	~Board(){
-		printf("~Board");
-	}
-*/
 
 	int get_size() const{ return size; }
 
