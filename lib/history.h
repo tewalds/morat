@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "move.h"
-#include "string.h"
 
 
 namespace Morat {

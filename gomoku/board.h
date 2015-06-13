@@ -139,7 +139,7 @@ public:
 		size = 0;
 	}
 
-	Board(int s){
+	explicit Board(int s){
 		size = s;
 		sizem1 = s - 1;
 		neighbor_list_ = get_neighbor_list();

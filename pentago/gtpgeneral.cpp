@@ -222,7 +222,7 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	int size = sgf.size();
 	if(size != hist->get_size()){
 		if(hist.len() == 0){
-			hist = History(size);
+			hist = History(Board(size));
 			set_board();
 			time_control.new_game();
 		}else{

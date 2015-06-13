@@ -154,7 +154,7 @@ public:
 		size = 0;
 	}
 
-	Board(int s){
+	explicit Board(int s){
 		size = s;
 		sizem1 = s - 1;
 		size_d = s*2-1;

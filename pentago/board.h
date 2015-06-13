@@ -58,7 +58,7 @@ public:
 	static const short unique_depth = 10;  //look for redundant moves up to this depth
 	static const short fullhash_depth = 7; //also consider rotations/mirrors of the board
 
-	Board(int size = 6){
+	explicit Board(int size = 6){
 		sides[0] = 0;
 		sides[1] = 0;
 		sides[2] = 0;

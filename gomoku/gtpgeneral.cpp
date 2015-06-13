@@ -46,7 +46,7 @@ GTPResponse GTP::gtp_boardsize(vecstr args){
 	if(size < Board::min_size || size > Board::max_size)
 		return GTPResponse(false, "Size " + to_str(size) + " is out of range.");
 
-	hist = History<Board>(size);
+	hist = History<Board>(Board(size));
 	set_board();
 	time_control.new_game();
 
@@ -269,7 +269,7 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 	int size = sgf.size();
 	if(size != hist->get_size()){
 		if(hist.len() == 0){
-			hist = History<Board>(size);
+			hist = History<Board>(Board(size));
 			set_board();
 			time_control.new_game();
 		}else{
