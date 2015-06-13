@@ -396,18 +396,6 @@ public:
 		return (num_moves_ > unique_depth ? hash.get(0) : hash.get());
 	}
 
-	std::string hashstr() const {
-		static const char hexlookup[] = "0123456789abcdef";
-		char buf[19] = "0x";
-		hash_t val = gethash();
-		for(int i = 15; i >= 0; i--){
-			buf[i+2] = hexlookup[val & 15];
-			val >>= 4;
-		}
-		buf[18] = '\0';
-		return (char *)buf;
-	}
-
 	void update_hash(const Move & pos, Side side) {
 		int turn = side.to_i();
 		if(num_moves_ > unique_depth){ //simple update, no rotations/symmetry

@@ -203,7 +203,7 @@ GTPResponse GTP::gtp_debug(vecstr args){
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
-	return GTPResponse(true, hist->hashstr());
+	return GTPResponse(true, to_str_hex(hist->gethash()));
 }
 
 GTPResponse GTP::gtp_save_sgf(vecstr args){

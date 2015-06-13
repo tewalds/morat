@@ -17,6 +17,17 @@ string to_str(double a, int prec){
 	return out.str();
 }
 
+std::string to_str_hex(uint64_t a) {
+	static const char hexlookup[] = "0123456789abcdef";
+	char buf[19] = "0x";
+	for (int i = 15; i >= 0; i--) {
+		buf[i+2] = hexlookup[a & 15];
+		a >>= 4;
+	}
+	buf[18] = '\0';
+	return (char *)buf;
+}
+
 void trim(string & str){
 	const char * space = " \t\r\n";
     str.erase(0,  str.find_first_not_of(space));
