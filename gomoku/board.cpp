@@ -55,6 +55,23 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	return s;
 }
 
+std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
+	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*24]);
+	MoveValid * a = list.get();
+	for(int y = 0; y < size; y++){
+		for(int x = 0; x < size; x++){
+			Move pos(x,y);
+
+			for(int i = 0; i < 24; i++){
+				Move loc = pos + neighbors[i];
+				*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
+				++a;
+			}
+		}
+	}
+
+	return list;
+}
 
 }; // namespace Gomoku
 }; // namespace Morat

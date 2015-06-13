@@ -63,6 +63,23 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	return s;
 }
 
+std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
+	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
+	MoveValid * a = list.get();
+	for(int y = 0; y < size_d; y++){
+		for(int x = 0; x < size_d; x++){
+			Move pos(x,y);
+
+			for(int i = 0; i < 18; i++){
+				Move loc = pos + neighbors[i];
+				*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
+				++a;
+			}
+		}
+	}
+
+	return list;
+}
 
 int Board::iscorner(int x, int y) const {
 	if(!on_board(x,y))

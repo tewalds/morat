@@ -260,23 +260,7 @@ public:
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
 
-	std::shared_ptr<MoveValid> get_neighbor_list() {
-		std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
-		MoveValid * a = list.get();
-		for(int y = 0; y < size_d; y++){
-			for(int x = 0; x < size_d; x++){
-				Move pos(x,y);
-
-				for(int i = 0; i < 18; i++){
-					Move loc = pos + neighbors[i];
-					*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
-					++a;
-				}
-			}
-		}
-
-		return list;
-	}
+	std::shared_ptr<MoveValid> get_neighbor_list() const;
 
 	int line_start(int y) const { return (y < size ? 0 : y - sizem1); }
 	int line_end(int y)   const { return (y < size ? size + y : size_d); }
