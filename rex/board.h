@@ -142,10 +142,7 @@ private:
 	std::shared_ptr<MoveValid> neighbor_list_;
 
 public:
-	Board(){
-		size = 0;
-	}
-
+	Board() = delete;
 	explicit Board(int s){
 		size = s;
 		sizem1 = s - 1;

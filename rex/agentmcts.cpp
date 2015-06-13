@@ -109,7 +109,7 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 		pool.resume();
 }
 
-AgentMCTS::AgentMCTS() : pool(this) {
+AgentMCTS::AgentMCTS(const Board & b) : Agent(b), pool(this) {
 	nodes = 0;
 	runs = 0;
 	gclimit = 5;

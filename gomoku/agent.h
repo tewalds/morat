@@ -17,7 +17,8 @@ class Agent {
 protected:
 	typedef std::vector<Move> vecmove;
 public:
-	Agent() { }
+	Agent() = delete;
+	Agent(const Board & b) : rootboard(b) { }
 	virtual ~Agent() { }
 
 	virtual void search(double time, uint64_t maxruns, int verbose) = 0;

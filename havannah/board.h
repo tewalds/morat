@@ -150,10 +150,7 @@ public:
 	bool check_rings; // whether to look for rings at all
 	int perm_rings;   // how many permanent stones are needed for a ring to count
 
-	Board(){
-		size = 0;
-	}
-
+	Board() = delete;
 	explicit Board(int s){
 		size = s;
 		sizem1 = s - 1;

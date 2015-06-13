@@ -167,7 +167,8 @@ public:
 
 	Node root;
 
-	AgentPNS() : pool(this) {
+	AgentPNS() = delete;
+	AgentPNS(const Board & b) : Agent(b), pool(this) {
 		ab = 2;
 		df = true;
 		epsilon = 0.25;

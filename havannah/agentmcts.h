@@ -237,7 +237,6 @@ public:
 
 	float gammas[4096]; //pattern weights for weighted random
 
-	Board rootboard;
 	Node  root;
 	uword nodes;
 	int   gclimit; //the minimum experience needed to not be garbage collected
@@ -248,7 +247,8 @@ public:
 
 	AgentThreadPool<AgentMCTS> pool;
 
-	AgentMCTS();
+	AgentMCTS() = delete;
+	AgentMCTS(const Board & b);
 	~AgentMCTS();
 
 	void set_memlimit(uint64_t lim) { }; // in bytes

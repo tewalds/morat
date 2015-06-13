@@ -12,22 +12,19 @@ namespace Y {
 
 GTPResponse GTP::gtp_mcts(vecstr args){
 	delete agent;
-	agent = new AgentMCTS();
-	agent->set_board(*hist);
+	agent = new AgentMCTS(*hist);
 	return GTPResponse(true);
 }
 
 GTPResponse GTP::gtp_pns(vecstr args){
 	delete agent;
-	agent = new AgentPNS();
-	agent->set_board(*hist);
+	agent = new AgentPNS(*hist);
 	return GTPResponse(true);
 }
 /*
 GTPResponse GTP::gtp_ab(vecstr args){
 	delete agent;
-	agent = new AgentAB();
-	agent->set_board(*hist);
+	agent = new AgentAB(*hist);
 	return GTPResponse(true);
 }
 */

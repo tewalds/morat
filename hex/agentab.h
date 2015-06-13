@@ -53,7 +53,8 @@ public:
 	XORShift_uint32 rand;
 	int randomness;
 
-	AgentAB() {
+	AgentAB() = delete;
+	AgentAB(const Board & b) : Agent(b) {
 		maxdepth = 0;
 		nodes_seen = 0;
 		time_used = 0;

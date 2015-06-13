@@ -35,7 +35,7 @@ public:
 
 		mem_allowed = 1000;
 
-		agent = new AgentMCTS();
+		agent = new AgentMCTS(*hist);
 
 		set_board();
 
