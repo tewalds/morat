@@ -40,9 +40,9 @@ public:
 		print("\n)\n");
 	}
 
-	void size(int s) {
+	void size(std::string s) {
 		assert(_root);
-		print("SZ", to_str(s));
+		print("SZ", s);
 	}
 	void game(std::string name) {
 		assert(_root);
@@ -134,8 +134,8 @@ public:
 		return eat_char(_is, ')');
 	}
 
-	int size() {
-		return from_str<int>(_properties["SZ"]);
+	std::string size() {
+		return _properties["SZ"];
 	}
 	std::string game() {
 		return _properties["GM"];

@@ -36,17 +36,18 @@ void test_game(Board b, std::string moves, Outcome outcome) {
 }
 
 TEST_CASE("Gomoku::Board", "[gomoku][board]") {
-	Board b(7);
+	Board b("7");
 
 	SECTION("Basics") {
-		REQUIRE(b.get_size() == 7);
+		REQUIRE(b.size() == "7");
+		REQUIRE(b.lines() == 7);
 		REQUIRE(b.moves_remain() == 49);
 	}
 
 	SECTION("sizes") {
 		for (int size = Board::min_size; size <= Board::max_size; size++) {
 			CAPTURE(size);
-			Board b(size);
+			Board b(to_str(size));
 			REQUIRE(b.move(Move(0, 0)));
 			REQUIRE(b.move(Move(size - 1, size - 1)));
 		}

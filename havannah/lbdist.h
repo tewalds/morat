@@ -16,7 +16,8 @@ public:
 	LBDists(const Board * b) : LBDistsBase(b) { }
 
 	void init_player(bool crossvcs, Side player) {
-		int m = board->get_size()-1, e = board->get_size_d()-1;
+		int e = board->lines() - 1;
+		int m = e / 2;
 
 		init(0, 0, 0, player, 3); flood(0, player, crossvcs); //corner 0
 		init(m, 0, 1, player, 4); flood(1, player, crossvcs); //corner 1
@@ -35,7 +36,7 @@ public:
 
 	Outcome isdraw() {
 		Outcome outcome = Outcome::DRAW;  // assume neither side can win
-		for(int y = 0; y < board->get_size_d(); y++) {
+		for(int y = 0; y < board->lines(); y++) {
 			for(int x = board->line_start(y); x < board->line_end(y); x++) {
 				MoveValid pos(x, y, board->xy(x, y));
 

@@ -48,10 +48,10 @@ class Board{
 public:
 
 	static constexpr const char * name = "havannah";
-	static const int default_size = 8;
+	static constexpr const char * default_size = "8";
 	static const int min_size = 3;
 	static const int max_size = 10;
-	static const int max_vec_size = 19*19;
+	static const int max_vec_size = 19 * 19;
 	static const int num_win_types = 3;
 	static const int unique_depth = 5; //update and test rotations/symmetry with less than this many pieces on the board
 	static const int LBDist_directions = 12;
@@ -88,7 +88,7 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 	public:
 		MoveIterator(const Board & b, bool Unique) : board(b), line_end(0), move(Move(M_SWAP), -1), unique(Unique) {
 			if(board.outcome_ >= Outcome::DRAW){
-				move = MoveValid(0, board.get_size_d(), -1); //already done
+				move = M_NONE;  //already done
 			} else {
 				if(unique)
 					hashes.init(board.moves_remain());
@@ -98,7 +98,7 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 
 		const MoveValid & operator * ()  const { return move; }
 		const MoveValid * operator -> () const { return & move; }
-		bool done() const { return (move.y >= board.get_size_d()); }
+		bool done() const { return (move == M_NONE); }
 		bool operator == (const Board::MoveIterator & rhs) const { return (move == rhs.move); }
 		bool operator != (const Board::MoveIterator & rhs) const { return (move != rhs.move); }
 		MoveIterator & operator ++ (){ //prefix form
@@ -109,8 +109,8 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 
 					if(move.x >= line_end){
 						move.y++;
-						if(move.y >= board.get_size_d()){ //done
-							move.xy = -1;
+						if(move.y >= board.size_) { //done
+							move = M_NONE;
 							return *this;
 						}
 						move.x = board.line_start(move.y);
@@ -131,9 +131,9 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 	};
 
 private:
-	char size; //the length of one side of the hexagon
-	char sizem1; //size - 1
-	char size_d; //diameter of the board = size*2-1
+	int8_t size_;  // the diameter of the board
+	int8_t size_r_;  // the radius of the board
+	int8_t size_r_m1_;  // size_r_ - 1
 
 	short num_cells_;
 	short num_moves_;
@@ -151,14 +151,21 @@ public:
 	int perm_rings;   // how many permanent stones are needed for a ring to count
 
 	Board() = delete;
-	explicit Board(int s){
-		size = s;
-		sizem1 = s - 1;
-		size_d = s*2-1;
+	explicit Board(std::string s) {
+		assert(size(s));
+	}
+
+	bool size(std::string s) {
+		if (!valid_size(s))
+			return false;
+		size_r_ = from_str<int>(s);
+		size_r_m1_ = size_r_ - 1;
+		size_ = size_r_ * 2 - 1;
 		neighbor_list_ = get_neighbor_list();
-		num_cells_ = vec_size() - size*sizem1;
+		num_cells_ = vec_size() - size_r_ * size_r_m1_;
 		cells_.resize(vec_size());
 		clear();
+		return true;
 	}
 
 	void clear() {
@@ -170,8 +177,8 @@ public:
 		check_rings = true;
 		perm_rings = 0;
 
-		for(int y = 0; y < size_d; y++){
-			for(int x = 0; x < size_d; x++){
+		for(int y = 0; y < size_; y++){
+			for(int x = 0; x < size_; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
 				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
@@ -185,24 +192,30 @@ public:
 		}
 	}
 
-	int get_size_d() const { return size_d; }
-	int get_size() const{ return size; }
+	std::string size() const {
+		return to_str<int>(size_r_);
+	}
+
+	static bool valid_size(const std::string& s) {
+		int size = from_str<int>(s);
+		return (min_size <= size && size <= max_size);
+	}
 
 	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
-	int vec_size() const { return size_d*size_d; }
+	int vec_size() const { return size_*size_; }
 	int num_cells() const { return num_cells_; }
 
 	int moves_made() const { return num_moves_; }
 	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
 
-	int xy(int x, int y)   const { return   y*size_d +   x; }
-	int xy(const Move & m) const { return m.y*size_d + m.x; }
+	int xy(int x, int y)   const { return   y*size_ +   x; }
+	int xy(const Move & m) const { return m.y*size_ + m.x; }
 	int xy(const MoveValid & m) const { return m.xy; }
 
-	int xyc(int x, int y)   const { return xy(  x + sizem1,   y + sizem1); }
-	int xyc(const Move & m) const { return xy(m.x + sizem1, m.y + sizem1); }
+	int xyc(int x, int y)   const { return xy(  x + size_r_m1_,   y + size_r_m1_); }
+	int xyc(const Move & m) const { return xy(m.x + size_r_m1_, m.y + size_r_m1_); }
 
-	MoveValid yx(int i) const { return MoveValid(i % size, i / size, i); }
+	MoveValid yx(int i) const { return MoveValid(i % size_, i / size_, i); }
 
 	int dist(const Move & a, const Move & b) const {
 		return (abs(a.x - b.x) + abs(a.y - b.y) + abs((a.x - a.y) - (b.x - b.y)) )/2;
@@ -231,11 +244,11 @@ public:
 
 
 	//assumes x, y are in array bounds
-	bool on_board_fast(int x, int y)   const { return (  y -   x < size) && (  x -   y < size); }
-	bool on_board_fast(const Move & m) const { return (m.y - m.x < size) && (m.x - m.y < size); }
+	bool on_board_fast(int x, int y)   const { return (  y -   x < size_r_) && (  x -   y < size_r_); }
+	bool on_board_fast(const Move & m) const { return (m.y - m.x < size_r_) && (m.x - m.y < size_r_); }
 	//checks array bounds too
-	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_d &&   y < size_d && on_board_fast(x, y) ); }
-	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_d && m.y < size_d && on_board_fast(m) ); }
+	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_ &&   y < size_ && on_board_fast(x, y) ); }
+	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_ && m.y < size_ && on_board_fast(m) ); }
 	bool on_board(const MoveValid & m) const { return m.on_board(); }
 
 	//assumes x, y are in bounds and the game isn't already finished
@@ -262,9 +275,10 @@ public:
 
 	std::shared_ptr<MoveValid> get_neighbor_list() const;
 
-	int line_start(int y) const { return (y < size ? 0 : y - sizem1); }
-	int line_end(int y)   const { return (y < size ? size + y : size_d); }
-	int line_len(int y)   const { return size_d - abs(sizem1 - y); }
+	int lines()           const { return size_; }
+	int line_start(int y) const { return (y < size_r_ ? 0 : y - size_r_m1_); }
+	int line_end(int y)   const { return (y < size_r_ ? size_r_ + y : size_); }
+	int line_len(int y)   const { return size_ - abs(size_r_m1_ - y); }
 
 	std::string to_s(bool color) const;
 	std::string to_s(bool color, std::function<std::string(Move)> func) const;
@@ -404,8 +418,8 @@ public:
 		}
 
 		//mirror is simply flip x,y
-		int x = pos.x - sizem1,
-		    y = pos.y - sizem1,
+		int x = pos.x - size_r_m1_,
+		    y = pos.y - size_r_m1_,
 		    z = y - x;
 
 //x,y; y,z; z,-x; -x,-y; -y,-z; -z,x
@@ -434,8 +448,8 @@ public:
 		if(num_moves_ >= unique_depth) //simple test, no rotations/symmetry
 			return hash.test(0, 3*xy(pos) + turn);
 
-		int x = pos.x - sizem1,
-		    y = pos.y - sizem1,
+		int x = pos.x - size_r_m1_,
+		    y = pos.y - size_r_m1_,
 		    z = y - x;
 
 		hash_t m = hash.test(0,  3*xyc( x,  y) + turn);

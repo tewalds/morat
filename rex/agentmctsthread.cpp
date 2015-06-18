@@ -364,7 +364,7 @@ void AgentMCTS::AgentThread::add_knowledge(const Board & board, Node * node, Nod
 		child->know += agent->bridge;
 
 	if(agent->dists)
-		child->know += abs(agent->dists) * std::max(0, board.get_size() - dists.get(child->move, board.to_play()));
+		child->know += abs(agent->dists) * std::max(0, board.lines() - dists.get(child->move, board.to_play()));
 }
 
 //test whether this move is a forced reply to the opponent probing your virtual connections

@@ -38,13 +38,12 @@ GTPResponse GTP::gtp_print(vecstr args){
 
 GTPResponse GTP::gtp_boardsize(vecstr args){
 	if(args.size() != 1)
-		return GTPResponse(false, "Current board size: " + to_str(hist->get_size()));
+		return GTPResponse(false, "Current board size: " + hist->size());
 
-	int size = from_str<int>(args[0]);
-	if(size < Board::min_size || size > Board::max_size)
-		return GTPResponse(false, "Size " + to_str(size) + " is out of range.");
+	if(!Board::valid_size(args[0]))
+		return GTPResponse(false, "Size " + args[0] + " is out of range.");
 
-	hist = History<Board>(Board(size));
+	hist = History<Board>(Board(args[0]));
 	set_board();
 	time_control.new_game();
 
@@ -195,7 +194,7 @@ GTPResponse GTP::gtp_extended(vecstr args){
 
 GTPResponse GTP::gtp_debug(vecstr args){
 	std::string str = "\n";
-	str += "Board size:  " + to_str(hist->get_size()) + "\n";
+	str += "Board size:  " + hist->size() + "\n";
 	str += "Board cells: " + to_str(hist->num_cells()) + "\n";
 	str += "Board vec:   " + to_str(hist->vec_size()) + "\n";
 	str += "Board mem:   " + to_str(hist->mem_size()) + "\n";
@@ -218,50 +217,11 @@ GTPResponse GTP::gtp_dists(vecstr args){
 		}
 	}
 
-	string white = "O",
-	       black = "@",
-	       empty = ".",
-	       coord = "",
-	       reset = "";
-	if(colorboard){
-		string esc = "\033";
-		reset = esc + "[0m";
-		coord = esc + "[1;37m";
-		empty = reset + ".";
-		white = esc + "[1;33m" + "@"; //yellow
-		black = esc + "[1;34m" + "@"; //blue
+	if(args.size() >= 2) {
+		return GTPResponse(true, to_str(dists.get(Move(args[1]), side)));
 	}
 
-
-	int size = board.get_size();
-
-	string s = "\n";
-	for(int i = 0; i < size; i++)
-		s += " " + coord + to_str(i+1);
-	s += "\n";
-
-	for(int y = 0; y < size; y++){
-		s += string(y, ' ');
-		s += coord + char('A' + y);
-		int end = board.line_end(y);
-		for(int x = 0; x < end; x++){
-			Side p = board.get(x, y);
-			s += ' ';
-			if(p == Side::NONE){
-				int d = (side == Side::NONE ? dists.get(Move(x, y)) : dists.get(Move(x, y), side));
-				if(d < 10)
-					s += reset + to_str(d);
-				else
-					s += empty;
-			}else if(p == Side::P1){
-				s += white;
-			}else if(p == Side::P2){
-				s += black;
-			}
-		}
-		s += '\n';
-	}
-	return GTPResponse(true, s);
+	return GTPResponse(true, "\n" + dists.to_s(side));
 }
 
 GTPResponse GTP::gtp_zobrist(vecstr args){
@@ -291,7 +251,7 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 	SGFPrinter<Move> sgf(outfile);
 	sgf.game(Board::name);
 	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
-	sgf.size(hist->get_size());
+	sgf.size(hist->size());
 
 	sgf.end_root();
 
@@ -325,8 +285,8 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
 	}
 
-	int size = sgf.size();
-	if(size != hist->get_size()){
+	auto size = sgf.size();
+	if(size != hist->size()){
 		if(hist.len() == 0){
 			hist = History<Board>(Board(size));
 			set_board();

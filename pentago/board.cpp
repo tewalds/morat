@@ -29,32 +29,6 @@ const uint64_t Board::xybits[36] = {
 
 const int16_t Board::scoremap[6] = { 0, 1, 3, 9, 27, 127 };
 
-
-Board::Board(std::string str) {
-	sides[1] = 0;
-	sides[2] = 0;
-	num_moves_ = 0;
-	outcome_ = -4;
-	cached_score = default_score;
-	cached_hash = 0;
-
-	assert(str.length() == 36);
-	int moved[3] = {0,0,0};
-	for(int i = 0; i < 36; i++){
-		int8_t side = str[i] - '0';
-		assert(side >= 0 && side <= 2);
-
-		if(side > 0){
-			num_moves_++;
-			sides[side] |= xybits[i];
-			moved[side]++;
-		}
-	}
-	assert(moved[1] == moved[2] || moved[1] == moved[2] + 1); //even number of moves per player
-	sides[0] = sides[1] | sides[2];
-	to_play_ = (num_moves_ % 2) + 1;
-}
-
 std::string Board::state() const {
 	std::string s;
 	for(int y = 0; y < 6; y++)

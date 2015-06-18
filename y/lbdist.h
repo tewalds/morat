@@ -16,7 +16,7 @@ public:
 	LBDists(const Board * b) : LBDistsBase(b) { }
 
 	void init_player(bool crossvcs, Side player){
-		int m = board->get_size();
+		int m = board->lines();
 		int m1 = m-1;
 
 		for(int x = 0; x < m; x++) { init(x,    0, 0,  player, 3); } flood(0,  player, crossvcs); //edge 0

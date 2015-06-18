@@ -10,7 +10,7 @@ using namespace Morat;
 using namespace Havannah;
 
 TEST_CASE("Havannah::LBDists", "[havannah][LBDists]") {
-	Board b(4);
+	Board b("4");
 	LBDists d;
 
 	SECTION("Basics") {

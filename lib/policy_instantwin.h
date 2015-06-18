@@ -22,7 +22,7 @@ public:
 
 	void rollout_start(Board & board, int max) {
 		if(max < 0)
-			max *= - board.get_size();
+			max *= - board.lines();
 		max_rollout_moves = max;
 
 		cur_rollout_moves = 0;

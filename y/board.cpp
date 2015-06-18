@@ -34,11 +34,11 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	}
 
 	string s;
-	for(int i = 0; i < size; i++)
+	for(int i = 0; i < size_; i++)
 		s += " " + coord + to_str(i+1);
 	s += "\n";
 
-	for(int y = 0; y < size; y++){
+	for(int y = 0; y < size_; y++){
 		s += string(y, ' ');
 		s += coord + char('A' + y);
 		int end = line_end(y);
@@ -62,14 +62,14 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 int Board::edges(int x, int y) const {
 	return (x == 0 ? 1 : 0) |
 	       (y == 0 ? 2 : 0) |
-	       (x + y == sizem1 ? 4 : 0);
+	       (x + y == sizem1_ ? 4 : 0);
 }
 
 std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
 	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
 	MoveValid * a = list.get();
-	for(int y = 0; y < size; y++){
-		for(int x = 0; x < size; x++){
+	for(int y = 0; y < size_; y++){
+		for(int x = 0; x < size_; x++){
 			Move pos(x,y);
 
 			for(int i = 0; i < 18; i++){

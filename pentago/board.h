@@ -51,14 +51,21 @@ class Board{
 public:
 
 	static constexpr const char * name = "pentago";
-	static const int default_size = 6;
+	static constexpr const char * default_size = "6";
 	static const int min_size = 6;
 	static const int max_size = 6;
 
 	static const short unique_depth = 10;  //look for redundant moves up to this depth
 	static const short fullhash_depth = 7; //also consider rotations/mirrors of the board
 
-	explicit Board(int size = 6){
+	explicit Board(int size = 6) {
+		clear();
+	}
+	explicit Board(std::string str) {
+		clear();
+	}
+
+	void clear() {
 		sides[0] = 0;
 		sides[1] = 0;
 		sides[2] = 0;
@@ -70,7 +77,6 @@ public:
 	}
 
 	//take a position as 01012200 ... of length 36, left to right, top to bottom, all [012]
-	Board(std::string str);
 
 	static void test();
 
@@ -78,8 +84,8 @@ public:
 	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : 36 - num_moves_); }
 	int moves_avail() const { return moves_remain()*8; } //upper bound
 
-	int get_size() const {
-		return 6;
+	std::string size() const {
+		return "6";
 	}
 
 	bool valid_move_fast(const Move & m) const { return !(sides[0] & xybits[m.l]); }

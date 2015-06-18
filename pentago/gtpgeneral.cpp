@@ -185,7 +185,7 @@ GTPResponse GTP::gtp_save_sgf(vecstr args){
 	SGFPrinter<Move> sgf(outfile);
 	sgf.game(Board::name);
 	sgf.program(gtp_name(vecstr()).response, gtp_version(vecstr()).response);
-	sgf.size(hist->get_size());
+	sgf.size(hist->size());
 
 	sgf.end_root();
 
@@ -219,8 +219,8 @@ GTPResponse GTP::gtp_load_sgf(vecstr args){
 		return GTPResponse(false, "File is for the wrong game: " + sgf.game());
 	}
 
-	int size = sgf.size();
-	if(size != hist->get_size()){
+	auto size = sgf.size();
+	if(size != hist->size()){
 		if(hist.len() == 0){
 			hist = History(Board(size));
 			set_board();

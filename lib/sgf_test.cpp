@@ -15,7 +15,7 @@ TEST_CASE("sgf simple", "[sgf]") {
 	{ // write an sgf file
 		SGFPrinter<Move> sgf(s);
 		sgf.game("havannah");
-		sgf.size(5);
+		sgf.size("5");
 		sgf.end_root();
 		sgf.move(Side::P1, Move("a1"));
 		sgf.comment("good");
@@ -29,7 +29,7 @@ TEST_CASE("sgf simple", "[sgf]") {
 	{ // read one and get back what was written above
 		SGFParser<Move> sgf(s);
 		REQUIRE(sgf.game() == "havannah");
-		REQUIRE(sgf.size() == 5);
+		REQUIRE(sgf.size() == "5");
 		REQUIRE(sgf.move() == Move());
 		REQUIRE(sgf.next_node());
 		REQUIRE_FALSE(sgf.has_children());
@@ -46,7 +46,7 @@ TEST_CASE("sgf write/read", "[sgf]") {
 	{
 		SGFPrinter<Move> sgf(s);
 		sgf.game("havannah");
-		sgf.size(5);
+		sgf.size("5");
 
 		sgf.end_root();
 
@@ -83,7 +83,7 @@ TEST_CASE("sgf write/read", "[sgf]") {
 	{ // read one and get back what was written above
 		SGFParser<Move> sgf(s);
 		REQUIRE(sgf.game() == "havannah");
-		REQUIRE(sgf.size() == 5);
+		REQUIRE(sgf.size() == "5");
 		REQUIRE(sgf.move() == Move());
 		REQUIRE(sgf.next_node());
 		REQUIRE(sgf.move() == Move("a1"));

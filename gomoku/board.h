@@ -48,10 +48,10 @@ class Board{
 public:
 
 	static constexpr const char * name = "gomoku";
-	static const int default_size = 13;
+	static constexpr const char * default_size = "13";
 	static const int min_size = 5;
 	static const int max_size = 19;
-	static const int max_vec_size = 19*19;
+	static const int max_vec_size = max_size * max_size;
 	static const int num_win_types = 1;
 
 	static const int pattern_cells = 24;
@@ -77,7 +77,7 @@ public:
 	public:
 		MoveIterator(const Board & b, bool Unique) : board(b), line_end(0), move(Move(M_SWAP), -1), unique(Unique) {
 			if(board.outcome_ >= Outcome::DRAW){
-				move = MoveValid(0, board.get_size(), -1); //already done
+				move = M_NONE;  //already done
 			} else {
 				if(unique)
 					hashes.init(board.moves_remain());
@@ -87,7 +87,7 @@ public:
 
 		const MoveValid & operator * ()  const { return move; }
 		const MoveValid * operator -> () const { return & move; }
-		bool done() const { return (move.y >= board.get_size()); }
+		bool done() const { return (move == M_NONE); }
 		bool operator == (const Board::MoveIterator & rhs) const { return (move == rhs.move); }
 		bool operator != (const Board::MoveIterator & rhs) const { return (move != rhs.move); }
 		MoveIterator & operator ++ (){ //prefix form
@@ -98,8 +98,8 @@ public:
 
 					if(move.x >= line_end){
 						move.y++;
-						if(move.y >= board.get_size()){ //done
-							move.xy = -1;
+						if(move.y >= board.size_) { //done
+							move = M_NONE;
 							return *this;
 						}
 						move.x = board.line_start(move.y);
@@ -120,9 +120,7 @@ public:
 	};
 
 private:
-	char size; //the length of one side
-	char sizem1; //size - 1
-
+	int8_t size_;
 	short num_cells_;
 	short num_moves_;
 	Move last_move_;
@@ -136,13 +134,19 @@ private:
 
 public:
 	Board() = delete;
-	explicit Board(int s){
-		size = s;
-		sizem1 = s - 1;
+	explicit Board(std::string s) {
+		assert(size(s));
+	}
+
+	bool size(std::string s) {
+		if (!valid_size(s))
+			return false;
+		size_ = from_str<int>(s);
 		neighbor_list_ = get_neighbor_list();
 		num_cells_ = vec_size();
 		cells_.resize(vec_size());
 		clear();
+		return true;
 	}
 
 	void clear() {
@@ -152,8 +156,8 @@ public:
 		outcome_ = Outcome::UNKNOWN;
 		win_type_ = 0;
 
-		for(int y = 0; y < size; y++){
-			for(int x = 0; x < size; x++){
+		for(int y = 0; y < size_; y++){
+			for(int x = 0; x < size_; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
 				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
@@ -167,20 +171,27 @@ public:
 		}
 	}
 
-	int get_size() const{ return size; }
+	std::string size() const {
+		return to_str<int>(size_);
+	}
+
+	static bool valid_size(const std::string& s) {
+		int size = from_str<int>(s);
+		return (min_size <= size && size <= max_size);
+	}
 
 	int mem_size() const { return sizeof(Board) + sizeof(Cell)*vec_size(); }
-	int vec_size() const { return size*size; }
+	int vec_size() const { return size_*size_; }
 	int num_cells() const { return num_cells_; }
 
 	int moves_made() const { return num_moves_; }
 	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
 
-	int xy(int x, int y)   const { return   y*size +   x; }
-	int xy(const Move & m) const { return m.y*size + m.x; }
+	int xy(int x, int y)   const { return   y*size_ +   x; }
+	int xy(const Move & m) const { return m.y*size_ + m.x; }
 	int xy(const MoveValid & m) const { return m.xy; }
 
-	MoveValid yx(int i) const { return MoveValid(i % size, i / size, i); }
+	MoveValid yx(int i) const { return MoveValid(i % size_, i / size_, i); }
 
 	int dist(const Move & a, const Move & b) const {
 		return std::max(abs(a.x - b.x), abs(a.y - b.y));
@@ -213,8 +224,8 @@ public:
 	bool on_board_fast(int x, int y)   const { return true; }
 	bool on_board_fast(const Move & m) const { return true; }
 	//checks array bounds too
-	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size &&   y < size && on_board_fast(x, y) ); }
-	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size && m.y < size && on_board_fast(m) ); }
+	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_ &&   y < size_ && on_board_fast(x, y) ); }
+	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_ && m.y < size_ && on_board_fast(m) ); }
 	bool on_board(const MoveValid & m) const { return m.on_board(); }
 
 	//assumes x, y are in bounds and the game isn't already finished
@@ -241,9 +252,10 @@ public:
 
 	std::shared_ptr<MoveValid> get_neighbor_list() const;
 
+	int lines()           const { return size_; }
 	int line_start(int y) const { return 0; }
-	int line_end(int y)   const { return size; }
-	int line_len(int y)   const { return size; }
+	int line_end(int y)   const { return size_; }
+	int line_len(int y)   const { return line_end(y) - line_start(y); }
 
 	std::string to_s(bool color) const;
 	std::string to_s(bool color, std::function<std::string(Move)> func) const;

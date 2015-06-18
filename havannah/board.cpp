@@ -35,13 +35,13 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	}
 
 	string s;
-	s += string(size + 3, ' ');
-	for(int i = 0; i < size; i++)
+	s += string(size_r_ + 3, ' ');
+	for(int i = 0; i < size_r_; i++)
 		s += " " + coord + to_str(i+1);
 	s += "\n";
 
-	for(int y = 0; y < size_d; y++){
-		s += string(abs(sizem1 - y) + 2, ' ');
+	for(int y = 0; y < size_; y++){
+		s += string(abs(size_r_m1_ - y) + 2, ' ');
 		s += coord + char('A' + y);
 		int end = line_end(y);
 		for(int x = line_start(y); x < end; x++){
@@ -54,8 +54,8 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 			else                     s += "?";
 		}
 		s += (last_move_ == Move(end-1, y) ? coord + "]" : " ");
-		if(y < sizem1)
-			s += coord + to_str(size + y + 1);
+		if(y < size_r_m1_)
+			s += coord + to_str(size_r_ + y + 1);
 		s += '\n';
 	}
 
@@ -66,8 +66,8 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
 	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
 	MoveValid * a = list.get();
-	for(int y = 0; y < size_d; y++){
-		for(int x = 0; x < size_d; x++){
+	for(int y = 0; y < size_; y++){
+		for(int x = 0; x < size_; x++){
 			Move pos(x,y);
 
 			for(int i = 0; i < 18; i++){
@@ -85,7 +85,7 @@ int Board::iscorner(int x, int y) const {
 	if(!on_board(x,y))
 		return -1;
 
-	int m = sizem1, e = size_d-1;
+	int m = size_r_m1_, e = size_ - 1;
 
 	if(x == 0 && y == 0) return 0;
 	if(x == m && y == 0) return 1;
@@ -101,7 +101,7 @@ int Board::isedge(int x, int y) const {
 	if(!on_board(x,y))
 		return -1;
 
-	int m = sizem1, e = size_d-1;
+	int m = size_r_m1_, e = size_ - 1;
 
 	if(y   == 0 && x != 0 && x != m) return 0;
 	if(x-y == m && x != m && x != e) return 1;

@@ -11,29 +11,46 @@ using namespace Hex;
 void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	REQUIRE(b.moves_made() == 0);
 	Side side = Side::P1;
+	int made = 0, remain = 49;
 	for(auto s : moves) {
 		Outcome expected = (s == moves.back() ? outcome : Outcome::UNKNOWN);
 		Move move(s);
 		CAPTURE(move);
 		CAPTURE(b);
+		REQUIRE(b.moves_made() == made);
+		REQUIRE(b.moves_remain() == remain);
 		REQUIRE(b.valid_move(move));
 		REQUIRE(b.to_play() == side);
 		REQUIRE(b.test_outcome(move) == expected);
 		REQUIRE(b.move(move));
 		REQUIRE(b.outcome() == expected);
 		side = ~side;
+		made++;
+		remain--;
 	}
+	REQUIRE(b.moves_made() == made);
+	REQUIRE(b.moves_remain() == (outcome == Outcome::UNKNOWN ? remain : 0));
 }
 void test_game(Board b, std::string moves, Outcome outcome) {
 	test_game(b, explode(moves, " "), outcome);
 }
 
 TEST_CASE("Hex::Board", "[hex][board]") {
-	Board b(7);
+	Board b("7");
 
 	SECTION("Basics") {
-		REQUIRE(b.get_size() == 7);
+		REQUIRE(b.size() == "7");
+		REQUIRE(b.lines() == 7);
 		REQUIRE(b.moves_remain() == 49);
+	}
+
+	SECTION("sizes") {
+		for (int size = Board::min_size; size <= Board::max_size; size++) {
+			CAPTURE(size);
+			Board b(to_str(size));
+			REQUIRE(b.move(Move(0, 0)));
+			REQUIRE(b.move(Move(size - 1, size - 1)));
+		}
 	}
 
 	SECTION("valid moves") {

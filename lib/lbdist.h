@@ -167,8 +167,7 @@ protected:
 
 					if( dist(edge, player, next.pos) > next.dist){
 						dist(edge, player, next.pos) = next.dist;
-						if(next.dist < board->get_size())
-							Q.push(next);
+						Q.push(next);
 					}
 				}
 			}

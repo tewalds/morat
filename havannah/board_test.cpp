@@ -1,5 +1,6 @@
 
 #include "../lib/catch.hpp"
+#include "../lib/string.h"
 
 #include "board.h"
 
@@ -30,13 +31,16 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	REQUIRE(b.moves_made() == made);
 	REQUIRE(b.moves_remain() == (outcome == Outcome::UNKNOWN ? remain : 0));
 }
+void test_game(Board b, std::string moves, Outcome outcome) {
+	test_game(b, explode(moves, " "), outcome);
+}
 
 TEST_CASE("Havannah::Board", "[havannah][board]") {
-	Board b(4);
+	Board b("4");
 
 	SECTION("Basics") {
-		REQUIRE(b.get_size() == 4);
-		REQUIRE(b.get_size_d() == 7);
+		REQUIRE(b.size() == "4");
+		REQUIRE(b.lines() == 7);
 		REQUIRE(b.moves_remain() == 37);
 	}
 
