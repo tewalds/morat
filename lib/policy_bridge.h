@@ -52,7 +52,7 @@ public:
 			r >>= offset;
 			i = (offset + trailing_zeros(r)) % 6;
 		}
-		return board.nb_begin(prev)[i];
+		return board.neighbors(prev)[i];
 	}
 };
 

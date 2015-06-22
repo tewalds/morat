@@ -13,6 +13,7 @@
 #include "../lib/bitcount.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
+#include "../lib/move_iterator.h"
 #include "../lib/outcome.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
@@ -21,28 +22,6 @@
 
 namespace Morat {
 namespace Havannah {
-
-/*
- * the board is represented as a flattened 2d array of the form:
- *   1 2 3
- * A 0 1 2     0 1        0 1
- * B 3 4 5 <=> 3 4 5 <=> 3 4 5
- * C 6 7 8       7 8      7 8
- */
-
-/* neighbors are laid out in this pattern:
- *     12   6  13         12  6 13
- *   11   0   1   7       11  0  1  7
- * 17   5   X   2  14 <=> 17  5  X  2 14
- *   10   4   3   8          10  4  3  8
- *     16   9  15               16  9 15
- */
-const MoveScore neighbors[18] = {
-	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
-	MoveScore(-1,-2, 2), MoveScore(1,-1, 2), MoveScore(2, 1, 2), MoveScore(1, 2, 2), MoveScore(-1, 1, 2), MoveScore(-2,-1, 2), //sides of ring 2, virtual connections
-	MoveScore(-2,-2, 1), MoveScore(0,-2, 1), MoveScore(2, 0, 1), MoveScore(2, 2, 1), MoveScore( 0, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
-};
-
 
 class Board{
 public:
@@ -77,57 +56,6 @@ mutable uint8_t mark;    //when doing a ring search, has this position been seen
 		int numedges()   const { return BitsSetTable256[edge];   }
 
 		std::string to_s(int i) const;
-	};
-
-	class MoveIterator { //only returns valid moves...
-		const Board & board;
-		int line_end;
-		MoveValid move;
-		bool unique;
-		HashSet hashes;
-	public:
-		MoveIterator(const Board & b, bool Unique) : board(b), line_end(0), move(Move(M_SWAP), -1), unique(Unique) {
-			if(board.outcome_ >= Outcome::DRAW){
-				move = M_NONE;  //already done
-			} else {
-				if(unique)
-					hashes.init(board.moves_remain());
-				++(*this); //find the first valid move
-			}
-		}
-
-		const MoveValid & operator * ()  const { return move; }
-		const MoveValid * operator -> () const { return & move; }
-		bool done() const { return (move == M_NONE); }
-		bool operator == (const Board::MoveIterator & rhs) const { return (move == rhs.move); }
-		bool operator != (const Board::MoveIterator & rhs) const { return (move != rhs.move); }
-		MoveIterator & operator ++ (){ //prefix form
-			while(true){
-				do{
-					move.x++;
-					move.xy++;
-
-					if(move.x >= line_end){
-						move.y++;
-						if(move.y >= board.size_) { //done
-							move = M_NONE;
-							return *this;
-						}
-						move.x = board.line_start(move.y);
-						move.xy = board.xy(move.x, move.y);
-						line_end = board.line_end(move.y);
-					}
-				}while(!board.valid_move_fast(move));
-
-				if(unique){
-					uint64_t h = board.test_hash(move, board.to_play());
-					if(!hashes.add(h))
-						continue;
-				}
-				break;
-			}
-			return *this;
-		}
 	};
 
 private:
@@ -181,8 +109,8 @@ public:
 			for(int x = 0; x < size_; x++){
 				int posxy = xy(x, y);
 				Pattern p = 0, j = 3;
-				for(const MoveValid * i = nb_begin(posxy), *e = nb_end_big_hood(i); i < e; i++){
-					if(!i->on_board())
+				for (const MoveValid m : neighbors_large(posxy)) {
+					if (!m.on_board())
 						p |= j;
 					j <<= 2;
 				}
@@ -261,17 +189,24 @@ public:
 	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && on_board(m)    && valid_move_fast(m)); }
 	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.on_board()   && valid_move_fast(m)); }
 
-	//iterator through neighbors of a position
-	const MoveValid * nb_begin(int x, int y)   const { return nb_begin(xy(x, y)); }
-	const MoveValid * nb_begin(const Move & m) const { return nb_begin(xy(m)); }
-	const MoveValid * nb_begin(int i)          const { return neighbor_list_.get() + i*18; }
+	const MoveValid* neighbors(const Move& m)      const { return neighbors(xy(m)); }
+	const MoveValid* neighbors(const MoveValid& m) const { return neighbors(m.xy); }
+	const MoveValid* neighbors(int i) const { return neighbor_list_.get() + i*18; }
 
-	const MoveValid * nb_end(int x, int y)   const { return nb_end(xy(x, y)); }
-	const MoveValid * nb_end(const Move & m) const { return nb_end(xy(m)); }
-	const MoveValid * nb_end(int i)          const { return nb_end(nb_begin(i)); }
-	const MoveValid * nb_end(const MoveValid * m) const { return m + 6; }
-	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
-	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
+	NeighborIterator neighbors_small(const Move& m)      const { return neighbors_small(xy(m)); }
+	NeighborIterator neighbors_small(const MoveValid& m) const { return neighbors_small(m.xy); }
+	NeighborIterator neighbors_small(int i) const { return NeighborIterator(neighbors(i), 6); }
+
+	NeighborIterator neighbors_medium(const Move& m)      const { return neighbors_medium(xy(m)); }
+	NeighborIterator neighbors_medium(const MoveValid& m) const { return neighbors_medium(m.xy); }
+	NeighborIterator neighbors_medium(int i) const { return NeighborIterator(neighbors(i), 12); }
+
+	NeighborIterator neighbors_large(const Move& m)      const { return neighbors_large(xy(m)); }
+	NeighborIterator neighbors_large(const MoveValid& m) const { return neighbors_large(m.xy); }
+	NeighborIterator neighbors_large(int i) const { return NeighborIterator(neighbors(i), 18); }
+
+	MoveIterator<Board> begin() const { return MoveIterator<Board>(*this); }
+	MoveIterator<Board> end()   const { return MoveIterator<Board>(*this, M_NONE); }
 
 	int lines()           const { return size_; }
 	int line_start(int y) const { return (y < size_r_ ? 0 : y - size_r_m1_); }
@@ -295,10 +230,6 @@ public:
 
 	Side to_play() const {
 		return to_play_;
-	}
-
-	MoveIterator moveit(bool unique = false) const {
-		return MoveIterator(*this, (unique ? num_moves_ <= unique_depth : false));
 	}
 
 	void set(const Move & m, bool perm = true) {
@@ -360,8 +291,9 @@ public:
 		Side turn = to_play();
 		int posxy = xy(pos);
 
-		Cell testcell = cells_[find_group(pos)];
-		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
+		Cell testcell = cells_[find_group(posxy)];
+		auto it = neighbors_small(posxy);
+		for (const MoveValid *i = it.begin(), *e = it.end(); i < e; i++) {
 			if(i->on_board() && turn == get(i->xy)){
 				const Cell * g = & cells_[find_group(i->xy)];
 				testcell.corner |= g->corner;
@@ -393,11 +325,11 @@ public:
 		if(g->piece == otherplayer && (g->edge || g->corner))
 			return false;
 
-		for(const MoveValid * i = nb_begin(posxy), *e = nb_end(i); i < e; i++){
-			if(!i->on_board())
+		for (auto m : neighbors_small(posxy)) {
+			if(!m.on_board())
 				return false;
 
-			const Cell * g = cell(find_group(i->xy));
+			const Cell * g = cell(find_group(m.xy));
 			if(g->piece == otherplayer && (g->edge || g->corner))
 				return false;
 		}
@@ -541,16 +473,17 @@ public:
 
 		// update the nearby patterns
 		Pattern p = turn.to_i();
-		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end_big_hood(i); i < e; i++){
-			if(i->on_board()){
-				cells_[i->xy].pattern |= p;
+		for (auto m : neighbors_large(pos)) {
+			if(m.on_board()){
+				cells_[m.xy].pattern |= p;
 			}
 			p <<= 2;
 		}
 
 		// join the groups for win detection
 		bool alreadyjoined = false; //useful for finding rings
-		for(const MoveValid * i = nb_begin(pos.xy), *e = nb_end(i); i < e; i++){
+		auto it = neighbors_small(pos);
+		for (const MoveValid *i = it.begin(), *e = it.end(); i < e; i++) {
 			if(i->on_board() && turn == get(i->xy)){
 				alreadyjoined |= join_groups(pos.xy, i->xy);
 				i++; //skip the next one. If it is the same group,
@@ -589,7 +522,8 @@ public:
 		if(test_local(pos, turn)){
 			Cell testcell = cells_[find_group(pos.xy)];
 			int numgroups = 0;
-			for(const MoveValid * i = nb_begin(pos), *e = nb_end(i); i < e; i++){
+			auto it = neighbors_small(pos);
+			for (const MoveValid *i = it.begin(), *e = it.end(); i < e; i++) {
 				if(i->on_board() && turn == get(i->xy)){
 					const Cell * g = & cells_[find_group(i->xy)];
 					testcell.corner |= g->corner;

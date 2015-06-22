@@ -140,7 +140,6 @@ AgentMCTS::AgentMCTS(const Board & b) : Agent(b), pool(this) {
 	keeptree    = true;
 	minimax     = 2;
 	visitexpand = 1;
-	prunesymmetry = false;
 	gcsolved    = 100000;
 	longestloss = false;
 
@@ -360,20 +359,11 @@ void AgentMCTS::create_children_simple(const Board & board, Node * node){
 
 	node->children.alloc(board.moves_remain(), ctmem);
 
-	Node * child = node->children.begin(),
-		 * end   = node->children.end();
-	Board::MoveIterator moveit = board.moveit(prunesymmetry);
-	int num_moves = 0;
-	for(; !moveit.done() && child != end; ++moveit, ++child){
-		*child = Node(*moveit);
-		num_moves++;
+	Node * child = node->children.begin();
+	for (auto move : board) {
+		*child++ = Node(move);
 	}
-
-	if(prunesymmetry)
-		node->children.shrink(num_moves); //shrink the node to ignore the extra moves
-	else //both end conditions should happen in parallel
-		assert(moveit.done() && child == end);
-
+	assert(child == node->children.end());
 	PLUS(nodes, node->children.num());
 }
 

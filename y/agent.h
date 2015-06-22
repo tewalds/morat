@@ -46,9 +46,9 @@ protected:
 	static Outcome solve1ply(const Board & board, unsigned int & nodes) {
 		Outcome outcome = Outcome::UNKNOWN;
 		Side turn = board.to_play();
-		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		for (auto move : board) {
 			++nodes;
-			Outcome won = board.test_outcome(*move, turn);
+			Outcome won = board.test_outcome(move, turn);
 
 			if(won == +turn)
 				return won;
@@ -63,16 +63,16 @@ protected:
 		Outcome outcome = Outcome::UNKNOWN;
 		Side turn = board.to_play();
 		Side op = ~turn;
-		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		for (auto move : board) {
 			++nodes;
-			Outcome won = board.test_outcome(*move, turn);
+			Outcome won = board.test_outcome(move, turn);
 
 			if(won == +turn)
 				return won;
 			if(won == Outcome::DRAW)
 				outcome = Outcome::DRAW;
 
-			if(board.test_outcome(*move, op) == +op)
+			if(board.test_outcome(move, op) == +op)
 				losses++;
 		}
 		if(losses >= 2)

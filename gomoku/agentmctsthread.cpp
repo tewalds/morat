@@ -131,17 +131,14 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 	int losses = 0;
 
 	Node * child = temp.begin(),
-	     * end   = temp.end(),
 	     * loss  = NULL;
-	Board::MoveIterator move = board.moveit(agent->prunesymmetry);
-	int num_moves = 0;
-	for(; !move.done() && child != end; ++move, ++child){
-		*child = Node(*move);
+	for (auto move : board) {
+		*child = Node(move);
 
 		if(agent->minimax){
-			child->outcome = board.test_outcome(*move);
+			child->outcome = board.test_outcome(move);
 
-			if(agent->minimax >= 2 && board.test_outcome(*move, opponent) == +opponent){
+			if(agent->minimax >= 2 && board.test_outcome(move, opponent) == +opponent){
 				losses++;
 				loss = child;
 			}
@@ -149,7 +146,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 			if(child->outcome == +to_play){ //proven win from here, don't need children
 				node->outcome = child->outcome;
 				node->proofdepth = 1;
-				node->bestmove = *move;
+				node->bestmove = move;
 				node->children.unlock();
 				temp.dealloc(agent->ctmem);
 				return true;
@@ -158,13 +155,9 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 
 		if(agent->knowledge)
 			add_knowledge(board, node, child);
-		num_moves++;
+		child++;
 	}
-
-	if(agent->prunesymmetry)
-		temp.shrink(num_moves); //shrink the node to ignore the extra moves
-	else //both end conditions should happen in parallel
-		assert(move.done() && child == end);
+	assert(child == temp.end());
 
 	//Make a macro move, add experience to the move so the current simulation continues past this move
 	if(losses == 1){

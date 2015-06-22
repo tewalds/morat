@@ -46,8 +46,9 @@ public:
 
 		//find the first empty cell
 		int dir = -1;
-		for(int i = 0; i <= 5; i++){
-			start = board.nb_begin(prev)[i];
+		const MoveValid* neighbors = board.neighbors(prev);
+		for(int i = 0; i < 6; i++){
+			start = neighbors[i];
 
 			if(!board.on_board(start) || board.get(start) != turn){
 				dir = (i + 5) % 6;
@@ -78,9 +79,10 @@ public:
 			}
 
 			//advance to the next cell
+			const MoveValid* neighbors = board.neighbors(cur);
 			for(int i = 5; i <= 9; i++){
 				int nd = (dir + i) % 6;
-				MoveValid next = board.nb_begin(cur)[nd];
+				MoveValid next = neighbors[nd];
 
 				if(!board.on_board(next) || board.get(next) != turn){
 					cur = next;

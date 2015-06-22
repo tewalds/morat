@@ -107,13 +107,13 @@ int16_t AgentAB::negamax(const Board & board, int16_t alpha, int16_t beta, int d
 		//TODO: sort moves first?
 
 		//generate moves
-		for (Board::MoveIterator move = board.moveit(); !move.done(); ++move) {
+		for (auto move : board) {
 			Board b = board;
-			b.move(*move);
+			b.move(move);
 			int16_t value = -negamax(b, -beta, -max(alpha, score), depth-1);
 			if (score < value) {
 				score = value;
-				bestmove = *move;
+				bestmove = move;
 				if (score >= beta){
 					break;
 				}

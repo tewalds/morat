@@ -4,6 +4,27 @@
 namespace Morat {
 namespace Gomoku {
 
+/*
+ * the board is represented as a flattened 2d array of the form:
+ *   1 2 3
+ * A 0 1 2
+ * B 3 4 5
+ * C 6 7 8
+ *
+ * neighbors are laid out in this pattern:
+ *  8  16 9 17 10
+ * 23  0  1  2 18
+ * 15  7  X  3 11
+ * 22  6  5  4 19
+ * 14 21 13 20 12
+ */
+
+const MoveScore neighbor_offsets[24] = {
+	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
+	MoveScore(-2,-2, 2), MoveScore(0,-2, 2), MoveScore(2,-2, 2), MoveScore(2, 0, 2), MoveScore(2, 2, 2), MoveScore( 0, 2, 2), MoveScore(-2, 2, 2), MoveScore(-2, 0, 2), //corners
+	MoveScore(-1,-2, 1), MoveScore(1,-2, 1), MoveScore(2,-1, 1), MoveScore(2, 1, 1), MoveScore(1, 2, 1), MoveScore(-1, 2, 1), MoveScore(-2, 1, 1), MoveScore(-2,-1, 1), //knight's move
+};
+
 std::string Board::Cell::to_s(int i) const {
 	return "Cell " + to_str(i) +": "
 		"piece: " + to_str(piece.to_i())+
@@ -63,7 +84,7 @@ std::shared_ptr<MoveValid> Board::gen_neighbor_list() const {
 			Move pos(x,y);
 
 			for(int i = 0; i < 24; i++){
-				Move loc = pos + neighbors[i];
+				Move loc = pos + neighbor_offsets[i];
 				*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
 				++a;
 			}

@@ -74,9 +74,9 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 	bool invert = true;
 	std::string ret;
 	const Board & board = *hist;
-	for(Board::MoveIterator move = board.moveit(); !move.done(); ++move){
-		ret += move->to_s() + " ";
-		unsigned int p = board.pattern(*move);
+	for (auto move : board) {
+		ret += move.to_s() + " ";
+		unsigned int p = board.pattern(move);
 		if(symmetric)
 			p = board.pattern_symmetry(p);
 		if(invert && board.to_play() == Side::P2)
@@ -89,8 +89,8 @@ GTPResponse GTP::gtp_patterns(vecstr args){
 
 GTPResponse GTP::gtp_all_legal(vecstr args){
 	std::string ret;
-	for(Board::MoveIterator move = hist->moveit(); !move.done(); ++move)
-		ret += move->to_s() + " ";
+	for (auto move : *hist)
+		ret += move.to_s() + " ";
 	return GTPResponse(true, ret);
 }
 

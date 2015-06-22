@@ -146,9 +146,10 @@ protected:
 
 		MoveDist cur;
 		while(Q.pop(cur)){
+			const MoveValid* neighbors = board->neighbors(cur.pos);
 			for(int i = 5; i <= 7; i++){
 				int nd = (cur.dir + i) % 6;
-				MoveDist next(board->nb_begin(cur.pos)[nd], cur.dist, nd);
+				MoveDist next(neighbors[nd], cur.dist, nd);
 
 				if(board->on_board(next.pos)){
 					Side colour = board->get(next.pos);
@@ -158,8 +159,8 @@ protected:
 
 					if(colour == Side::NONE){
 						if(!crossvcs && //forms a vc
-						   board->get(board->nb_begin(cur.pos)[(nd + 5) % 6]) == otherplayer &&
-						   board->get(board->nb_begin(cur.pos)[(nd + 7) % 6]) == otherplayer)
+						   board->get(neighbors[(nd + 5) % 6]) == otherplayer &&
+						   board->get(neighbors[(nd + 7) % 6]) == otherplayer)
 							continue;
 
 						next.dist++;

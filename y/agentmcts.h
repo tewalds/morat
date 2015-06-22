@@ -210,7 +210,6 @@ public:
 	bool  keeptree;   //reuse the tree from the previous move
 	int   minimax;    //solve the minimax tree within the uct tree
 	uint  visitexpand;//number of visits before expanding a node
-	bool  prunesymmetry; //prune symmetric children from the move list, useful for proving but likely not for playing
 	uint  gcsolved;   //garbage collect solved nodes or keep them in the tree, assuming they meet the required amount of work
 	bool  longestloss;//if we have a proven loss, if true backup the longest loss, else backup the hardest loss to solve
 

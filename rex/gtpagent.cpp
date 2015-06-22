@@ -145,7 +145,6 @@ GTPResponse GTP::gtp_mcts_params(vecstr args){
 			"  -k --keeptree    Keep the tree from the previous move              [" + to_str(mcts->keeptree) + "]\n" +
 			"  -m --minimax     Backup the minimax proof in the UCT tree          [" + to_str(mcts->minimax) + "]\n" +
 			"  -x --visitexpand Number of visits before expanding a node          [" + to_str(mcts->visitexpand) + "]\n" +
-			"  -P --symmetry    Prune symmetric moves, good for proof, not play   [" + to_str(mcts->prunesymmetry) + "]\n" +
 			"     --gcsolved    Garbage collect solved nodes with fewer sims than [" + to_str(mcts->gcsolved) + "]\n" +
 			"  -L --longestloss For known losses take longest over hardest solve  [" + to_str(mcts->longestloss) + "]\n"+
 			"Node initialization knowledge, Give a bonus:\n" +
@@ -198,8 +197,6 @@ GTPResponse GTP::gtp_mcts_params(vecstr args){
 			mcts->keeptree = from_str<bool>(args[++i]);
 		}else if((arg == "-m" || arg == "--minimax") && i+1 < args.size()){
 			mcts->minimax = from_str<int>(args[++i]);
-		}else if((arg == "-P" || arg == "--symmetry") && i+1 < args.size()){
-			mcts->prunesymmetry = from_str<bool>(args[++i]);
 		}else if((arg == "-L" || arg == "--longestloss") && i+1 < args.size()){
 			mcts->longestloss = from_str<bool>(args[++i]);
 		}else if((               arg == "--gcsolved") && i+1 < args.size()){

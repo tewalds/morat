@@ -4,6 +4,27 @@
 namespace Morat {
 namespace Havannah {
 
+/*
+ * the board is represented as a flattened 2d array of the form:
+ *   1 2 3
+ * A 0 1 2     0 1        0 1
+ * B 3 4 5 <=> 3 4 5 <=> 3 4 5
+ * C 6 7 8       7 8      7 8
+ *
+ * neighbors are laid out in this pattern:
+ *     12   6  13         12  6 13
+ *   11   0   1   7       11  0  1  7
+ * 17   5   X   2  14 <=> 17  5  X  2 14
+ *   10   4   3   8          10  4  3  8
+ *     16   9  15               16  9 15
+ */
+
+const MoveScore neighbor_offsets[18] = {
+	MoveScore(-1,-1, 3), MoveScore(0,-1, 3), MoveScore(1, 0, 3), MoveScore(1, 1, 3), MoveScore( 0, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
+	MoveScore(-1,-2, 2), MoveScore(1,-1, 2), MoveScore(2, 1, 2), MoveScore(1, 2, 2), MoveScore(-1, 1, 2), MoveScore(-2,-1, 2), //sides of ring 2, virtual connections
+	MoveScore(-2,-2, 1), MoveScore(0,-2, 1), MoveScore(2, 0, 1), MoveScore(2, 2, 1), MoveScore( 0, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
+};
+
 std::string Board::Cell::to_s(int i) const {
 	return "Cell " + to_str(i) +": "
 		"piece: " + to_str(piece.to_i())+
@@ -71,7 +92,7 @@ std::shared_ptr<MoveValid> Board::gen_neighbor_list() const {
 			Move pos(x,y);
 
 			for(int i = 0; i < 18; i++){
-				Move loc = pos + neighbors[i];
+				Move loc = pos + neighbor_offsets[i];
 				*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
 				++a;
 			}
@@ -119,7 +140,7 @@ bool Board::checkring_df(const MoveValid & pos, const Side turn) const {
 	start->mark = 1;
 	bool success = false;
 	for(int i = 0; i < 4; i++){ //4 instead of 6 since any ring must have its first endpoint in the first 4
-		MoveValid loc = nb_begin(pos)[i];
+		MoveValid loc = neighbors(pos)[i];
 
 		if(!loc.on_board())
 			continue;
@@ -144,7 +165,7 @@ bool Board::checkring_df(const MoveValid & pos, const Side turn) const {
 bool Board::followring(const MoveValid & cur, const int & dir, const Side & turn, const int & permsneeded) const {
 	for(int i = 5; i <= 7; i++){
 		int nd = (dir + i) % 6;
-		MoveValid next = nb_begin(cur)[nd];
+		MoveValid next = neighbors(cur)[nd];
 
 		if(!next.on_board())
 			continue;
@@ -238,10 +259,10 @@ bool Board::checkring_o1(const MoveValid & pos, const Side turn) const {
 	};
 
 	int bitpattern = 0;
-	const MoveValid * s = nb_begin(pos);
-	for(const MoveValid * i = s, *e = nb_end(i); i < e; i++){
+	const MoveValid * s = neighbors(pos);
+	for (auto m : neighbors_small(pos)) {
 		bitpattern <<= 1;
-		if(i->on_board() && turn == get(i->xy))
+		if(m.on_board() && turn == get(m.xy))
 			bitpattern |= 1;
 	}
 

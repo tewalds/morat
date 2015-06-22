@@ -4,6 +4,27 @@
 namespace Morat {
 namespace Y {
 
+/*
+ * the board is represented as a flattened 2d array of the form:
+ *   1 2 3
+ * A 0 1 2     0 1 2     0 1 2
+ * B 3 4 5 <=> 3 4   <=>  3 4
+ * C 6 7 8     6           6
+ *
+ * neighbors are laid out in this pattern:
+ *     12   6  13               12  6 13
+ *   11   0   1   7          11  0  1  7
+ * 17   5   X   2  14 <=> 17  5  X  2 14
+ *   10   4   3   8       10  4  3  8
+ *     16   9  15         16  9 15
+ */
+
+const MoveScore neighbor_offsets[18] = {
+	MoveScore( 0,-1, 3), MoveScore(1,-1, 3), MoveScore(1, 0, 3), MoveScore( 0, 1, 3), MoveScore(-1, 1, 3), MoveScore(-1, 0, 3), //direct neighbors, clockwise
+	MoveScore( 1,-2, 2), MoveScore(2,-1, 2), MoveScore(1, 1, 2), MoveScore(-1, 2, 2), MoveScore(-2, 1, 2), MoveScore(-1,-1, 2), //sides of ring 2, virtual connections
+	MoveScore( 0,-2, 1), MoveScore(2,-2, 1), MoveScore(2, 0, 1), MoveScore( 0, 2, 1), MoveScore(-2, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
+};
+
 std::string Board::Cell::to_s(int i) const {
 	return "Cell " + to_str(i) +": "
 		"piece: " + to_str(piece.to_i())+
@@ -73,7 +94,7 @@ std::shared_ptr<MoveValid> Board::gen_neighbor_list() const {
 			Move pos(x,y);
 
 			for(int i = 0; i < 18; i++){
-				Move loc = pos + neighbors[i];
+				Move loc = pos + neighbor_offsets[i];
 				*a = MoveValid(loc, (on_board(loc) ? xy(loc) : -1) );
 				++a;
 			}

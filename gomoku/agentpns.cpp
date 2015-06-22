@@ -106,22 +106,22 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 		temp.alloc(numnodes, agent->ctmem);
 
 		unsigned int i = 0;
-		for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
+		for (auto move : board) {
 			unsigned int pd;
 			Outcome outcome;
 
 			if(agent->ab){
 				Board next = board;
-				next.move(*move);
+				next.move(move);
 
 				pd = 0;
 				outcome = (agent->ab == 1 ? solve1ply(next, pd) : solve2ply(next, pd));
 			}else{
 				pd = 1;
-				outcome = board.test_outcome(*move);
+				outcome = board.test_outcome(move);
 			}
 
-			temp[i] = Node(*move).outcome(outcome, board.to_play(), agent->ties, pd);
+			temp[i] = Node(move).outcome(outcome, board.to_play(), agent->ties, pd);
 			i++;
 		}
 		nodes_seen += i;
@@ -317,9 +317,9 @@ void AgentPNS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
 	node->children.alloc(board.moves_remain(), ctmem);
 	unsigned int i = 0;
-	for(Board::MoveIterator move = board.moveit(true); !move.done(); ++move){
-		Outcome outcome = board.test_outcome(*move);
-		node->children[i] = Node(*move).outcome(outcome, board.to_play(), ties, 1);
+	for (auto move : board) {
+		Outcome outcome = board.test_outcome(move);
+		node->children[i] = Node(move).outcome(outcome, board.to_play(), ties, 1);
 		i++;
 	}
 	PLUS(nodes, i);
