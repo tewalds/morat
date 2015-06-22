@@ -55,7 +55,7 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	return s;
 }
 
-std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
+std::shared_ptr<MoveValid> Board::gen_neighbor_list() const {
 	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*24]);
 	MoveValid * a = list.get();
 	for(int y = 0; y < size_; y++){

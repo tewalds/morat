@@ -142,7 +142,7 @@ public:
 		if (!valid_size(s))
 			return false;
 		size_ = from_str<int>(s);
-		neighbor_list_ = get_neighbor_list();
+		neighbor_list_ = gen_neighbor_list();
 		num_cells_ = vec_size();
 		cells_.resize(vec_size());
 		clear();
@@ -249,8 +249,6 @@ public:
 	const MoveValid * nb_end(const MoveValid * m) const { return m + 8; }
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 16; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 24; }
-
-	std::shared_ptr<MoveValid> get_neighbor_list() const;
 
 	int lines()           const { return size_; }
 	int line_start(int y) const { return 0; }
@@ -455,6 +453,9 @@ public:
 
 		return Outcome::UNKNOWN;
 	}
+
+private:
+	std::shared_ptr<MoveValid> gen_neighbor_list() const;
 };
 
 }; // namespace Gomoku

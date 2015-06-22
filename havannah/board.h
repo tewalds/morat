@@ -161,7 +161,7 @@ public:
 		size_r_ = from_str<int>(s);
 		size_r_m1_ = size_r_ - 1;
 		size_ = size_r_ * 2 - 1;
-		neighbor_list_ = get_neighbor_list();
+		neighbor_list_ = gen_neighbor_list();
 		num_cells_ = vec_size() - size_r_ * size_r_m1_;
 		cells_.resize(vec_size());
 		clear();
@@ -272,8 +272,6 @@ public:
 	const MoveValid * nb_end(const MoveValid * m) const { return m + 6; }
 	const MoveValid * nb_end_small_hood(const MoveValid * m) const { return m + 12; }
 	const MoveValid * nb_end_big_hood(const MoveValid * m) const { return m + 18; }
-
-	std::shared_ptr<MoveValid> get_neighbor_list() const;
 
 	int lines()           const { return size_; }
 	int line_start(int y) const { return (y < size_r_ ? 0 : y - size_r_m1_); }
@@ -621,6 +619,7 @@ private:
 	bool followring(const MoveValid & cur, const int & dir, const Side & turn, const int & permsneeded) const;
 	bool checkring_back(const MoveValid & a, const MoveValid & b, const MoveValid & c, Side turn) const;
 
+	std::shared_ptr<MoveValid> gen_neighbor_list() const;
 };
 
 }; // namespace Havannah

@@ -65,7 +65,7 @@ int Board::edges(int x, int y) const {
 	       (x + y == sizem1_ ? 4 : 0);
 }
 
-std::shared_ptr<MoveValid> Board::get_neighbor_list() const {
+std::shared_ptr<MoveValid> Board::gen_neighbor_list() const {
 	std::shared_ptr<MoveValid> list(new MoveValid[vec_size()*18]);
 	MoveValid * a = list.get();
 	for(int y = 0; y < size_; y++){
