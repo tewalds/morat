@@ -39,6 +39,13 @@ std::string Side::to_s() const {
 	                   return "unknown";
 }
 
+std::string Side::to_s_short() const {
+	if(*this == NONE)  return "N";
+	if(*this == P1)    return "W";
+	if(*this == P2)    return "B";
+	                   return "U";
+}
+
 std::string Outcome::to_s() const {
 	if(*this == UNDEF)   return "undefined";
 	if(*this == UNKNOWN) return "unknown";

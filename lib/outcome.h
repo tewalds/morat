@@ -28,6 +28,7 @@ public:
 
 	friend std::ostream& operator<< (std::ostream &out, const Side & s);
 	std::string to_s() const;
+	std::string to_s_short() const;
 	Type to_i() const { return side; }
 };
 
