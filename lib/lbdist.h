@@ -28,6 +28,10 @@ Subclasses must implement init_player and _get which define which flood fills to
 and how to look up the value for a given cell.
 */
 
+	SubClass* self() {
+		return static_cast<SubClass*>(this);
+	}
+
 protected:
 	struct MoveDist {
 		MoveValid pos;
@@ -112,8 +116,8 @@ public:
 				for(int k = 0; k < board->vec_size(); k++)
 					dists[i][j][k] = maxdist; //far far away!
 
-		if((side & Side::P1) == Side::P1) static_cast<SubClass*>(this)->init_player(crossvcs, Side::P1);
-		if((side & Side::P2) == Side::P2) static_cast<SubClass*>(this)->init_player(crossvcs, Side::P2);
+		if((side & Side::P1) == Side::P1) self()->init_player(crossvcs, Side::P1);
+		if((side & Side::P2) == Side::P2) self()->init_player(crossvcs, Side::P2);
 	}
 
 	// return the distance to for a single cell, either the minimum of both sides or for the chosen side
@@ -121,7 +125,7 @@ public:
 	int get(MoveValid pos) { return std::min(get(pos, Side::P1), get(pos, Side::P2)); }
 	int get(Move      pos, Side player) { return get(board->xy(pos), player); }
 	int get(MoveValid pos, Side player) { return get(pos.xy, player); }
-	int get(int pos, Side player) { return static_cast<SubClass*>(this)->_get(pos, player); }
+	int get(int pos, Side player) { return self()->_get(pos, player); }
 
 	std::string to_s(Side side = Side::NONE) {
 	// Return a string representation of the whole board, with empty cells showing their distance numbers
