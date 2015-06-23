@@ -66,7 +66,7 @@ class MoveIteratorUnique : public MoveIterator<Board> {
 	HashSet hashes_;
 public:
 	MoveIteratorUnique(const Board & b) : MoveIterator<Board>(b) {
-		hashes_.init(MoveIterator<Board>::board_.moves_remain());
+		hashes_.init(MoveIterator<Board>::board_.moves_avail());
 		++(*this);
 	}
 
@@ -93,7 +93,7 @@ class MoveIteratorRandom : public MoveIterator<Board> {
 
 public:
 	MoveIteratorRandom(const Board & b, Rand & r) : MoveIterator<Board>(b), rand_(r) {
-		moves_.reserve(MoveIterator<Board>::board_.moves_remain());
+		moves_.reserve(MoveIterator<Board>::board_.moves_avail());
 		for(auto m : MoveIterator<Board>::board_) {
 			moves_.push_back(m);
 		}

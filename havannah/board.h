@@ -134,7 +134,8 @@ public:
 	int num_cells() const { return num_cells_; }
 
 	int moves_made() const { return num_moves_; }
-	int moves_remain() const { return (outcome() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
+	int moves_avail() const { return (outcome() >= Outcome::DRAW ? 0 : num_cells_ - num_moves_); }
+	int moves_remain() const { return moves_avail(); }
 
 	int xy(int x, int y)   const { return   y*size_ +   x; }
 	int xy(const Move & m) const { return m.y*size_ + m.x; }

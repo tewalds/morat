@@ -101,9 +101,8 @@ bool AgentPNS::AgentThread::pns(const Board & board, Node * node, int depth, uin
 		if(!node->children.lock())
 			return false;
 
-		int numnodes = board.moves_remain();
 		CompactTree<Node>::Children temp;
-		temp.alloc(numnodes, agent->ctmem);
+		temp.alloc(board.moves_avail(), agent->ctmem);
 
 		if(agent->lbdist)
 			dists.run(&board);
@@ -321,7 +320,7 @@ void AgentPNS::garbage_collect(Node * node){
 
 void AgentPNS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
-	node->children.alloc(board.moves_remain(), ctmem);
+	node->children.alloc(board.moves_avail(), ctmem);
 	unsigned int i = 0;
 	for (auto move : board) {
 		Outcome outcome = board.test_outcome(move);

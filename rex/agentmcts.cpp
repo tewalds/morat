@@ -357,7 +357,7 @@ void AgentMCTS::gen_sgf(SGFPrinter<Move> & sgf, unsigned int limit, const Node &
 void AgentMCTS::create_children_simple(const Board & board, Node * node){
 	assert(node->children.empty());
 
-	node->children.alloc(board.moves_remain(), ctmem);
+	node->children.alloc(board.moves_avail(), ctmem);
 
 	Node * child = node->children.begin();
 	for (auto move : board) {

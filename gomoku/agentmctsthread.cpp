@@ -124,7 +124,7 @@ bool AgentMCTS::AgentThread::create_children(const Board & board, Node * node){
 		return false;
 
 	CompactTree<Node>::Children temp;
-	temp.alloc(board.moves_remain(), agent->ctmem);
+	temp.alloc(board.moves_avail(), agent->ctmem);
 
 	Side to_play = board.to_play();
 	Side opponent = ~to_play;
