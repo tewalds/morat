@@ -223,7 +223,7 @@ std::vector<Move> AgentPNS::get_pv(const vecmove& moves) const {
 
 	const Node * n = & root;
 	Side turn = rootboard.to_play();
-	int i = 0;
+	unsigned int i = 0;
 	while(n && !n->children.empty()){
 		Move m = (i < moves.size() ? moves[i++] : return_move(n, turn));
 		pv.push_back(m);
