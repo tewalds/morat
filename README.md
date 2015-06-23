@@ -19,6 +19,15 @@ Potential games:
 * [Star](https://en.wikipedia.org/wiki/Star_%28board_game%29) or [*Star](https://en.wikipedia.org/wiki/*Star)
 * [Domineering or Cram](https://en.wikipedia.org/wiki/Domineering)
 * [Dots and Boxes](https://en.wikipedia.org/wiki/Dots_and_Boxes)
+* [Connect Four](https://en.wikipedia.org/wiki/Connect_Four), or maybe a more general Connect m,n,k.
+* [Go](https://en.wikipedia.org/wiki/Go_%28game%29)
+
+Potential variants:
+* Gomoku on a hex board
+* non-regular or non-symmetric boards
+* Misere any game (ie make rex a variant of hex instead of its own game)
+* 1,2,2 (first turn place 1 piece, then each player alternates placing 2 pieces)
+* Various swap rules
 
 So far it supports 3 algorithms:
 * [MCTS: Monte-Carlo Tree Search](https://en.wikipedia.org/wiki/Monte-Carlo_tree_search)
