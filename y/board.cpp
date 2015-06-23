@@ -25,6 +25,8 @@ const MoveScore neighbor_offsets[18] = {
 	MoveScore( 0,-2, 1), MoveScore(2,-2, 1), MoveScore(2, 0, 1), MoveScore( 0, 2, 1), MoveScore(-2, 2, 1), MoveScore(-2, 0, 1), //corners of ring 2, easy to block
 };
 
+const char* Board::win_names[] = {"F"};
+
 std::string Board::Cell::to_s(int i) const {
 	return "Cell " + to_str(i) +": "
 		"piece: " + to_str(piece.to_i())+

@@ -72,15 +72,15 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 
 	if(verbose){
 		DepthStats gamelen, treelen;
-		DepthStats win_types[2][4];
-		uint64_t games = 0;
+		DepthStats win_types[2][Board::num_win_types];
+		uint64_t games = 0, draws = 0;
 		double times[4] = {0,0,0,0};
 		for(auto & t : pool){
 			gamelen += t->gamelen;
 			treelen += t->treelen;
 
 			for(int a = 0; a < 2; a++){
-				for(int b = 0; b < 4; b++){
+				for(int b = 0; b < Board::num_win_types; b++){
 					win_types[a][b] += t->win_types[a][b];
 					games += t->win_types[a][b].num;
 				}
@@ -89,25 +89,38 @@ void AgentMCTS::search(double time, uint64_t max_runs, int verbose){
 			for(int a = 0; a < 4; a++)
 				times[a] += t->times[a];
 		}
+		draws = gamelen.num - games;
 
 		logerr("Finished:    " + to_str(runs) + " runs in " + to_str(time_used*1000, 0) + " msec: " + to_str(runs/time_used, 0) + " Games/s\n");
-		if(runs > 0){
+		if(gamelen.num > 0){
 			logerr("Game length: " + gamelen.to_s() + "\n");
 			logerr("Tree depth:  " + treelen.to_s() + "\n");
 			if(profile)
 				logerr("Times:       " + to_str(times[0], 3) + ", " + to_str(times[1], 3) + ", " + to_str(times[2], 3) + ", " + to_str(times[3], 3) + "\n");
 
-			logerr("Win Types:   ");
-			logerr("W: f " + to_str(win_types[0][1].num*100.0/games,0) + "%, b " + to_str(win_types[0][2].num*100.0/games,0) + "%, r " + to_str(win_types[0][3].num*100.0/games,0) + "%; ");
-			logerr("B: f " + to_str(win_types[1][1].num*100.0/games,0) + "%, b " + to_str(win_types[1][2].num*100.0/games,0) + "%, r " + to_str(win_types[1][3].num*100.0/games,0) + "%\n");
+			if (Board::num_win_types > 1 || verbose >= 2) {
+				logerr("Win Types:   ");
+				if (draws > 0)
+					logerr("Draws: " + to_str(draws*100.0/gamelen.num, 0) + "%; ");
+				for (int a = 0; a < 2; a++) {
+					logerr((a == 0 ? Side::P1 : Side::P2).to_s_short() + ": ");
+					for (int b = 0; b < Board::num_win_types; b++) {
+						if (b != 0) logerr(", ");
+						logerr(Board::win_names[b]);
+						logerr(" " + to_str(win_types[a][b].num*100.0/gamelen.num, 0) + "%");
+					}
+					logerr((a == 0 ? "; " : "\n"));
+				}
 
-			if(verbose >= 2){
-				logerr("  W fork:    " + win_types[0][1].to_s() + "\n");
-				logerr("  W bridge:  " + win_types[0][2].to_s() + "\n");
-				logerr("  W ring:    " + win_types[0][3].to_s() + "\n");
-				logerr("  B fork:    " + win_types[1][1].to_s() + "\n");
-				logerr("  B bridge:  " + win_types[1][2].to_s() + "\n");
-				logerr("  B ring:    " + win_types[1][3].to_s() + "\n");
+				if(verbose >= 2){
+					for (int a = 0; a < 2; a++) {
+						for (int b = 0; b < Board::num_win_types; b++) {
+							logerr("  " + (a == 0 ? Side::P1 : Side::P2).to_s_short() + " ");
+							logerr(Board::win_names[b]);
+							logerr(": " + win_types[a][b].to_s() + "\n");
+						}
+					}
+				}
 			}
 		}
 

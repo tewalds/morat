@@ -31,7 +31,10 @@ public:
 	static const int min_size = 5;
 	static const int max_size = 16;
 	static const int max_vec_size = max_size * max_size;
+
 	static const int num_win_types = 1;
+	static const char* win_names[num_win_types];
+
 	static const int unique_depth = 5; //update and test rotations/symmetry with less than this many pieces on the board
 	static const int LBDist_directions = 3;
 
@@ -212,7 +215,7 @@ public:
 		return outcome_;
 	}
 
-	char win_type() const { return outcome_ > Outcome::DRAW; }
+	char win_type() const { return 0; }
 
 	Side to_play() const {
 		return to_play_;

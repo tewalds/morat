@@ -31,7 +31,9 @@ public:
 	static const int min_size = 5;
 	static const int max_size = 19;
 	static const int max_vec_size = max_size * max_size;
+
 	static const int num_win_types = 1;
+	static const char* win_names[num_win_types];
 
 	static const int pattern_cells = 24;
 	typedef uint64_t Pattern;
@@ -54,7 +56,6 @@ private:
 	Move last_move_;
 	Side to_play_;
 	Outcome outcome_;
-	char win_type_; //0 no win, 1 = 5 in a row
 
 	std::vector<Cell> cells_;
 	Zobrist<1> hash;
@@ -82,7 +83,6 @@ public:
 		num_moves_ = 0;
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
-		win_type_ = 0;
 
 		for(int y = 0; y < size_; y++){
 			for(int x = 0; x < size_; x++){
@@ -204,7 +204,7 @@ public:
 		return outcome_;
 	}
 
-	char win_type() const { return win_type_; }
+	int8_t win_type() const { return 0; }
 
 	Side to_play() const {
 		return to_play_;
@@ -327,9 +327,6 @@ public:
 
 		if(checkwin) {
 			outcome_ = test_outcome(pos, turn);
-			if(outcome_ > Outcome::DRAW) {
-				win_type_ = 1;
-			}
 		}
 
 		set(pos, permanent);

@@ -31,7 +31,10 @@ public:
 	static const int min_size = 3;
 	static const int max_size = 10;
 	static const int max_vec_size = 19 * 19;
+
 	static const int num_win_types = 3;
+	static const char* win_names[num_win_types];
+
 	static const int unique_depth = 5; //update and test rotations/symmetry with less than this many pieces on the board
 	static const int LBDist_directions = 12;
 
@@ -68,7 +71,7 @@ private:
 	Move last_move_;
 	Side to_play_;
 	Outcome outcome_;
-	char win_type_; //0 no win, 1 = edge, 2 = corner, 3 = ring
+	int8_t win_type_;
 
 	std::vector<Cell> cells_;
 	Zobrist<12> hash;
@@ -101,7 +104,7 @@ public:
 		num_moves_ = 0;
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
-		win_type_ = 0;
+		win_type_ = -1;
 		check_rings = true;
 		perm_rings = 0;
 
@@ -227,7 +230,7 @@ public:
 		return outcome_;
 	}
 
-	char win_type() const { return win_type_; }
+	int8_t win_type() const { return win_type_; }
 
 	Side to_play() const {
 		return to_play_;
@@ -496,13 +499,13 @@ public:
 			Cell * g = & cells_[find_group(pos.xy)];
 			if(g->numedges() >= 3){
 				outcome_ = +turn;
-				win_type_ = 1;
+				win_type_ = 0;
 			}else if(g->numcorners() >= 2){
 				outcome_ = +turn;
-				win_type_ = 2;
+				win_type_ = 1;
 			}else if(check_rings && alreadyjoined && g->size >= 6 && checkring_df(pos, turn)){
 				outcome_ = +turn;
-				win_type_ = 3;
+				win_type_ = 2;
 			}else if(num_moves_ == num_cells_){
 				outcome_ = Outcome::DRAW;
 			}

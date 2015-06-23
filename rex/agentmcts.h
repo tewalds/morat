@@ -149,6 +149,7 @@ public:
 
 	public:
 		DepthStats treelen, gamelen;
+		DepthStats win_types[2][Board::num_win_types]; //player,win_type_
 		double times[4]; //time spent in each of the stages
 		Time timestamps[4]; //timestamps for the beginning, before child creation, before rollout, after rollout
 
@@ -161,6 +162,10 @@ public:
 
 			use_rave = false;
 			use_explore = false;
+
+			for(int a = 0; a < 2; a++)
+				for(int b = 0; b < Board::num_win_types; b++)
+					win_types[a][b].reset();
 
 			for(int a = 0; a < 4; a++)
 				times[a] = 0;

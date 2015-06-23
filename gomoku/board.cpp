@@ -25,6 +25,8 @@ const MoveScore neighbor_offsets[24] = {
 	MoveScore(-1,-2, 1), MoveScore(1,-2, 1), MoveScore(2,-1, 1), MoveScore(2, 1, 1), MoveScore(1, 2, 1), MoveScore(-1, 2, 1), MoveScore(-2, 1, 1), MoveScore(-2,-1, 1), //knight's move
 };
 
+const char* Board::win_names[] = {"5"};
+
 std::string Board::Cell::to_s(int i) const {
 	return "Cell " + to_str(i) +": "
 		"piece: " + to_str(piece.to_i())+

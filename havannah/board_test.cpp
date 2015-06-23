@@ -8,7 +8,7 @@
 using namespace Morat;
 using namespace Havannah;
 
-void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
+void test_game(Board b, std::vector<std::string> moves, Outcome outcome, int win_type) {
 	REQUIRE(b.moves_made() == 0);
 	Side side = Side::P1;
 	int made = 0, remain = 37;
@@ -30,9 +30,10 @@ void test_game(Board b, std::vector<std::string> moves, Outcome outcome) {
 	}
 	REQUIRE(b.moves_made() == made);
 	REQUIRE(b.moves_remain() == (outcome == Outcome::UNKNOWN ? remain : 0));
+	REQUIRE(b.win_type() == win_type);
 }
-void test_game(Board b, std::string moves, Outcome outcome) {
-	test_game(b, explode(moves, " "), outcome);
+void test_game(Board b, std::string moves, Outcome outcome, int win_type) {
+	test_game(b, explode(moves, " "), outcome, win_type);
 }
 
 TEST_CASE("Havannah::Board", "[havannah][board]") {
@@ -152,23 +153,23 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 	}
 
 	SECTION("bridge") {
-		test_game(b, {      "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P1);
-		test_game(b, {"d4", "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P2);
+		test_game(b, {      "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P1, 1);
+		test_game(b, {"d4", "a1", "b1", "a2", "b2", "a3", "b3", "a4"}, Outcome::P2, 1);
 	}
 
 	SECTION("fork") {
-		test_game(b, {      "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::P1);
-		test_game(b, {"d4", "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::P2);
+		test_game(b, {      "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::P1, 0);
+		test_game(b, {"d4", "b1", "c1", "b2", "c2", "b3", "c3", "b4", "c4", "b5", "c5", "a2"}, Outcome::P2, 0);
 	}
 
 	SECTION("ring") {
-		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::P1);
-		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::P2);
+		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::P1, 2);
+		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "d4"}, Outcome::P2, 2);
 	}
 
 	SECTION("filled ring") {
-		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::P1);
-		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::P2);
+		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::P1, 2);
+		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::P2, 2);
 	}
 
 	SECTION("draw") {
@@ -180,6 +181,6 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 		   "e2", "e3", "e4", "e5", "e6", "e7",
 		      "f3", "f4", "f5", "f6", "f7",
 		         "g4", "g5", "g6", "g7",
-		}, Outcome::DRAW);
+		}, Outcome::DRAW, -1);
 	}
 }

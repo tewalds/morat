@@ -432,6 +432,9 @@ Outcome AgentMCTS::AgentThread::rollout(Board & board, Move move, int depth){
 
 	gamelen.add(depth);
 
+	if(won > Outcome::DRAW)
+		win_types[won.to_i() - 1][(int)board.win_type()].add(depth);
+
 	//update the last good reply table
 	if(agent->lastgoodreply)
 		last_good_reply.rollout_end(board, movelist, won);
