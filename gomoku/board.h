@@ -214,9 +214,9 @@ public:
 		return hash.get(0);
 	}
 
-	void update_hash(const Move & pos, Side side) {
+	void update_hash(const MoveValid & pos, Side side) {
 		int turn = side.to_i();
-		hash.update(0, 3*xy(pos) + turn);
+		hash.update(0, 3 * pos.xy + turn);
 		return;
 	}
 
@@ -316,6 +316,8 @@ public:
 		Cell& cell = cells_[pos.xy];
 		cell.piece = to_play_;
 		cell.perm = permanent;
+
+		update_hash(pos, to_play_); //depends on num_moves_
 
 		// update the nearby patterns
 		Pattern p = to_play_.to_i();

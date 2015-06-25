@@ -288,10 +288,10 @@ public:
 		return (num_moves_ > unique_depth ? hash.get(0) : hash.get());
 	}
 
-	void update_hash(const Move & pos, Side side) {
+	void update_hash(const MoveValid & pos, Side side) {
 		int turn = side.to_i();
 		if(num_moves_ > unique_depth){ //simple update, no rotations/symmetry
-			hash.update(0, 3*xy(pos) + turn);
+			hash.update(0, 3 * pos.xy + turn);
 			return;
 		}
 
