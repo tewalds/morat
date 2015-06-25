@@ -279,8 +279,7 @@ public:
 		Time starttime;
 		logerr("Starting player GC with limit " + to_str(gclimit) + " ... ");
 		uint64_t nodesbefore = nodes;
-		Board copy = rootboard;
-		garbage_collect(copy, & root);
+		garbage_collect(root, rootboard.to_play());
 		Time gctime;
 		ctmem.compact(1.0, 0.75);
 		Time compacttime;
@@ -304,8 +303,7 @@ public:
 	}
 
 protected:
-
-	void garbage_collect(Board & board, Node * node); //destroys the board, so pass in a copy
+	void garbage_collect(Node& node, Side to_play);
 	bool do_backup(Node * node, const Node * backup, Side to_play);
 	Move return_move(const Node * node, Side to_play, int verbose = 0) const;
 

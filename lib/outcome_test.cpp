@@ -64,6 +64,17 @@ TEST_CASE("Side and Outcome", "[side][outcome]"){
 		REQUIRE((Side::BOTH  & Side::P1) == Side::P1);
 		REQUIRE((Side::BOTH  & Side::P2) == Side::P2);
 	}
+
+	SECTION("solved") {
+		REQUIRE_FALSE(Outcome::UNDEF.solved());
+		REQUIRE_FALSE(Outcome::UNKNOWN.solved());
+		REQUIRE_FALSE(Outcome::P2_DRAW.solved());
+		REQUIRE_FALSE(Outcome::P1_DRAW.solved());
+		REQUIRE(Outcome::DRAW.solved());
+		REQUIRE(Outcome::P1.solved());
+		REQUIRE(Outcome::P2.solved());
+		REQUIRE(Outcome::DRAW2.solved());
+	}
 }
 
 }; // namespace Morat

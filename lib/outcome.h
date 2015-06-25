@@ -66,6 +66,7 @@ public:
 	std::string to_s_rel(Side to_play) const;
 	Type to_i() const { return outcome; }
 	bool cas(Outcome old, Outcome new_);
+	bool solved() const { return outcome >= DRAW.to_i(); }
 };
 
 

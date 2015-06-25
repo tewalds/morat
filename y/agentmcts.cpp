@@ -350,22 +350,22 @@ Move AgentMCTS::return_move(const Node * node, Side to_play, int verbose) const 
 	return ret->move;
 }
 
-void AgentMCTS::garbage_collect(Board & board, Node * node){
-	Node * child = node->children.begin(),
-		 * end = node->children.end();
-
-	Side to_play = board.to_play();
-	for( ; child != end; child++){
-		if(child->children.num() == 0)
+void AgentMCTS::garbage_collect(Node& node, Side to_play){
+	for (auto& child : node.children) {
+		if (child.children.num() == 0)
 			continue;
 
-		if(	(node->outcome >= Outcome::DRAW && child->exp.num() > gcsolved && (node->outcome != to_play || child->outcome == to_play || child->outcome == Outcome::DRAW)) || //parent is solved, only keep the proof tree, plus heavy draws
-			(node->outcome <  Outcome::DRAW && child->exp.num() > (child->outcome >= Outcome::DRAW ? gcsolved : gclimit)) ){ // only keep heavy nodes, with different cutoffs for solved and unsolved
-			board.set(child->move);
-			garbage_collect(board, child);
-			board.unset(child->move);
-		}else{
-			nodes -= child->dealloc(ctmem);
+		if ((node.outcome.solved() &&       // parent is solved
+		     child.exp.num() > gcsolved &&  // keep the heavy nodes
+		     (node.outcome != to_play ||    // loss or draw, keep the everything
+		      child.outcome == to_play)) || // found the win, keep the proof tree
+		    (!node.outcome.solved() &&      // parent isn't solved,
+		     child.exp.num() > (child.outcome.solved() ?
+		      gcsolved :                    // only keep the heavy proof tree
+		      gclimit)) ){                  // but the light area still being worked on
+			garbage_collect(child, ~to_play);
+		} else {
+			nodes -= child.dealloc(ctmem);
 		}
 	}
 }
