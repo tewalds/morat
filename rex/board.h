@@ -221,41 +221,6 @@ public:
 		return to_play_;
 	}
 
-	int find_group(const MoveValid & m) const { return find_group(m.xy); }
-	int find_group(const Move & m) const { return find_group(xy(m)); }
-	int find_group(int x, int y)   const { return find_group(xy(x, y)); }
-	int find_group(unsigned int i) const {
-		unsigned int p = cells_[i].parent;
-		if(p != i){
-			do{
-				p = cells_[p].parent;
-			}while(p != cells_[p].parent);
-			cells_[i].parent = p; //do path compression, but only the current one, not all, to avoid recursion
-		}
-		return p;
-	}
-
-	//join the groups of two positions, propagating group size, and edge connections
-	//returns true if they're already the same group, false if they are now joined
-	bool join_groups(const Move & a, const Move & b) { return join_groups(xy(a), xy(b)); }
-	bool join_groups(int x1, int y1, int x2, int y2) { return join_groups(xy(x1, y1), xy(x2, y2)); }
-	bool join_groups(int i, int j){
-		i = find_group(i);
-		j = find_group(j);
-
-		if(i == j)
-			return true;
-
-		if(cells_[i].size < cells_[j].size) //force i's subtree to be bigger
-			std::swap(i, j);
-
-		cells_[j].parent = i;
-		cells_[i].size   += cells_[j].size;
-		cells_[i].edge   |= cells_[j].edge;
-
-		return false;
-	}
-
 	Cell test_cell(const Move & pos) const {
 		Side turn = to_play();
 		int posxy = xy(pos);
@@ -479,6 +444,37 @@ private:
 	int edges(int x, int y) const;
 
 	std::shared_ptr<MoveValid> gen_neighbor_list() const;
+
+	int find_group(const MoveValid & m) const { return find_group(m.xy); }
+	int find_group(unsigned int i) const {
+		unsigned int p = cells_[i].parent;
+		if(p != i){
+			do{
+				p = cells_[p].parent;
+			}while(p != cells_[p].parent);
+			cells_[i].parent = p; //do path compression, but only the current one, not all, to avoid recursion
+		}
+		return p;
+	}
+
+	//join the groups of two positions, propagating group size, and edge connections
+	//returns true if they're already the same group, false if they are now joined
+	bool join_groups(int i, int j){
+		i = find_group(i);
+		j = find_group(j);
+
+		if(i == j)
+			return true;
+
+		if(cells_[i].size < cells_[j].size) //force i's subtree to be bigger
+			std::swap(i, j);
+
+		cells_[j].parent = i;
+		cells_[i].size   += cells_[j].size;
+		cells_[i].edge   |= cells_[j].edge;
+
+		return false;
+	}
 };
 
 }; // namespace Rex
