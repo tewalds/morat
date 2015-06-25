@@ -210,23 +210,6 @@ public:
 		return to_play_;
 	}
 
-	void set(const Move & m, bool perm = true) {
-		last_move_ = m;
-		Cell * cell = & cells_[xy(m)];
-		cell->piece = to_play_;
-		cell->perm = perm;
-		num_moves_++;
-		to_play_ = ~to_play_;
-	}
-
-	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
-		to_play_ = ~to_play_;
-		num_moves_--;
-		Cell * cell = & cells_[xy(m)];
-		cell->piece = Side::NONE;
-		cell->perm = 0;
-	}
-
 	hash_t gethash() const {
 		return hash.get(0);
 	}
@@ -318,27 +301,32 @@ public:
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
 	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true) {
-		assert(outcome_ < Outcome::DRAW);
+		assert(!outcome_.solved());
 
 		if(!valid_move(pos))
 			return false;
 
-		Side turn = to_play();
-
 		if(checkwin) {
-			outcome_ = test_outcome(pos, turn);
+			outcome_ = test_outcome(pos, to_play_);
 		}
 
-		set(pos, permanent);
+		last_move_ = pos;
+		num_moves_++;
+
+		Cell& cell = cells_[pos.xy];
+		cell.piece = to_play_;
+		cell.perm = permanent;
 
 		// update the nearby patterns
-		Pattern p = turn.to_i();
+		Pattern p = to_play_.to_i();
 		for (auto m : neighbors_large(pos)) {
 			if(m.on_board()){
 				cells_[m.xy].pattern |= p;
 			}
 			p <<= 2;
 		}
+
+		to_play_ = ~to_play_;
 
 		return true;
 	}

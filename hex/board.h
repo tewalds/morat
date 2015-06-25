@@ -215,29 +215,10 @@ public:
 		return outcome_;
 	}
 
-	char win_type() const { return 0; }
+	int8_t win_type() const { return 0; }
 
 	Side to_play() const {
 		return to_play_;
-	}
-
-	void set(const Move & m, bool perm = true) {
-		last_move_ = m;
-		Cell * cell = & cells_[xy(m)];
-		cell->piece = to_play_;
-		cell->perm = perm;
-		num_moves_++;
-		update_hash(m, to_play_); //depends on num_moves_
-		to_play_ = ~to_play_;
-	}
-
-	void unset(const Move & m) { //break win checks, but is a poor mans undo if all you care about is the hash
-		to_play_ = ~to_play_;
-		update_hash(m, to_play_);
-		num_moves_--;
-		Cell * cell = & cells_[xy(m)];
-		cell->piece = Side::NONE;
-		cell->perm = 0;
 	}
 
 	int find_group(const MoveValid & m) const { return find_group(m.xy); }
@@ -417,16 +398,22 @@ public:
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
 	bool move(const MoveValid & pos, bool checkwin = true, bool permanent = true) {
-		assert(outcome_ < Outcome::DRAW);
+		assert(!outcome_.solved());
 
 		if(!valid_move(pos))
 			return false;
 
-		Side turn = to_play();
-		set(pos, permanent);
+		last_move_ = pos;
+		num_moves_++;
+
+		Cell& cell = cells_[pos.xy];
+		cell.piece = to_play_;
+		cell.perm = permanent;
+
+		update_hash(pos, to_play_); //depends on num_moves_
 
 		// update the nearby patterns
-		Pattern p = turn.to_i();
+		Pattern p = to_play_.to_i();
 		for (auto m : neighbors_large(pos)) {
 			if(m.on_board()){
 				cells_[m.xy].pattern |= p;
@@ -437,7 +424,7 @@ public:
 		// join the groups for win detection
 		auto it = neighbors_small(pos);
 		for (const MoveValid *i = it.begin(), *e = it.end(); i < e; i++) {
-			if(i->on_board() && turn == get(i->xy)){
+			if(i->on_board() && to_play_ == get(i->xy)){
 				join_groups(pos.xy, i->xy);
 				i++; //skip the next one. If it is the same group,
 					 //it is already connected and forms a corner, which we can ignore
@@ -446,10 +433,13 @@ public:
 
 		// did I win?
 		Cell * g = & cells_[find_group(pos.xy)];
-		uint8_t winmask = (turn == Side::P1 ? 3 : 0xC);
+		uint8_t winmask = (to_play_ == Side::P1 ? 3 : 0xC);
 		if((g->edge & winmask) == winmask){
-			outcome_ = turn;
+			outcome_ = +to_play_;
 		}
+
+		to_play_ = ~to_play_;
+
 		return true;
 	}
 
@@ -479,7 +469,7 @@ public:
 
 			int winmask = (turn == Side::P1 ? 3 : 0xC);
 			if((testcell.edge & winmask) == winmask)
-				return turn;
+				return +turn;
 		}
 
 		return Outcome::UNKNOWN;
