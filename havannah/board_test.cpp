@@ -129,6 +129,19 @@ TEST_CASE("Havannah::Board", "[havannah][board]") {
 		REQUIRE(b.moves_remain() == remain);
 	}
 
+	SECTION("hash") {
+		hash_t h = b.test_hash(b.move_valid("a2"));
+		REQUIRE_FALSE(h == b.test_hash(b.move_valid("a1")));
+		for (auto s : {"a2", "a3", "b5", "c6", "e7", "f7", "g6", "g5", "f3", "e2", "c1", "b1"}) {
+			CAPTURE(s);
+			b.clear();
+			REQUIRE(b.gethash() == 0);
+			MoveValid m = b.move_valid(s);
+			REQUIRE(h == b.test_hash(m));
+			b.move(m);
+			REQUIRE(h == b.gethash());
+		}
+	}
 	SECTION("move distance") {
 		SECTION("x") {
 			REQUIRE(b.dist(Move("b2"), Move("b1")) == 1);

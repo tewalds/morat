@@ -134,6 +134,23 @@ TEST_CASE("Rex::Board size 7", "[rex][board]") {
 		REQUIRE_FALSE(b.move(m));
 	}
 
+	SECTION("hash") {
+		MoveValid m1 = b.move_valid("a1");
+		MoveValid m2 = b.move_valid("g7");
+		MoveValid m3 = b.move_valid("g1");
+		hash_t h = b.test_hash(m1);
+		REQUIRE(h == b.test_hash(m2));
+		REQUIRE_FALSE(h == b.test_hash(m3));
+		SECTION("m1") {
+			b.move(m1);
+			REQUIRE(h == b.gethash());
+		}
+		SECTION("m2") {
+			b.move(m2);
+			REQUIRE(h == b.gethash());
+		}
+	}
+
 	SECTION("move distance") {
 		SECTION("x") {
 			REQUIRE(b.dist(Move("b2"), Move("b1")) == 1);

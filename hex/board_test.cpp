@@ -85,6 +85,23 @@ TEST_CASE("Hex::Board", "[hex][board]") {
 		REQUIRE_FALSE(b.move(m));
 	}
 
+	SECTION("hash") {
+		MoveValid m1 = b.move_valid("a1");
+		MoveValid m2 = b.move_valid("g7");
+		MoveValid m3 = b.move_valid("g1");
+		hash_t h = b.test_hash(m1);
+		REQUIRE(h == b.test_hash(m2));
+		REQUIRE_FALSE(h == b.test_hash(m3));
+		SECTION("m1") {
+			b.move(m1);
+			REQUIRE(h == b.gethash());
+		}
+		SECTION("m2") {
+			b.move(m2);
+			REQUIRE(h == b.gethash());
+		}
+	}
+
 	SECTION("move distance") {
 		SECTION("x") {
 			REQUIRE(b.dist(Move("b2"), Move("b1")) == 1);
@@ -125,15 +142,15 @@ TEST_CASE("Hex::Board", "[hex][board]") {
 		test_game(b, {      "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::UNKNOWN);
 		test_game(b, {"d7", "b2", "f3", "b3", "f4", "c2", "f5", "c4", "f6", "d3", "f7", "c3", "e6", "d4"}, Outcome::UNKNOWN);
 	}
-	
+
 	SECTION("White Connects") {
-		test_game(b, 
+		test_game(b,
 			"c2 c5 e4 d6 c6 d5 f5 e3 d4 d3 b4 d1 a6 c1 d2 b3 c3 e1 f2 a7 b6 b7 c7 a5 f3 e7 g6 g7 f7 g4 f1 g2 b5 e2 c4",
 			 Outcome::P1);
 	}
-	
+
 	SECTION("Black Connects") {
-		test_game(b, 
+		test_game(b,
 			"d1 d4 e4 e3 g2 f3 g3 f5 g5 g4 a6 b5 f4 d6 e5 g1 a5 b3 c5 c3 a3 b6 g7 a7 f7 f2 c4 d3 a4 b4",
 			Outcome::P2);
 	}

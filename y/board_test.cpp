@@ -86,6 +86,20 @@ TEST_CASE("Y::Board [y][board]") {
 		REQUIRE_FALSE(b.move(m));
 	}
 
+	SECTION("hash") {
+		hash_t h = b.test_hash(b.move_valid("a2"));
+		REQUIRE_FALSE(h == b.test_hash(b.move_valid("a1")));
+		for (auto s : {"a2", "b1", "a6", "b6", "f1", "f2"}) {
+			CAPTURE(s);
+			b.clear();
+			REQUIRE(b.gethash() == 0);
+			MoveValid m = b.move_valid(s);
+			REQUIRE(h == b.test_hash(m));
+			b.move(m);
+			REQUIRE(h == b.gethash());
+		}
+	}
+
 	SECTION("move distance") {
 		SECTION("x") {
 			REQUIRE(b.dist(Move("b2"), Move("b1")) == 1);

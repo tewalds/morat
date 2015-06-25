@@ -16,6 +16,9 @@ private:
 
 public:
 	Zobrist(){
+		clear();
+	}
+	void clear() {
 		for(int i = 0; i < num; i++)
 			values[i] = 0;
 	}

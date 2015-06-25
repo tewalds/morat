@@ -83,6 +83,7 @@ public:
 		num_moves_ = 0;
 		to_play_ = Side::P1;
 		outcome_ = Outcome::UNKNOWN;
+		hash.clear();
 
 		for(int y = 0; y < size_; y++){
 			for(int x = 0; x < size_; x++){
@@ -121,6 +122,9 @@ public:
 	int xy(const MoveValid & m) const { return m.xy; }
 
 	MoveValid yx(int i) const { return MoveValid(i % size_, i / size_, i); }
+
+	MoveValid move_valid(std::string s) const { return move_valid(Move(s)); }
+	MoveValid move_valid(Move m) const { return MoveValid(m, xy(m)); }
 
 	int dist(const Move & a, const Move & b) const {
 		return std::max(abs(a.x - b.x), abs(a.y - b.y));
@@ -217,16 +221,15 @@ public:
 	void update_hash(const MoveValid & pos, Side side) {
 		int turn = side.to_i();
 		hash.update(0, 3 * pos.xy + turn);
-		return;
 	}
 
-	hash_t test_hash(const Move & pos) const {
+	hash_t test_hash(const MoveValid & pos) const {
 		return test_hash(pos, to_play());
 	}
 
-	hash_t test_hash(const Move & pos, Side side) const {
+	hash_t test_hash(const MoveValid & pos, Side side) const {
 		int turn = side.to_i();
-		return hash.test(0, 3*xy(pos) + turn);
+		return hash.test(0, 3 * pos.xy + turn);
 	}
 
 	Pattern sympattern(const MoveValid & pos) const { return sympattern(pos.xy); }
