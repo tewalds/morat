@@ -12,6 +12,7 @@
 
 #include "../lib/bitcount.h"
 #include "../lib/board_grid_hex.h"
+#include "../lib/board_shape_hex.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
 #include "../lib/outcome.h"
@@ -23,7 +24,7 @@
 namespace Morat {
 namespace Havannah {
 
-class Board : public BoardGridHex<Board> {
+class Board : public BoardGridHex<Board>, public BoardShapeHex<Board> {
 public:
 
 	static constexpr const char * name = "havannah";
@@ -158,14 +159,6 @@ public:
 	Side get(const Move & m) const { return get(xy(m)); }
 	Side get(const MoveValid & m) const { return get(m.xy); }
 
-	//assumes x, y are in array bounds
-	bool on_board_fast(int x, int y)   const { return (  y -   x < size_r_) && (  x -   y < size_r_); }
-	bool on_board_fast(const Move & m) const { return (m.y - m.x < size_r_) && (m.x - m.y < size_r_); }
-	//checks array bounds too
-	bool on_board(int x, int y)  const { return (  x >= 0 &&   y >= 0 &&   x < size_ &&   y < size_ && on_board_fast(x, y) ); }
-	bool on_board(const Move & m)const { return (m.x >= 0 && m.y >= 0 && m.x < size_ && m.y < size_ && on_board_fast(m) ); }
-	bool on_board(const MoveValid & m) const { return m.on_board(); }
-
 	//assumes x, y are in bounds and the game isn't already finished
 	bool valid_move_fast(int i)               const { return get(i) == Side::NONE; }
 	bool valid_move_fast(int x, int y)        const { return valid_move_fast(xy(x, y)); }
@@ -175,11 +168,6 @@ public:
 	bool valid_move(int x, int y)        const { return (outcome_ < Outcome::DRAW && on_board(x, y) && valid_move_fast(x, y)); }
 	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && on_board(m)    && valid_move_fast(m)); }
 	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.on_board()   && valid_move_fast(m)); }
-
-	int lines()           const { return size_; }
-	int line_start(int y) const { return (y < size_r_ ? 0 : y - size_r_m1_); }
-	int line_end(int y)   const { return (y < size_r_ ? size_r_ + y : size_); }
-	int line_len(int y)   const { return size_ - abs(size_r_m1_ - y); }
 
 	std::string to_s(bool color) const;
 	std::string to_s(bool color, std::function<std::string(Move)> func) const;
@@ -435,6 +423,7 @@ private:
 	}
 
 	friend class BoardGridHex;
+	friend class BoardShapeHex;
 	friend class BoardBase;
 };
 
