@@ -14,7 +14,6 @@
 #include "../lib/board_base_hex.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
-#include "../lib/move_iterator.h"
 #include "../lib/outcome.h"
 #include "../lib/string.h"
 #include "../lib/types.h"
@@ -176,25 +175,6 @@ public:
 	bool valid_move(int x, int y)        const { return (outcome_ < Outcome::DRAW && on_board(x, y) && valid_move_fast(x, y)); }
 	bool valid_move(const Move & m)      const { return (outcome_ < Outcome::DRAW && on_board(m)    && valid_move_fast(m)); }
 	bool valid_move(const MoveValid & m) const { return (outcome_ < Outcome::DRAW && m.on_board()   && valid_move_fast(m)); }
-
-	const MoveValid* neighbors(const Move& m)      const { return neighbors(xy(m)); }
-	const MoveValid* neighbors(const MoveValid& m) const { return neighbors(m.xy); }
-	const MoveValid* neighbors(int i) const { return neighbor_list_.get() + i*18; }
-
-	NeighborIterator neighbors_small(const Move& m)      const { return neighbors_small(xy(m)); }
-	NeighborIterator neighbors_small(const MoveValid& m) const { return neighbors_small(m.xy); }
-	NeighborIterator neighbors_small(int i) const { return NeighborIterator(neighbors(i), 6); }
-
-	NeighborIterator neighbors_medium(const Move& m)      const { return neighbors_medium(xy(m)); }
-	NeighborIterator neighbors_medium(const MoveValid& m) const { return neighbors_medium(m.xy); }
-	NeighborIterator neighbors_medium(int i) const { return NeighborIterator(neighbors(i), 12); }
-
-	NeighborIterator neighbors_large(const Move& m)      const { return neighbors_large(xy(m)); }
-	NeighborIterator neighbors_large(const MoveValid& m) const { return neighbors_large(m.xy); }
-	NeighborIterator neighbors_large(int i) const { return NeighborIterator(neighbors(i), 18); }
-
-	MoveIterator<Board> begin() const { return MoveIterator<Board>(*this); }
-	MoveIterator<Board> end()   const { return MoveIterator<Board>(*this, M_NONE); }
 
 	int lines()           const { return size_; }
 	int line_start(int y) const { return (y < size_r_ ? 0 : y - size_r_m1_); }

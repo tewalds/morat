@@ -12,6 +12,22 @@ class BoardBaseHex : public BoardBase<SubClassBoard> {
 	using BoardBase<SubClassBoard>::self;
 
 public:
+	const MoveValid* neighbors(const Move& m)      const { return neighbors(self()->xy(m)); }
+	const MoveValid* neighbors(const MoveValid& m) const { return neighbors(m.xy); }
+	const MoveValid* neighbors(int i) const { return self()->neighbor_list_.get() + i*18; }
+
+	NeighborIterator neighbors_small(const Move& m)      const { return neighbors_small(self()->xy(m)); }
+	NeighborIterator neighbors_small(const MoveValid& m) const { return neighbors_small(m.xy); }
+	NeighborIterator neighbors_small(int i) const { return NeighborIterator(neighbors(i), 6); }
+
+	NeighborIterator neighbors_medium(const Move& m)      const { return neighbors_medium(self()->xy(m)); }
+	NeighborIterator neighbors_medium(const MoveValid& m) const { return neighbors_medium(m.xy); }
+	NeighborIterator neighbors_medium(int i) const { return NeighborIterator(neighbors(i), 12); }
+
+	NeighborIterator neighbors_large(const Move& m)      const { return neighbors_large(self()->xy(m)); }
+	NeighborIterator neighbors_large(const MoveValid& m) const { return neighbors_large(m.xy); }
+	NeighborIterator neighbors_large(int i) const { return NeighborIterator(neighbors(i), 18); }
+
 	int local(const MoveValid & m, Side turn) const { return local(m.xy, turn); }
 	int local(const Move & m,      Side turn) const { return local(self()->xy(m), turn); }
 	int local(int i,               Side turn) const {

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "move.h"
+#include "move_iterator.h"
 #include "outcome.h"
 #include "types.h"
 
@@ -45,6 +46,9 @@ public:
 	MoveValid move_valid(std::string s) const { return move_valid(Move(s)); }
 	MoveValid move_valid(int x, int y) const { return move_valid(Move(x, y)); }
 	MoveValid move_valid(Move m) const { return MoveValid(m, self()->xy(m)); }
+
+	MoveIterator<SubClassBoard> begin() const { return MoveIterator<SubClassBoard>(*self()); }
+	MoveIterator<SubClassBoard> end()   const { return MoveIterator<SubClassBoard>(*self(), M_NONE); }
 
 	bool test_local(const Move & pos, Side turn) const { return test_local(self()->move_valid(pos), turn); }
 	bool test_local(const MoveValid & pos, Side turn) const {
