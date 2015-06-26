@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../lib/bitcount.h"
+#include "../lib/board_base_hex.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
 #include "../lib/move_iterator.h"
@@ -23,7 +24,7 @@
 namespace Morat {
 namespace Rex {
 
-class Board{
+class Board : public BoardBaseHex<Board> {
 public:
 
 	static constexpr const char * name = "rex";
@@ -39,7 +40,6 @@ public:
 	static const int LBDist_directions = 2;
 
 	static const int pattern_cells = 18;
-	typedef uint64_t Pattern;
 
 	struct Cell {
 		Side     piece;   //who controls this cell, 0 for none, 1,2 for players
@@ -99,15 +99,9 @@ public:
 
 		for(int y = 0; y < size_; y++){
 			for(int x = 0; x < size_; x++){
-				int posxy = xy(x, y);
-				Pattern p = 0, j = 3;
-				for (const MoveValid m : neighbors_large(posxy)) {
-					if (!m.on_board())
-						p |= j;
-					j <<= 2;
-				}
+				MoveValid pos = move_valid(x, y);
 				Side s = (on_board(x, y) ? Side::NONE : Side::UNDEF);
-				cells_[posxy] = Cell(s, posxy, 1, edges(x, y), pattern_reverse(p));
+				cells_[pos.xy] = Cell(s, pos.xy, 1, edges(x, y), init_pattern(pos));
 			}
 		}
 	}
@@ -135,9 +129,6 @@ public:
 
 	MoveValid yx(int i) const { return MoveValid(i % size_, i / size_, i); }
 
-	MoveValid move_valid(std::string s) const { return move_valid(Move(s)); }
-	MoveValid move_valid(Move m) const { return MoveValid(m, xy(m)); }
-
 	int dist(const Move & a, const Move & b) const {
 		return (abs(a.x - b.x) + abs(a.y - b.y) + abs((a.x + a.y) - (b.x + b.y)) )/2;
 	}
@@ -152,17 +143,6 @@ public:
 	Side get(int x, int y)   const { return get(xy(x, y)); }
 	Side get(const Move & m) const { return get(xy(m)); }
 	Side get(const MoveValid & m) const { return get(m.xy); }
-
-	int local(const Move & m, Side turn) const { return local(xy(m), turn); }
-	int local(int i,          Side turn) const {
-		Pattern p = pattern(i);
-		Pattern x = ((p & 0xAAAAAAAAAull) >> 1) ^ (p & 0x555555555ull); // p1 is now when p1 or p2 but not both (ie off the board)
-		p = x & (turn == Side::P1 ? p : p >> 1); // now just the selected player
-		return (p & 0x000000FFF ? 3 : 0) |
-		       (p & 0x000FFF000 ? 2 : 0) |
-		       (p & 0xFFF000000 ? 1 : 0);
-	}
-
 
 	//assumes x, y are in array bounds, and all moves within array bounds are valid
 	bool on_board_fast(int x, int y)   const { return true; }
@@ -280,68 +260,6 @@ public:
 		return m;
 	}
 
-	Pattern sympattern(const MoveValid & pos) const { return sympattern(pos.xy); }
-	Pattern sympattern(const Move & pos)      const { return sympattern(xy(pos)); }
-	Pattern sympattern(int posxy)             const { return pattern_symmetry(pattern(posxy)); }
-
-	Pattern pattern(const MoveValid & pos) const { return pattern(pos.xy); }
-	Pattern pattern(const Move & pos)      const { return pattern(xy(pos)); }
-	Pattern pattern(int posxy)             const {
-		// this is from the opposite perspective
-		// so rotate into this move's perspective
-		return pattern_reverse(cells_[posxy].pattern);
-	}
-
-	Pattern pattern_medium(const MoveValid & pos) const { return pattern_medium(pos.xy); }
-	Pattern pattern_medium(const Move & pos)      const { return pattern_medium(xy(pos)); }
-	Pattern pattern_medium(int posxy)             const {
-		return pattern(posxy) & ((1ull << 24) - 1);
-	}
-
-	Pattern pattern_small(const MoveValid & pos) const { return pattern_small(pos.xy); }
-	Pattern pattern_small(const Move & pos)      const { return pattern_small(xy(pos)); }
-	Pattern pattern_small(int posxy)             const {
-		return pattern(posxy) & ((1ull << 12) - 1);
-	}
-
-	static Pattern pattern_reverse(Pattern p) { // switch perspectives (position out, or position in)
-		return (((p & 0x03F03F03Full) << 6) | ((p & 0xFC0FC0FC0ull) >> 6));
-	}
-
-	static Pattern pattern_invert(Pattern p) { //switch players
-		return ((p & 0xAAAAAAAAAull) >> 1) | ((p & 0x555555555ull) << 1);
-	}
-	static Pattern pattern_rotate(Pattern p) {
-		return (((p & 0x003003003ull) << 10) | ((p & 0xFFCFFCFFCull) >> 2));
-	}
-	static Pattern pattern_mirror(Pattern p) {
-		// HGFEDC BA9876 543210 -> DEFGHC 6789AB 123450
-		return ((p & (3ull <<  6))      ) | ((p & (3ull <<  0))     ) | // 0,3 stay in place
-		       ((p & (3ull << 10)) >>  8) | ((p & (3ull <<  2)) << 8) | // 1,5 swap
-		       ((p & (3ull <<  8)) >>  4) | ((p & (3ull <<  4)) << 4) | // 2,4 swap
-		       ((p & (3ull << 22)) >> 10) | ((p & (3ull << 12)) <<10) | // 6,B swap
-		       ((p & (3ull << 20)) >>  6) | ((p & (3ull << 14)) << 6) | // 7,A swap
-		       ((p & (3ull << 18)) >>  2) | ((p & (3ull << 16)) << 2) | // 8,9 swap
-		       ((p & (3ull << 30))      ) | ((p & (3ull << 24))     ) | // F,C stay in place
-		       ((p & (3ull << 34)) >>  8) | ((p & (3ull << 26)) << 8) | // H,D swap
-		       ((p & (3ull << 32)) >>  4) | ((p & (3ull << 28)) << 4);  // G,E swap
-	}
-	static Pattern pattern_symmetry(Pattern p) { //takes a pattern and returns the representative version
-		Pattern m = p;                 //012345
-		m = std::min(m, (p = pattern_rotate(p)));//501234
-		m = std::min(m, (p = pattern_rotate(p)));//450123
-		m = std::min(m, (p = pattern_rotate(p)));//345012
-		m = std::min(m, (p = pattern_rotate(p)));//234501
-		m = std::min(m, (p = pattern_rotate(p)));//123450
-		m = std::min(m, (p = pattern_mirror(pattern_rotate(p))));//012345 -> 054321
-		m = std::min(m, (p = pattern_rotate(p)));//105432
-		m = std::min(m, (p = pattern_rotate(p)));//210543
-		m = std::min(m, (p = pattern_rotate(p)));//321054
-		m = std::min(m, (p = pattern_rotate(p)));//432105
-		m = std::min(m, (p = pattern_rotate(p)));//543210
-		return m;
-	}
-
 	bool move(const Move & pos, bool checkwin = true, bool permanent = true) {
 		return move(MoveValid(pos, xy(pos)), checkwin, permanent);
 	}
@@ -359,15 +277,7 @@ public:
 		cell.perm = permanent;
 
 		update_hash(pos, to_play_); //depends on num_moves_
-
-		// update the nearby patterns
-		Pattern p = to_play_.to_i();
-		for (auto m : neighbors_large(pos)) {
-			if(m.on_board()){
-				cells_[m.xy].pattern |= p;
-			}
-			p <<= 2;
-		}
+		update_pattern(pos, to_play_);
 
 		// join the groups for win detection
 		auto it = neighbors_small(pos);
@@ -389,11 +299,6 @@ public:
 		to_play_ = ~to_play_;
 
 		return true;
-	}
-
-	bool test_local(const Move & pos, Side turn) const { return test_local(MoveValid(pos, xy(pos)), turn); }
-	bool test_local(const MoveValid & pos, Side turn) const {
-		return (local(pos, turn) == 3);
 	}
 
 	//test if making this move would win, but don't actually make the move
@@ -458,6 +363,9 @@ private:
 
 		return false;
 	}
+
+	friend class BoardBaseHex;
+	friend class BoardBase;
 };
 
 }; // namespace Rex
