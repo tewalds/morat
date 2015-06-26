@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../lib/bitcount.h"
-#include "../lib/board_base_oct.h"
+#include "../lib/board_grid_oct.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
 #include "../lib/outcome.h"
@@ -23,7 +23,7 @@
 namespace Morat {
 namespace Gomoku {
 
-class Board : public BoardBaseOct<Board> {
+class Board : public BoardGridOct<Board> {
 public:
 
 	static constexpr const char * name = "gomoku";
@@ -258,7 +258,7 @@ public:
 private:
 	std::shared_ptr<MoveValid> gen_neighbor_list() const;
 
-	friend class BoardBaseOct;
+	friend class BoardGridOct;
 	friend class BoardBase;
 };
 

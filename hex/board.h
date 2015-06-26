@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../lib/bitcount.h"
-#include "../lib/board_base_hex.h"
+#include "../lib/board_grid_hex.h"
 #include "../lib/hashset.h"
 #include "../lib/move.h"
 #include "../lib/outcome.h"
@@ -23,7 +23,7 @@
 namespace Morat {
 namespace Hex {
 
-class Board : public BoardBaseHex<Board> {
+class Board : public BoardGridHex<Board> {
 public:
 
 	static constexpr const char * name = "hex";
@@ -344,7 +344,7 @@ private:
 		return false;
 	}
 
-	friend class BoardBaseHex;
+	friend class BoardGridHex;
 	friend class BoardBase;
 };
 
