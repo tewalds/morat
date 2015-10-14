@@ -32,6 +32,8 @@ all: morat-gomoku morat-havannah morat-hex morat-pentago morat-rex morat-y
 test: \
 		lib/test.o \
 		lib/fileio.o \
+		lib/lap_timer.o \
+		lib/lap_timer_test.o \
 		lib/move_test.o \
 		lib/outcome.o \
 		lib/outcome_test.o \
