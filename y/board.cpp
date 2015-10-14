@@ -56,14 +56,14 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 		black = esc + "[1;34m" + "@"; //blue
 	}
 
-	string s;
+	string s = " ";
 	for(int i = 0; i < size_; i++)
-		s += " " + coord + to_str(i+1);
+		s += " " + coord + char('A' + i);
 	s += "\n";
 
 	for(int y = 0; y < size_; y++){
-		s += string(y, ' ');
-		s += coord + char('A' + y);
+		s += string(y + ((y + 1) < 10), ' ');
+		s += coord + to_str(y + 1);
 		int end = line_end(y);
 		for(int x = line_start(y); x < end; x++){
 			s += (last_move_ == Move(x, y)   ? coord + "[" :

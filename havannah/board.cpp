@@ -60,12 +60,12 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	string s;
 	s += string(size_r_ + 3, ' ');
 	for(int i = 0; i < size_r_; i++)
-		s += " " + coord + to_str(i+1);
+		s += " " + coord + char('A' + i);
 	s += "\n";
 
 	for(int y = 0; y < size_; y++){
-		s += string(abs(size_r_m1_ - y) + 2, ' ');
-		s += coord + char('A' + y);
+		s += string(abs(size_r_m1_ - y) + (y + 1 < 10) + 1, ' ');
+		s += coord + to_str(y + 1);
 		int end = line_end(y);
 		for(int x = line_start(y); x < end; x++){
 			s += (last_move_ == Move(x, y)   ? coord + "[" :
@@ -78,7 +78,7 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 		}
 		s += (last_move_ == Move(end-1, y) ? coord + "]" : " ");
 		if(y < size_r_m1_)
-			s += coord + to_str(size_r_ + y + 1);
+			s += coord + char('A' + size_r_ + y);
 		s += '\n';
 	}
 

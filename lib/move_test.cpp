@@ -10,7 +10,7 @@ TEST_CASE("Move", "[move]"){
 	REQUIRE(Move(M_UNKNOWN) == M_UNKNOWN);
 	REQUIRE(Move("unknown") == M_UNKNOWN);
 	REQUIRE(Move("a1") == Move(0, 0));
-	REQUIRE(Move("c5") == Move(4, 2));
+	REQUIRE(Move("c5") == Move(2, 4));
 	REQUIRE(Move("a1").to_s() == "a1");
 	REQUIRE(Move("c5").to_s() == "c5");
 	REQUIRE(Move().to_s() == "unknown");

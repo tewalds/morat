@@ -53,13 +53,15 @@ std::string Board::to_s(bool color, std::function<std::string(Move)> func) const
 	}
 
 	string s;
-	s += ' ';
+	s += "  ";
 	for(int i = 0; i < size_; i++)
-		s += " " + coord + to_str(i+1);
+		s += " " + coord + char('A' + i);
 	s += "\n";
 
 	for(int y = 0; y < size_; y++){
-		s += coord + char('A' + y);
+		if (y + 1 < 10)
+			s += ' ';
+		s += coord + to_str(y + 1);
 		int end = line_end(y);
 		for(int x = line_start(y); x < end; x++){
 			s += (last_move_ == Move(x, y)   ? coord + "[" :

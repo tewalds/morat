@@ -30,8 +30,8 @@ struct Move {
 		else if(str == "none"   ){ y = M_NONE;    x = 120; }
 		else if(str == "unknown"){ y = M_UNKNOWN; x = 120; }
 		else{
-			y = tolower(str[0]) - 'a';
-			x = atoi(str.c_str() + 1) - 1;
+			x = tolower(str[0]) - 'a';
+			y = atoi(str.c_str() + 1) - 1;
 		}
 	}
 
@@ -41,7 +41,7 @@ struct Move {
 		if(y == M_SWAP)    return "swap";
 		if(y == M_RESIGN)  return "resign";
 
-		return std::string() + char(y + 'a') + to_str(x + 1);
+		return std::string() + char(x + 'a') + to_str(y + 1);
 	}
 
 	friend std::ostream& operator<< (std::ostream &out, const Move & m) { return out << m.to_s(); }
