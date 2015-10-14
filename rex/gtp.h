@@ -47,6 +47,7 @@ public:
 		newcallback("colorboard",      std::bind(&GTP::gtp_colorboard,    this, _1), "Turn on or off the colored board");
 		newcallback("showboard",       std::bind(&GTP::gtp_print,         this, _1), "Show the board");
 		newcallback("print",           std::bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
+		newcallback("s",               std::bind(&GTP::gtp_print,         this, _1), "Alias for showboard");
 		newcallback("dists",           std::bind(&GTP::gtp_dists,         this, _1), "Similar to print, but shows minimum win distances");
 		newcallback("zobrist",         std::bind(&GTP::gtp_zobrist,       this, _1), "Output the zobrist hash for the current move");
 		newcallback("clear_board",     std::bind(&GTP::gtp_clearboard,    this, _1), "Clear the board, but keep the size");
@@ -56,10 +57,13 @@ public:
 		newcallback("size",            std::bind(&GTP::gtp_boardsize,     this, _1), "Alias for board_size");
 		newcallback("play",            std::bind(&GTP::gtp_play,          this, _1), "Place a stone: play <color> <location>");
 		newcallback("white",           std::bind(&GTP::gtp_playwhite,     this, _1), "Place a white stone: white <location>");
+		newcallback("w",               std::bind(&GTP::gtp_playwhite,     this, _1), "Alias for white");
 		newcallback("black",           std::bind(&GTP::gtp_playblack,     this, _1), "Place a black stone: black <location>");
+		newcallback("b",               std::bind(&GTP::gtp_playblack,     this, _1), "Alias for black");
 		newcallback("undo",            std::bind(&GTP::gtp_undo,          this, _1), "Undo one or more moves: undo [amount to undo]");
 		newcallback("time",            std::bind(&GTP::gtp_time,          this, _1), "Set the time limits and the algorithm for per game time");
 		newcallback("genmove",         std::bind(&GTP::gtp_genmove,       this, _1), "Generate a move: genmove [color] [time]");
+		newcallback("g",               std::bind(&GTP::gtp_genmove,       this, _1), "Alias for genmove");
 		newcallback("solve",           std::bind(&GTP::gtp_solve,         this, _1), "Try to solve this position");
 
 //		newcallback("ab",              std::bind(&GTP::gtp_ab,            this, _1), "Switch to use the Alpha/Beta agent to play/solve");
@@ -69,6 +73,7 @@ public:
 		newcallback("all_legal",       std::bind(&GTP::gtp_all_legal,     this, _1), "List all legal moves");
 		newcallback("history",         std::bind(&GTP::gtp_history,       this, _1), "List of played moves");
 		newcallback("playgame",        std::bind(&GTP::gtp_playgame,      this, _1), "Play a list of moves");
+		newcallback("p",               std::bind(&GTP::gtp_playgame,      this, _1), "Alias for playgame");
 		newcallback("winner",          std::bind(&GTP::gtp_winner,        this, _1), "Check the winner of the game");
 		newcallback("patterns",        std::bind(&GTP::gtp_patterns,      this, _1), "List all legal moves plus their local pattern");
 
