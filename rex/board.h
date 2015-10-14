@@ -30,7 +30,7 @@ public:
 	static constexpr const char * name = "rex";
 	static constexpr const char * default_size = "8";
 	static const int min_size = 3;
-	static const int max_size = 16;
+	static const int max_size = 25;
 	static const int max_vec_size = max_size * max_size;
 
 	static const int num_win_types = 1;

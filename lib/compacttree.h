@@ -20,7 +20,7 @@ namespace Morat {
  */
 template <class Node> class CompactTree {
 	static const unsigned int CHUNK_SIZE = 16*1024*1024;
-	static const unsigned int MAX_NUM = 300; //maximum amount of Node's to allocate at once, needed for size of freelist
+	static const unsigned int MAX_NUM = 25*25 + 1; //maximum amount of Node's to allocate at once, needed for size of freelist
 
 	//Hold a list of children within the compact tree
 	struct Data {
