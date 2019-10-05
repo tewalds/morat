@@ -36,14 +36,14 @@ std::string Side::to_s() const {
 	if(*this == P1)    return "white";
 	if(*this == P2)    return "black";
 	if(*this == BOTH)  return "both";
-	                   return "unknown";
+	return "unknown";
 }
 
 std::string Side::to_s_short() const {
 	if(*this == NONE)  return "N";
 	if(*this == P1)    return "W";
 	if(*this == P2)    return "B";
-	                   return "U";
+	return "U";
 }
 
 std::string Outcome::to_s() const {
@@ -55,14 +55,14 @@ std::string Outcome::to_s() const {
 	   *this == DRAW2)   return "draw"; // simultaneous win
 	if(*this == P1)      return "white";
 	if(*this == P2)      return "black";
-	                     return "unknown";
+    return "unknown";
 }
 
 std::string Outcome::to_s_rel(Side to_play) const {
 	if(*this == Outcome::DRAW)  return "draw";
 	if(*this == Outcome::DRAW2) return "draw by simultaneous win";
-	if(*this == +to_play)        return "win";
-	if(*this == +~to_play)       return "loss";
+	if(*this == +to_play)       return "win";
+	if(*this == +~to_play)      return "loss";
 	if(*this == -~to_play)      return "win or draw";
 	if(*this == -to_play)       return "loss or draw";
 	return "unkown";
